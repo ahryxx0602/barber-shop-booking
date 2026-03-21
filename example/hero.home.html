@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Classic Cut - Editorial Vintage Barbershop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com" rel="preconnect" />
+    <link crossorigin="" href="https://fonts.gstatic.com" rel="preconnect" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400..900;1,400..900&family=Epilogue:ital,wght@0,100..900;1,100..900&display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#8b1a1f",
+                        "primary-dark": "#6e1419",
+                        "background-light": "#f5f0eb",
+                        "background-dark": "#1a0f10",
+                        "warm-gray": "#3d3532",
+                        "warm-gray-light": "#6b6260",
+                    },
+                    fontFamily: {
+                        "display": ["Epilogue", "sans-serif"],
+                        "serif": ["Playfair Display", "Georgia", "serif"],
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Epilogue', sans-serif;
+        }
+
+        /* Custom parallax setup */
+        .parallax-container {
+            perspective: 1px;
+            height: 100vh;
+            overflow-x: hidden;
+            overflow-y: auto;
+        }
+
+        .parallax-layer {
+            position: absolute;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+        }
+
+        .parallax-base {
+            transform: translateZ(0);
+        }
+
+        .parallax-back {
+            transform: translateZ(-0.5px) scale(1.5);
+            transform-origin: 100% 50%;
+        }
+
+        /* Nav Transition */
+        .scrolled-nav {
+            background-color: #f5f0eb;
+            border-bottom: 1px solid #d6cfc7;
+            transition: background-color 0.3s ease, border-color 0.3s ease;
+        }
+
+        .hero-img-overlay {
+            background: linear-gradient(rgba(139, 69, 19, 0.15), rgba(139, 69, 19, 0.15));
+            mix-blend-mode: multiply;
+        }
+
+        /* Monochromatic Noise */
+        .noise-bg {
+            background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.03'/%3E%3C/svg%3E");
+        }
+
+        /* Editorial decorative line */
+        .editorial-line::before {
+            content: '';
+            display: block;
+            width: 48px;
+            height: 2px;
+            background-color: #8b1a1f;
+            margin-bottom: 24px;
+        }
+    </style>
+</head>
+
+<body
+    class="bg-background-light dark:bg-background-dark text-warm-gray dark:text-slate-100 antialiased font-display overflow-hidden">
+    <!-- Top Navigation Container -->
+    <nav class="fixed top-0 w-full z-50 transition-all duration-300 bg-transparent h-[72px] flex flex-col justify-center"
+        id="main-nav">
+        <div class="px-8 md:px-16 lg:px-24 flex justify-between items-center w-full max-w-[1600px] mx-auto">
+            <!-- Logo -->
+            <div class="flex items-center gap-3">
+                <div class="size-4 text-primary">
+                    <svg fill="none" viewbox="0 0 48 48" xmlns="http://www.w3.org/2000/svg">
+                        <path
+                            d="M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z"
+                            fill="currentColor"></path>
+                    </svg>
+                </div>
+                <a class="text-[15px] font-bold tracking-[3px] text-warm-gray uppercase" href="#">Classic Cut</a>
+            </div>
+            <!-- Links -->
+            <div class="hidden md:flex items-center gap-12">
+                <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
+                    href="#">Services</a>
+                <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
+                    href="#">Story</a>
+                <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
+                    href="#">Book</a>
+            </div>
+            <!-- Mobile Menu Toggle -->
+            <div class="md:hidden">
+                <button class="p-2 text-warm-gray">
+                    <span class="material-symbols-outlined">menu</span>
+                </button>
+            </div>
+        </div>
+    </nav>
+    <!-- Parallax Wrapper -->
+    <div class="parallax-container w-full" id="scroll-area">
+        <!-- Hero Section (Parallax Base + Back) -->
+        <main class="relative w-full min-h-screen flex flex-col lg:flex-row noise-bg">
+            <!-- Left Side: Typography and CTA (Base Layer) -->
+            <div
+                class="parallax-layer parallax-base flex-1 flex flex-col justify-center px-8 pt-32 pb-20 md:px-16 lg:px-24 lg:pt-0 z-10 lg:w-1/2 bg-background-light/90 lg:bg-transparent">
+                <div class="max-w-xl mx-auto lg:mx-0 lg:ml-auto lg:pr-16 xl:pr-28 flex flex-col gap-10 md:gap-12">
+                    <div class="flex flex-col gap-6">
+                        <!-- Editorial decorative element -->
+                        <div class="flex items-center gap-4 mb-2">
+                            <div class="w-8 h-[1.5px] bg-primary"></div>
+                            <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Est. 1987</span>
+                        </div>
+                        <h1
+                            class="font-serif text-5xl md:text-[68px] lg:text-[76px] font-bold leading-[1.02] tracking-[-0.015em] text-warm-gray">
+                            The Art of<br/>the Classic Cut.
+                        </h1>
+                        <p class="text-base md:text-lg font-normal text-warm-gray-light leading-[1.7] max-w-sm">
+                            A premium vintage barbershop experience. Heritage craftsmanship meets contemporary
+                            style.
+                        </p>
+                    </div>
+                    <div class="flex items-center gap-8">
+                        <button
+                            class="group relative flex items-center justify-center h-[52px] w-[200px] bg-primary text-white text-[11px] font-bold uppercase tracking-[2.5px] rounded-none transition-all duration-300 hover:bg-warm-gray overflow-hidden">
+                            <span
+                                class="relative z-10 transition-transform duration-300 group-hover:-translate-y-10">Book
+                                Your Chair</span>
+                            <span
+                                class="absolute z-10 transition-transform duration-300 translate-y-10 group-hover:translate-y-0">Book
+                                Your Chair</span>
+                        </button>
+                        <a href="#" class="text-[11px] font-semibold tracking-[2px] uppercase text-warm-gray-light hover:text-primary transition-colors border-b border-warm-gray-light/40 pb-0.5">View Services</a>
+                    </div>
+                </div>
+            </div>
+            <!-- Right Side: Parallax Image (Back Layer) -->
+            <div class="hidden lg:block absolute top-0 right-0 w-1/2 h-full z-0 overflow-hidden">
+                <div class="w-full h-[120%] -mt-[10%] relative parallax-back">
+                    <!-- Base grayscale image -->
+                    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat filter grayscale contrast-110"
+                        data-alt="Vintage barber chair against a dark brick wall"
+                        style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuBjMOgFK7nirCchS42_k41V0XmFpVPrq_25NhdRU-kBoVoMP3BtFU4-wG0YeftPwHsvD-2tVPSLfuXdEaThHAeAP0xL-__5AGsxLhLCE2KQqtX0k7HzNEePhkbz7ww6w2WgKYb_xio4ZUyJUZ1Cr590FR2N7EwEsdfFBbBLqVieAxlgTvyDcnYnKMl96YpJXNmjpf6xmakkkaGBsndW81VB_LZNY0OnX34FdClZJ8dbpr1p9yHWfplzLK0bV7Tp5jWA8yb508g56i8');">
+                    </div>
+                    <!-- Warm sepia overlay -->
+                    <div class="absolute inset-0 bg-[#6b4a2e] opacity-[0.12] mix-blend-color"></div>
+                    <!-- Dark gradient fade for text legibility -->
+                    <div
+                        class="absolute inset-0 bg-gradient-to-r from-background-light via-background-light/60 to-transparent lg:w-40">
+                    </div>
+                </div>
+            </div>
+            <!-- Mobile Image Fallback -->
+            <div class="lg:hidden w-full h-[500px] relative mt-4">
+                <div class="absolute inset-0 bg-cover bg-center bg-no-repeat filter grayscale contrast-110"
+                    data-alt="Vintage barber chair against a dark brick wall"
+                    style="background-image: url('https://lh3.googleusercontent.com/aida-public/AB6AXuC7lThHikqs1u96SWCx61V4QdG1VSqvYaY_fDHbZxeUqPtBtrN3a9N4JDKBsLLKnkW6CKnlMb4D05HKDiaKlQehV-zkyjqDYAV3FSgi2zHWUGkM85qU8zgtUxpPnh_6YnnaWgqKov0VmhJgC5LGjwa8WfU613tJQHXYehUZPAfupjDK28v8nyp4Yam4rPzoZr4k4CtUEXlHcj7SEVS6OdWgVNOTns2ty_ypwsybQ8myV4et8XnGhSgBTOXK2uIOEimISeOMVGuRkgo');">
+                </div>
+                <div class="absolute inset-0 bg-[#6b4a2e] opacity-[0.12] mix-blend-color"></div>
+                <!-- Top fade -->
+                <div class="absolute inset-0 bg-gradient-to-b from-background-light via-transparent to-warm-gray/50"></div>
+            </div>
+        </main>
+        <!-- Spacer -->
+        <div
+            class="parallax-layer parallax-base mt-[1024px] h-[400px] bg-background-light relative z-20 flex items-center justify-center border-t border-warm-gray/10">
+            <div class="flex flex-col items-center gap-4">
+                <div class="w-[1px] h-12 bg-warm-gray/20"></div>
+                <p class="text-warm-gray-light font-medium tracking-[4px] uppercase text-[10px]">Scroll to explore</p>
+            </div>
+        </div>
+    </div>
+    <!-- Script for Nav Transition -->
+    <script>
+        const scrollArea = document.getElementById('scroll-area');
+        const mainNav = document.getElementById('main-nav');
+
+        scrollArea.addEventListener('scroll', () => {
+            if (scrollArea.scrollTop > 50) {
+                mainNav.classList.add('scrolled-nav');
+                mainNav.classList.remove('bg-transparent');
+            } else {
+                mainNav.classList.remove('scrolled-nav');
+                mainNav.classList.add('bg-transparent');
+            }
+        });
+    </script>
+</body>
+
+</html>

@@ -1,0 +1,127 @@
+<!DOCTYPE html>
+
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <meta content="width=device-width, initial-scale=1.0" name="viewport" />
+    <title>Confirmation - Editorial Vintage Barbershop</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Epilogue:wght@400;500;600;700&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <link
+        href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&amp;display=swap"
+        rel="stylesheet" />
+    <script id="tailwind-config">
+        tailwind.config = {
+            darkMode: "class",
+            theme: {
+                extend: {
+                    colors: {
+                        "primary": "#9c161b",
+                        "background-light": "#f8f6f6",
+                        "background-dark": "#211112",
+                    },
+                    fontFamily: {
+                        "display": ["Epilogue", "sans-serif"]
+                    },
+                    borderRadius: { "DEFAULT": "0.125rem", "lg": "0.25rem", "xl": "0.5rem", "full": "0.75rem" },
+                },
+            },
+        }
+    </script>
+    <style>
+        body {
+            font-family: 'Epilogue', sans-serif;
+        }
+    </style>
+</head>
+
+<body class="bg-background-light dark:bg-background-dark min-h-screen flex items-center justify-center p-4">
+    <!-- Modal Overlay -->
+    <div class="fixed inset-0 bg-slate-900/40 backdrop-blur-sm z-40 transition-opacity"></div>
+    <!-- Confirmation Modal -->
+    <div
+        class="relative z-50 w-full max-w-[600px] bg-white dark:bg-slate-900 rounded-xl shadow-2xl border border-slate-200 dark:border-slate-800 overflow-hidden">
+        <!-- Header with Back Button (Exception Rule) -->
+        <div
+            class="absolute top-0 left-0 w-full p-4 flex justify-between items-center border-b border-slate-100 dark:border-slate-800 bg-white/80 dark:bg-slate-900/80 backdrop-blur-md z-10">
+            <button
+                class="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors flex items-center gap-2 text-sm font-medium">
+                <span class="material-symbols-outlined text-xl">arrow_back</span>
+                Back
+            </button>
+            <button
+                class="text-slate-500 hover:text-slate-900 dark:text-slate-400 dark:hover:text-slate-100 transition-colors">
+                <span class="material-symbols-outlined text-xl">close</span>
+            </button>
+        </div>
+        <div class="pt-20 pb-12 px-6 sm:px-12 flex flex-col items-center">
+            <!-- Success Icon -->
+            <div class="w-16 h-16 rounded-full bg-primary/10 flex items-center justify-center mb-6">
+                <span class="material-symbols-outlined text-primary text-3xl"
+                    style="font-variation-settings: 'FILL' 1;">check_circle</span>
+            </div>
+            <!-- Headline -->
+            <h1
+                class="text-slate-900 dark:text-slate-100 text-[32px] font-bold leading-tight text-center mb-8 font-display">
+                Your chair is reserved.
+            </h1>
+            <!-- Appointment Details Box -->
+            <div
+                class="w-full bg-slate-50 dark:bg-slate-800/50 rounded-lg border border-slate-200 dark:border-slate-700 p-6 mb-8">
+                <div class="space-y-4">
+                    <div
+                        class="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700/50 last:border-0">
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">Date
+                        </p>
+                        <p class="text-slate-900 dark:text-slate-100 text-base font-semibold text-right">Thursday, Oct
+                            24th</p>
+                    </div>
+                    <div
+                        class="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700/50 last:border-0">
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">Time
+                        </p>
+                        <p class="text-slate-900 dark:text-slate-100 text-base font-semibold text-right">2:00 PM</p>
+                    </div>
+                    <div
+                        class="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700/50 last:border-0">
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">
+                            Barber</p>
+                        <p class="text-slate-900 dark:text-slate-100 text-base font-semibold text-right">Arthur
+                            Pendelton</p>
+                    </div>
+                    <div
+                        class="flex justify-between items-center py-2 border-b border-slate-200 dark:border-slate-700/50 last:border-0">
+                        <p class="text-slate-500 dark:text-slate-400 text-sm font-medium uppercase tracking-wider">
+                            Service</p>
+                        <p class="text-slate-900 dark:text-slate-100 text-base font-semibold text-right">Classic Cut
+                            &amp; Shave</p>
+                    </div>
+                </div>
+            </div>
+            <!-- Calendar Links -->
+            <div class="flex flex-col sm:flex-row gap-4 w-full justify-center">
+                <button
+                    class="flex-1 flex items-center justify-center gap-2 h-12 px-6 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-colors group">
+                    <span
+                        class="material-symbols-outlined text-lg text-slate-400 group-hover:text-primary transition-colors">calendar_today</span>
+                    Add to Apple Calendar
+                </button>
+                <button
+                    class="flex-1 flex items-center justify-center gap-2 h-12 px-6 rounded border border-slate-200 dark:border-slate-700 bg-white dark:bg-slate-800 text-slate-700 dark:text-slate-300 text-sm font-semibold hover:border-primary hover:text-primary dark:hover:border-primary dark:hover:text-primary transition-colors group">
+                    <span
+                        class="material-symbols-outlined text-lg text-slate-400 group-hover:text-primary transition-colors">event</span>
+                    Add to Google Calendar
+                </button>
+            </div>
+        </div>
+        <!-- Bottom Decorator Line -->
+        <div class="h-1 w-full bg-primary"></div>
+    </div>
+</body>
+
+</html>

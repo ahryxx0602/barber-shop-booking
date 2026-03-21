@@ -1,0 +1,73 @@
+<?php
+
+namespace App\Http\Controllers\Client;
+
+use App\Http\Controllers\Controller;
+use App\Http\Requests\Client\StoreBookingRequest;
+use App\Models\Barber;
+use App\Models\Booking;
+use App\Models\Service;
+use App\Models\TimeSlot;
+use App\Services\BookingService;
+use Illuminate\Http\JsonResponse;
+use Illuminate\Http\Request;
+use Illuminate\View\View;
+
+class BookingController extends Controller
+{
+    public function __construct(
+        protected BookingService $bookingService,
+    ) {}
+
+    public function create(): View
+    {
+        $services = Service::where('is_active', true)->get();
+        $barbers = Barber::with('user')->where('is_active', true)->get();
+
+        return view('client.booking.create', compact('services', 'barbers'));
+    }
+
+    public function getSlots(Request $request): JsonResponse
+    {
+        $request->validate([
+            'barber_id' => 'required|exists:barbers,id',
+            'date' => 'required|date|after_or_equal:today',
+        ]);
+
+        $slots = TimeSlot::where('barber_id', $request->barber_id)
+            ->where('slot_date', $request->date)
+            ->where('status', 'available')
+            ->orderBy('start_time')
+            ->get()
+            ->map(fn ($slot) => [
+                'id' => $slot->id,
+                'start_time' => $slot->start_time,
+                'end_time' => $slot->end_time,
+                'label' => \Carbon\Carbon::parse($slot->start_time)->format('H:i'),
+            ]);
+
+        return response()->json($slots);
+    }
+
+    public function store(StoreBookingRequest $request)
+    {
+        try {
+            $booking = $this->bookingService->create(
+                $request->validated(),
+                $request->user()
+            );
+
+            return redirect()->route('client.booking.confirmation', $booking)
+                ->with('success', 'Dat lich thanh cong!');
+        } catch (\App\Exceptions\SlotNotAvailableException $e) {
+            return back()->withErrors(['time_slot_id' => $e->getMessage()])->withInput();
+        }
+    }
+
+    public function confirmation(Booking $booking): View
+    {
+        $booking->load(['barber.user', 'services', 'timeSlot']);
+
+        return view('client.booking.confirmation', compact('booking'));
+    }
+}

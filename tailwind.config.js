@@ -15,6 +15,8 @@ export default {
         extend: {
             fontFamily: {
                 sans: ['Outfit', 'Figtree', ...defaultTheme.fontFamily.sans],
+                display: ['Epilogue', 'sans-serif'],
+                serif: ['Playfair Display', 'Georgia', 'serif'],
             },
             colors: {
                 brand: {
@@ -31,6 +33,15 @@ export default {
                     900: '#771a31',
                     950: '#450d1b',
                 },
+                // Editorial Vintage theme
+                primary: '#8b1a1f',
+                'primary-dark': '#6e1419',
+                'bg-light': '#f5f0eb',
+                'bg-dark': '#1a0f10',
+                'warm-gray': '#3d3532',
+                'warm-gray-light': '#6b6260',
+                surface: '#ebe6dc',
+                muted: '#7a7571',
                 success: {
                     50: '#ecfdf3',
                     100: '#d1fadf',

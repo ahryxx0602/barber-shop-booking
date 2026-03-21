@@ -1,10 +1,26 @@
 <?php
 
+use App\Http\Controllers\Client\BarberController as ClientBarberController;
+use App\Http\Controllers\Client\BookingController as ClientBookingController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
+});
+
+// Client-facing routes (public - no auth required for browsing)
+Route::name('client.')->group(function () {
+    Route::get('/barbers', [ClientBarberController::class, 'index'])->name('barbers.index');
+    Route::get('/barbers/{barber}', [ClientBarberController::class, 'show'])->name('barbers.show');
+    Route::get('/booking/slots', [ClientBookingController::class, 'getSlots'])->name('booking.slots');
+
+    // Booking requires authentication
+    Route::middleware(['auth'])->group(function () {
+        Route::get('/booking/create', [ClientBookingController::class, 'create'])->name('booking.create');
+        Route::post('/booking', [ClientBookingController::class, 'store'])->name('booking.store');
+        Route::get('/booking/{booking}/confirmation', [ClientBookingController::class, 'confirmation'])->name('booking.confirmation');
+    });
 });
 
 Route::get('/dashboard', function () {
