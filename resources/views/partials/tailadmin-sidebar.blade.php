@@ -179,6 +179,27 @@
           </li>
           <!-- /Thợ cắt -->
 
+          <!-- Menu: Lịch làm việc -->
+          <li>
+            <a
+              href="{{ route('admin.schedules.index') }}"
+              @click="selected = 'LichLam'"
+              class="menu-item group"
+              :class="selected === 'LichLam' ? 'menu-item-active' : 'menu-item-inactive'"
+            >
+              <svg
+                :class="selected === 'LichLam' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'"
+                width="24" height="24" viewBox="0 0 24 24" fill="none"
+              >
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M6.75 2.5C6.75 2.08579 7.08578 1.75 7.5 1.75C7.91421 1.75 8.25 2.08579 8.25 2.5V3.25H15.75V2.5C15.75 2.08579 16.0858 1.75 16.5 1.75C16.9142 1.75 17.25 2.08579 17.25 2.5V3.25H19C20.2426 3.25 21.25 4.25736 21.25 5.5V19.5C21.25 20.7426 20.2426 21.75 19 21.75H5C3.75736 21.75 2.75 20.7426 2.75 19.5V5.5C2.75 4.25736 3.75736 3.25 5 3.25H6.75V2.5ZM15.75 4.75V5.5C15.75 5.91422 16.0858 6.25 16.5 6.25C16.9142 6.25 17.25 5.91422 17.25 5.5V4.75H19C19.4142 4.75 19.75 5.08579 19.75 5.5V8.25H4.25V5.5C4.25 5.08579 4.58579 4.75 5 4.75H6.75V5.5C6.75 5.91422 7.08578 6.25 7.5 6.25C7.91421 6.25 8.25 5.91422 8.25 5.5V4.75H15.75ZM4.25 9.75V19.5C4.25 19.9142 4.58579 20.25 5 20.25H19C19.4142 20.25 19.75 19.9142 19.75 19.5V9.75H4.25Z"
+                />
+              </svg>
+              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Lịch làm việc</span>
+            </a>
+          </li>
+          <!-- /Lịch làm việc -->
+
         </ul>
       </div>
       <!-- /Menu Group CHÍNH -->
