@@ -67,7 +67,7 @@
                     Ve trang chu
                 </a>
                 @auth
-                <a href="{{ route('customer.dashboard') }}" class="flex-1 flex items-center justify-center gap-2 h-12 px-6 border border-muted/20 bg-white text-warm-gray text-sm font-semibold hover:border-primary hover:text-primary transition-colors">
+                <a href="{{ route('client.profile.show') }}" class="flex-1 flex items-center justify-center gap-2 h-12 px-6 border border-muted/20 bg-white text-warm-gray text-sm font-semibold hover:border-primary hover:text-primary transition-colors">
                     <span class="material-symbols-outlined text-lg">history</span>
                     Lich su dat lich
                 </a>

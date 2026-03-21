@@ -13,13 +13,17 @@ use Illuminate\Support\Str;
 
 class BookingService
 {
-    public function create(array $data, User $customer): Booking
+    public function create(array $data, ?User $customer = null): Booking
     {
         return DB::transaction(function () use ($data, $customer) {
             $slot = TimeSlot::lockForUpdate()->findOrFail($data['time_slot_id']);
 
             if ($slot->status !== 'available') {
                 throw new SlotNotAvailableException('Slot nay vua duoc dat, vui long chon lai.');
+            }
+
+            if (!$customer) {
+                $customer = $this->findOrCreateGuest($data);
             }
 
             $services = Service::whereIn('id', $data['service_ids'])->get();
@@ -51,6 +55,19 @@ class BookingService
 
             return $booking;
         });
+    }
+
+    protected function findOrCreateGuest(array $data): User
+    {
+        return User::firstOrCreate(
+            ['email' => $data['guest_email']],
+            [
+                'name' => $data['guest_name'],
+                'phone' => $data['guest_phone'],
+                'password' => bcrypt(Str::random(32)),
+                'role' => 'customer',
+            ]
+        );
     }
 
     protected function generateCode(): string

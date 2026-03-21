@@ -40,7 +40,7 @@
                     href="{{ route('client.barbers.index') }}">Tho cat</a>
                 @auth
                     <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
-                        href="{{ url('/dashboard') }}">Dashboard</a>
+                        href="{{ route('client.profile.show') }}">Tai khoan</a>
                 @else
                     <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
                         href="{{ route('login') }}">Dang nhap</a>
@@ -65,7 +65,7 @@
                         href="{{ route('client.barbers.index') }}">Tho cat</a>
                     @auth
                         <a class="text-warm-gray-light hover:text-primary text-[11px] font-semibold tracking-[2.5px] uppercase"
-                            href="{{ url('/dashboard') }}">Dashboard</a>
+                            href="{{ route('client.profile.show') }}">Tai khoan</a>
                     @else
                         <a class="text-warm-gray-light hover:text-primary text-[11px] font-semibold tracking-[2.5px] uppercase"
                             href="{{ route('login') }}">Dang nhap</a>

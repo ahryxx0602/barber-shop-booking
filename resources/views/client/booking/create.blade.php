@@ -172,10 +172,60 @@
 
                 <hr class="border-muted/10">
 
-                {{-- Step 4: Note --}}
+                {{-- Step 4: Guest Info (only for non-authenticated users) --}}
+                @guest
+                <section :class="selectedSlot ? 'opacity-100' : 'opacity-40 pointer-events-none'" class="transition-opacity duration-500">
+                    <div class="flex items-center mb-5">
+                        <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold mr-3"
+                            :class="guestName && guestPhone && guestEmail ? 'bg-primary text-white' : 'bg-surface text-warm-gray-light'">4</span>
+                        <h2 class="text-lg font-semibold font-display text-warm-gray">Thong tin lien he</h2>
+                    </div>
+                    <p class="text-sm text-muted mb-4">Ban chua dang nhap. Vui long dien thong tin de chung toi lien he xac nhan lich hen.</p>
+                    <div class="space-y-4">
+                        <div>
+                            <label for="guest_name" class="block text-sm font-medium text-warm-gray mb-2">Ho va ten <span class="text-primary">*</span></label>
+                            <input type="text" name="guest_name" id="guest_name" value="{{ old('guest_name') }}" required
+                                x-model="guestName"
+                                placeholder="Nguyen Van A"
+                                class="w-full px-4 py-3 border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                            @error('guest_name')
+                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="guest_phone" class="block text-sm font-medium text-warm-gray mb-2">So dien thoai <span class="text-primary">*</span></label>
+                            <input type="tel" name="guest_phone" id="guest_phone" value="{{ old('guest_phone') }}" required
+                                x-model="guestPhone"
+                                placeholder="0901234567"
+                                class="w-full px-4 py-3 border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                            @error('guest_phone')
+                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                        <div>
+                            <label for="guest_email" class="block text-sm font-medium text-warm-gray mb-2">Email <span class="text-primary">*</span></label>
+                            <input type="email" name="guest_email" id="guest_email" value="{{ old('guest_email') }}" required
+                                x-model="guestEmail"
+                                placeholder="email@example.com"
+                                class="w-full px-4 py-3 border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
+                            @error('guest_email')
+                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+                    <p class="text-xs text-muted mt-3 flex items-center gap-1">
+                        <span class="material-symbols-outlined text-[14px]">info</span>
+                        Da co tai khoan? <a href="{{ route('login') }}?redirect={{ urlencode(route('client.booking.create')) }}" class="text-primary hover:underline font-medium">Dang nhap tai day</a>
+                    </p>
+                </section>
+
+                <hr class="border-muted/10">
+                @endguest
+
+                {{-- Step Note --}}
                 <section :class="selectedSlot ? 'opacity-100' : 'opacity-40 pointer-events-none'" class="transition-opacity duration-500">
                     <div class="flex items-center mb-4">
-                        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-surface text-warm-gray-light text-xs font-bold mr-3">4</span>
+                        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-surface text-warm-gray-light text-xs font-bold mr-3">@auth 4 @else 5 @endauth</span>
                         <h2 class="text-lg font-semibold font-display text-warm-gray">Ghi chu (tuy chon)</h2>
                     </div>
                     <textarea name="note" rows="3" placeholder="Yeu cau dac biet, kieu toc mong muon..."
@@ -228,9 +278,12 @@ function bookingWizard() {
         selectedSlotLabel: null,
         slots: [],
         loadingSlots: false,
+        isGuest: {{ auth()->check() ? 'false' : 'true' }},
+        guestName: '{{ old("guest_name", "") }}',
+        guestPhone: '{{ old("guest_phone", "") }}',
+        guestEmail: '{{ old("guest_email", "") }}',
 
         init() {
-            // If barber_id was pre-selected via URL
             if (this.selectedBarber) {
                 // Ready for date selection
             }
@@ -286,7 +339,11 @@ function bookingWizard() {
         },
 
         get canSubmit() {
-            return this.selectedServices.length > 0 && this.selectedBarber && this.selectedSlot;
+            const baseReady = this.selectedServices.length > 0 && this.selectedBarber && this.selectedSlot;
+            if (this.isGuest) {
+                return baseReady && this.guestName.trim() !== '' && this.guestPhone.trim() !== '' && this.guestEmail.trim() !== '';
+            }
+            return baseReady;
         }
     }
 }

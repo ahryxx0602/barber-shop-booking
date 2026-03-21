@@ -1,11 +1,5 @@
 <?php
 
-use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
-use Illuminate\Support\Facades\Route;
-
-Route::middleware(['auth', 'role:customer,admin'])
-    ->prefix('customer')
-    ->name('customer.')
-    ->group(function () {
-        Route::get('/dashboard', [CustomerDashboardController::class, 'index'])->name('dashboard');
-    });
+// Customer routes have been moved to client routes in web.php
+// Profile: /profile (client.profile.show)
+// Edit profile: /profile/edit (client.profile.edit)
