@@ -19,7 +19,7 @@ class StoreServiceRequest extends FormRequest
             'description'      => ['nullable', 'string'],
             'price'            => ['required', 'numeric', 'min:0'],
             'duration_minutes' => ['required', 'integer', 'min:15', 'max:300'],
-            'image'            => ['nullable', 'image', 'max:2048'],
+            'image'            => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
             'is_active'        => ['boolean'],
         ];
     }
@@ -37,6 +37,7 @@ class StoreServiceRequest extends FormRequest
             'duration_minutes.min'      => 'Thời gian tối thiểu là 15 phút.',
             'duration_minutes.max'      => 'Thời gian tối đa là 300 phút.',
             'image.image'               => 'File phải là ảnh.',
+            'image.mimes'               => 'Ảnh phải có định dạng JPG, JPEG, PNG hoặc WEBP.',
             'image.max'                 => 'Ảnh tối đa 2MB.',
         ];
     }

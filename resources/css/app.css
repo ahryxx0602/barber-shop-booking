@@ -4,6 +4,11 @@
 @tailwind components;
 @tailwind utilities;
 
+/* ===== Alpine.js: prevent flash of unstyled content ===== */
+[x-cloak] {
+    display: none !important;
+}
+
 /* ===== TailAdmin: Base overrides ===== */
 @layer base {
     *,
