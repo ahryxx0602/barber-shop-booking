@@ -3,7 +3,7 @@
 use App\Http\Controllers\Customer\DashboardController as CustomerDashboardController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware(['auth', 'verified', 'role:customer,admin'])
+Route::middleware(['auth', 'role:customer,admin'])
     ->prefix('customer')
     ->name('customer.')
     ->group(function () {

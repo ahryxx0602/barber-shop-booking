@@ -21,6 +21,8 @@
                             <span class="font-bold">✂️ BarberBook Admin</span>
                             <a href="{{ route('admin.dashboard') }}"
                                class="text-sm text-gray-300 hover:text-white">Dashboard</a>
+                            <a href="{{ route('admin.services.index') }}"
+                               class="text-sm text-gray-300 hover:text-white">Dịch vụ</a>
                         </div>
                         <div class="flex items-center space-x-4">
                             <span class="text-sm text-gray-300">{{ auth()->user()->name }}</span>

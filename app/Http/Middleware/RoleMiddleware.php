@@ -10,7 +10,7 @@ class RoleMiddleware
 {
     public function handle(Request $request, Closure $next, string ...$roles): Response
     {
-        if (!in_array(auth()->user()->role, $roles)) {
+        if (!auth()->check() || !in_array(auth()->user()->role, $roles)) {
             abort(403);
         }
 
