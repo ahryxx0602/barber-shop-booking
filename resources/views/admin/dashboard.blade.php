@@ -1,18 +1,17 @@
-@extends('layouts.admin')
+@extends('layouts.tailadmin')
 
-@section('header')
-    <h2 class="font-semibold text-xl text-gray-800 leading-tight">Admin Dashboard</h2>
-@endsection
+@section('title', 'Dashboard')
 
 @section('content')
-    <div class="py-12">
-        <div class="max-w-7xl mx-auto sm:px-6 lg:px-8">
-            <div class="bg-white overflow-hidden shadow-sm sm:rounded-lg">
-                <div class="p-6 text-gray-900">
-                    Xin chào, <strong>{{ auth()->user()->name }}</strong>! 🛡️
-                    <p class="mt-2 text-gray-600">Đây là trang quản trị hệ thống BarberBook. Quản lý thợ, dịch vụ và người dùng tại đây.</p>
-                </div>
-            </div>
-        </div>
+    <div class="mb-6">
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Dashboard</h2>
+        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tổng quan hệ thống BarberBook</p>
+    </div>
+
+    <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
+        <p class="text-gray-900 dark:text-white">
+            Xin chào, <strong>{{ auth()->user()->name }}</strong>!
+        </p>
+        <p class="mt-2 text-gray-500 dark:text-gray-400">Đây là trang quản trị hệ thống BarberBook. Quản lý thợ, dịch vụ và người dùng tại đây.</p>
     </div>
 @endsection
