@@ -6,12 +6,16 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreServiceRequest;
 use App\Http\Requests\Admin\UpdateServiceRequest;
 use App\Models\Service;
+use App\Services\ServiceService;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ServiceController extends Controller
 {
+    public function __construct(
+        protected ServiceService $serviceService,
+    ) {}
+
     public function index(): View
     {
         $services = Service::latest()->paginate(10);
@@ -25,13 +29,10 @@ class ServiceController extends Controller
 
     public function store(StoreServiceRequest $request): RedirectResponse
     {
-        $data = $request->validated();
-
-        if ($request->hasFile('image')) {
-            $data['image'] = $request->file('image')->store('services', 'public');
-        }
-
-        Service::create($data);
+        $this->serviceService->create(
+            $request->validated(),
+            $request->file('image'),
+        );
 
         return redirect()->route('admin.services.index')
             ->with('success', 'Dịch vụ đã được thêm thành công.');
@@ -44,16 +45,11 @@ class ServiceController extends Controller
 
     public function update(UpdateServiceRequest $request, Service $service): RedirectResponse
     {
-        $data = $request->validated();
-
-        if ($request->hasFile('image')) {
-            if ($service->image) {
-                Storage::disk('public')->delete($service->image);
-            }
-            $data['image'] = $request->file('image')->store('services', 'public');
-        }
-
-        $service->update($data);
+        $this->serviceService->update(
+            $service,
+            $request->validated(),
+            $request->file('image'),
+        );
 
         return redirect()->route('admin.services.index')
             ->with('success', 'Dịch vụ đã được cập nhật.');
@@ -61,11 +57,7 @@ class ServiceController extends Controller
 
     public function destroy(Service $service): RedirectResponse
     {
-        if ($service->image) {
-            Storage::disk('public')->delete($service->image);
-        }
-
-        $service->delete();
+        $this->serviceService->delete($service);
 
         return redirect()->route('admin.services.index')
             ->with('success', 'Dịch vụ đã được xóa.');

@@ -26,6 +26,7 @@ Cập nhật lần cuối  : 22/03/2026
 | 4 | Quản lý lịch làm việc (Barber) | ✅ Hoàn thành |
 | 5 | Core Booking — đặt lịch (Client) | ✅ Hoàn thành |
 | 5+ | Giao diện Client & Profile | ✅ Hoàn thành |
+| 5++ | Refactor: Dependency Injection cho Controllers | ✅ Hoàn thành |
 | 6 | Quản lý Booking (Barber + Client) | ⬜ Chưa bắt đầu |
 | 7 | Review & Notification | ⬜ Chưa bắt đầu |
 | 8 | Báo cáo doanh thu (Admin) | ⬜ Chưa bắt đầu |
@@ -92,6 +93,15 @@ Cập nhật lần cuối  : 22/03/2026
 - [x] 5+.7 Booking cho khách vãng lai (guest) — điền SĐT + email, tự tạo user không cần mật khẩu
 - [x] 5+.8 Navigation: "Tài khoản" cho user đã đăng nhập, "Đăng nhập" cho guest
 
+### Giai đoạn 5++ — Refactor: Dependency Injection cho Controllers
+- [x] 5++.1 Tạo `BarberService` — extract store/update/destroy logic từ Admin\BarberController
+- [x] 5++.2 Tạo `ServiceService` — extract store/update/destroy logic từ Admin\ServiceController
+- [x] 5++.3 Tạo `ScheduleService` — extract shared logic + DAY_LABELS từ Admin & Barber ScheduleControllers
+- [x] 5++.4 Refactor `Admin\BarberController` → constructor injection `BarberService`
+- [x] 5++.5 Refactor `Admin\ServiceController` → constructor injection `ServiceService`
+- [x] 5++.6 Refactor `Admin\ScheduleController` → constructor injection `ScheduleService`
+- [x] 5++.7 Refactor `Barber\ScheduleController` → constructor injection `ScheduleService`
+
 ### Giai đoạn 6 — Quản lý Booking
 - [ ] 6.1 Dashboard Barber: danh sách booking theo ngày
 - [ ] 6.2 Thợ xác nhận / từ chối booking
@@ -128,6 +138,7 @@ Cập nhật lần cuối  : 22/03/2026
 - **22/03/2026**: Đổi tên "Customer" → "Client" trong toàn bộ giao diện người dùng. Customer dashboard cũ (dùng `x-app-layout`) đã xóa, thay bằng Client Profile (dùng `layouts.client` vintage). Route `/customer/dashboard` không còn, thay bằng `/profile` (client.profile.show).
 - **22/03/2026**: Booking không còn yêu cầu đăng nhập. Khách vãng lai có thể đặt lịch bằng cách điền tên + SĐT + email. Hệ thống tự `firstOrCreate` user theo email với mật khẩu ngẫu nhiên.
 - **22/03/2026**: Routes Breeze profile (`/profile`) đã đổi thành `/profile/breeze` để tránh xung đột với client profile route.
+- **22/03/2026**: Refactor Dependency Injection — tách business logic ra Service layer (BarberService, ServiceService, ScheduleService). Controllers chỉ còn nhận request + gọi service + trả response. Xóa duplicate DAY_LABELS giữa Admin & Barber ScheduleController.
 
 ---
 
