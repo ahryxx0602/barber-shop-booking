@@ -9,8 +9,8 @@ use Carbon\Carbon;
 class TimeSlotService
 {
     /**
-     * Generate slots cho 1 barber trong 1 ngày cụ thể
-     * Dựa theo working_schedule của barber đó
+     * Generate slots cho 1 barber trong 1 ngày cụ thể.
+     * Dựa theo working_schedule của barber đó.
      */
     public function generateForBarber(int $barberId, string $date): void
     {
@@ -21,8 +21,9 @@ class TimeSlotService
             ->where('is_day_off', false)
             ->first();
 
-        if (!$schedule)
+        if (!$schedule) {
             return; // ngày nghỉ, không generate
+        }
 
         $current = Carbon::parse($date . ' ' . $schedule->start_time);
         $end = Carbon::parse($date . ' ' . $schedule->end_time);
@@ -38,5 +39,37 @@ class TimeSlotService
             ]);
             $current->addMinutes(30);
         }
+    }
+
+    /**
+     * Generate slots cho 1 barber trong nhiều ngày liên tiếp.
+     * Mặc định generate cho 7 ngày tới (hôm nay + 6 ngày).
+     */
+    public function generateForBarberRange(int $barberId, int $days = 7): void
+    {
+        for ($i = 0; $i < $days; $i++) {
+            $date = now()->addDays($i)->format('Y-m-d');
+            $this->generateForBarber($barberId, $date);
+        }
+    }
+
+    /**
+     * Xoá các slot "available" (chưa được đặt) rồi generate lại.
+     * Dùng khi barber thay đổi working schedule — chỉ xoá slot chưa book,
+     * slot đã booked giữ nguyên để không ảnh hưởng booking hiện tại.
+     */
+    public function clearAndRegenerate(int $barberId, int $days = 7): void
+    {
+        $startDate = now()->format('Y-m-d');
+        $endDate = now()->addDays($days - 1)->format('Y-m-d');
+
+        // Chỉ xoá slot available (chưa có ai đặt)
+        TimeSlot::where('barber_id', $barberId)
+            ->where('status', 'available')
+            ->whereBetween('slot_date', [$startDate, $endDate])
+            ->delete();
+
+        // Generate lại
+        $this->generateForBarberRange($barberId, $days);
     }
 }

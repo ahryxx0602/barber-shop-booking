@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Barber;
 use App\Models\WorkingSchedule;
+use App\Services\TimeSlotService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -21,6 +22,10 @@ class ScheduleController extends Controller
         5 => 'Thứ 6',
         6 => 'Thứ 7',
     ];
+
+    public function __construct(
+        private readonly TimeSlotService $timeSlotService
+    ) {}
 
     /**
      * Danh sách lịch làm việc của tất cả thợ.
@@ -119,6 +124,9 @@ class ScheduleController extends Controller
                 );
             }
         });
+
+        // Generate lại time slots cho 7 ngày tới sau khi admin cập nhật schedule
+        $this->timeSlotService->clearAndRegenerate($barber->id);
 
         return redirect()
             ->route('admin.schedules.index')

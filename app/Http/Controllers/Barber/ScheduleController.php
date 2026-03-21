@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Barber;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Barber\UpdateScheduleRequest;
 use App\Models\WorkingSchedule;
+use App\Services\TimeSlotService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\View\View;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +24,10 @@ class ScheduleController extends Controller
         5 => 'Thứ 6',
         6 => 'Thứ 7',
     ];
+
+    public function __construct(
+        private readonly TimeSlotService $timeSlotService
+    ) {}
 
     /**
      * Hiển thị trang cài đặt lịch làm việc.
@@ -87,8 +92,12 @@ class ScheduleController extends Controller
             }
         });
 
+        // Bước 4.4: Generate lại time slots cho 7 ngày tới sau khi cập nhật schedule
+        $this->timeSlotService->clearAndRegenerate($barber->id);
+
         return redirect()
             ->route('barber.schedule.edit')
             ->with('success', 'Lịch làm việc đã được cập nhật thành công!');
     }
 }
+
