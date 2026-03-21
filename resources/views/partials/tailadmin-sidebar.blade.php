@@ -129,6 +129,56 @@
           </li>
           <!-- /Dịch vụ -->
 
+          <!-- Menu: Thợ cắt -->
+          <li>
+            <a
+              href="#"
+              @click.prevent="selected = (selected === 'ThoCat' ? '' : 'ThoCat')"
+              class="menu-item group"
+              :class="selected === 'ThoCat' ? 'menu-item-active' : 'menu-item-inactive'"
+            >
+              <svg
+                :class="selected === 'ThoCat' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'"
+                width="24" height="24" viewBox="0 0 24 24" fill="none"
+              >
+                <path fill-rule="evenodd" clip-rule="evenodd"
+                  d="M12 3.25C9.37665 3.25 7.25 5.37665 7.25 8C7.25 10.6234 9.37665 12.75 12 12.75C14.6234 12.75 16.75 10.6234 16.75 8C16.75 5.37665 14.6234 3.25 12 3.25ZM8.75 8C8.75 6.20507 10.2051 4.75 12 4.75C13.7949 4.75 15.25 6.20507 15.25 8C15.25 9.79493 13.7949 11.25 12 11.25C10.2051 11.25 8.75 9.79493 8.75 8ZM12 14.25C9.68695 14.25 7.55773 14.908 5.94817 15.9757C4.34515 17.0391 3.25 18.5421 3.25 20.2C3.25 20.6142 3.58579 20.95 4 20.95H20C20.4142 20.95 20.75 20.6142 20.75 20.2C20.75 18.5421 19.6549 17.0391 18.0518 15.9757C16.4423 14.908 14.3131 14.25 12 14.25ZM4.83691 19.45C5.15318 18.5576 5.93631 17.6588 7.13653 16.8627C8.42691 16.006 10.138 15.45 12 15.45C13.862 15.45 15.5731 16.006 16.8635 16.8627C18.0637 17.6588 18.8468 18.5576 19.1631 19.45H4.83691Z"
+                />
+              </svg>
+              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Thợ cắt</span>
+              <svg
+                class="menu-item-arrow"
+                :class="[selected === 'ThoCat' ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive', sidebarToggle ? 'lg:hidden' : '']"
+                width="20" height="20" viewBox="0 0 20 20" fill="none"
+              >
+                <path d="M4.79175 7.39584L10.0001 12.6042L15.2084 7.39585" stroke="" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
+            </a>
+            <!-- Dropdown -->
+            <div :class="selected === 'ThoCat' ? 'block' : 'hidden'">
+              <ul :class="sidebarToggle ? 'lg:hidden' : 'flex'" class="flex flex-col gap-1 mt-2 pl-9">
+                <li>
+                  <a href="{{ route('admin.barbers.index') }}"
+                    class="menu-dropdown-item group"
+                    :class="page === 'barbers' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'"
+                  >
+                    Danh sách thợ
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ route('admin.barbers.create') }}"
+                    class="menu-dropdown-item group"
+                    :class="page === 'barbersCreate' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'"
+                  >
+                    Thêm thợ
+                  </a>
+                </li>
+              </ul>
+            </div>
+            <!-- /Dropdown -->
+          </li>
+          <!-- /Thợ cắt -->
+
         </ul>
       </div>
       <!-- /Menu Group CHÍNH -->
