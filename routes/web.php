@@ -8,7 +8,7 @@ use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
     return view('welcome');
-});
+})->name('home');
 
 // Client-facing routes (public - no auth required for browsing)
 Route::name('client.')->group(function () {
@@ -32,9 +32,9 @@ Route::name('client.')->group(function () {
 Route::get('/dashboard', function () {
     $role = auth()->user()->role;
     return redirect(match ($role) {
-        'admin'  => route('admin.dashboard'),
+        'admin' => route('admin.dashboard'),
         'barber' => route('barber.dashboard'),
-        default  => route('client.profile.show'),
+        default => route('client.profile.show'),
     });
 })->middleware(['auth'])->name('dashboard');
 
@@ -44,6 +44,6 @@ Route::middleware('auth')->group(function () {
     Route::delete('/profile/breeze', [ProfileController::class, 'destroy'])->name('profile.destroy');
 });
 
-require __DIR__.'/auth.php';
-require __DIR__.'/barber.php';
-require __DIR__.'/admin.php';
+require __DIR__ . '/auth.php';
+require __DIR__ . '/barber.php';
+require __DIR__ . '/admin.php';

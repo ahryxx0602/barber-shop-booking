@@ -31,9 +31,9 @@ class AuthenticatedSessionController extends Controller
         $role = auth()->user()->role;
 
         return redirect(match ($role) {
-            'admin'  => route('admin.dashboard'),
+            'admin' => route('admin.dashboard'),
             'barber' => route('barber.dashboard'),
-            default  => route('customer.dashboard'),
+            default => route('home'),
         });
     }
 

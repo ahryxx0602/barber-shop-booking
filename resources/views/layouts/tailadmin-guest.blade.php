@@ -8,32 +8,59 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}" />
-  <title>@yield('title', 'BarberBook') — {{ config('app.name', 'BarberBook') }}</title>
+  <title>@yield('title', 'Classic Cut') — {{ config('app.name', 'Classic Cut') }}</title>
 
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 
   <style>
     @keyframes gradientShift {
-      0% { background-position: 0% 50%; }
-      50% { background-position: 100% 50%; }
-      100% { background-position: 0% 50%; }
+      0% {
+        background-position: 0% 50%;
+      }
+
+      50% {
+        background-position: 100% 50%;
+      }
+
+      100% {
+        background-position: 0% 50%;
+      }
     }
+
     @keyframes floatUp {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(-20px) scale(1.05); }
+
+      0%,
+      100% {
+        transform: translateY(0) scale(1);
+      }
+
+      50% {
+        transform: translateY(-20px) scale(1.05);
+      }
     }
+
     @keyframes floatDown {
-      0%, 100% { transform: translateY(0) scale(1); }
-      50% { transform: translateY(20px) scale(1.08); }
+
+      0%,
+      100% {
+        transform: translateY(0) scale(1);
+      }
+
+      50% {
+        transform: translateY(20px) scale(1.08);
+      }
     }
+
     .animated-gradient {
       background: linear-gradient(135deg, #1a1a2e, #16213e, #e94560, #1a1a2e, #16213e);
       background-size: 300% 300%;
       animation: gradientShift 8s ease infinite;
     }
+
     .float-circle-1 {
       animation: floatUp 6s ease-in-out infinite;
     }
+
     .float-circle-2 {
       animation: floatDown 8s ease-in-out infinite;
     }
@@ -98,7 +125,7 @@
             </div>
 
             {{-- Brand name --}}
-            <h2 class="text-3xl font-bold text-white mb-3">BarberBook</h2>
+            <h2 class="text-3xl font-bold text-white mb-3">Classic Cut</h2>
 
             {{-- Description --}}
             <p class="text-base leading-relaxed text-rose-200">
