@@ -15,7 +15,7 @@ class ProfileController extends Controller
         $user = $request->user();
 
         $bookings = $user->bookings()
-            ->with(['barber.user', 'services', 'timeSlot'])
+            ->with(['barber.user', 'services', 'timeSlot', 'review'])
             ->orderByDesc('booking_date')
             ->orderByDesc('start_time')
             ->get();

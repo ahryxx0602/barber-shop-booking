@@ -103,7 +103,8 @@ barbershop/
 │   │   │   ├── Client/
 │   │   │   │   ├── BarberController.php
 │   │   │   │   ├── BookingController.php
-│   │   │   │   └── ProfileController.php
+│   │   │   │   ├── ProfileController.php
+│   │   │   │   └── ReviewController.php
 │   │   │   ├── Barber/
 │   │   │   │   ├── DashboardController.php
 │   │   │   │   ├── BookingController.php
@@ -129,7 +130,8 @@ barbershop/
 │   │       ├── Barber/
 │   │       │   └── UpdateScheduleRequest.php
 │   │       ├── Client/
-│   │       │   └── StoreBookingRequest.php
+│   │       │   ├── StoreBookingRequest.php
+│   │       │   └── StoreReviewRequest.php
 │   │       └── Auth/
 │   │           └── LoginRequest.php
 │   ├── Listeners/
@@ -154,6 +156,7 @@ barbershop/
 │   ├── Services/
 │   │   ├── BookingService.php
 │   │   ├── BarberService.php
+│   │   ├── ReviewService.php
 │   │   ├── ScheduleService.php
 │   │   ├── ServiceService.php
 │   │   └── TimeSlotService.php

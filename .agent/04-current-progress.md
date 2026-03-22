@@ -8,8 +8,8 @@
 ## Trạng thái hiện tại
 
 ```
-Giai đoạn đang làm : 7 — Review & Notification
-Bước đang làm      : 7.1 — Form viết review
+Giai đoạn đang làm : 8 — Báo cáo doanh thu (Admin)
+Bước đang làm      : 8.1 — Trang báo cáo tổng quan
 Cập nhật lần cuối  : 22/03/2026
 ```
 
@@ -29,7 +29,7 @@ Cập nhật lần cuối  : 22/03/2026
 | 5++ | Refactor: Dependency Injection cho Controllers | ✅ Hoàn thành |
 | 6 | Quản lý Booking (Barber + Client) | ✅ Hoàn thành |
 | 6+ | Enums + Events/Listeners refactor | ✅ Hoàn thành |
-| 7 | Review & Notification | ⬜ Chưa bắt đầu |
+| 7 | Review & Notification | ✅ Hoàn thành |
 | 8 | Báo cáo doanh thu (Admin) | ⬜ Chưa bắt đầu |
 | 9 | Kiểm thử & Hoàn thiện | ⬜ Chưa bắt đầu |
 
@@ -131,11 +131,12 @@ Cập nhật lần cuối  : 22/03/2026
 - [x] 6+.14 Sửa `web.php` — dùng `UserRole::Admin`, `UserRole::Barber` trong match
 
 ### Giai đoạn 7 — Review & Notification
-- [ ] 7.1 Form viết review (chỉ khi completed, chưa review)
-- [ ] 7.2 Hiển thị review + rating trên trang thợ
+- [x] 7.1 Form viết review (chỉ khi completed, chưa review) — ReviewService + ReviewController + star rating form trong profile
+- [x] 7.2 Hiển thị review + rating trên trang thợ — rating summary bar + review list với show all toggle
 - [x] 7.3 Tạo Events: `BookingConfirmed`, `BookingCancelled`, `BookingCompleted` (đã làm ở 6+)
 - [x] 7.4 In-app notification — Listeners ghi vào bảng `notifications` (đã làm ở 6+)
-- [ ] 7.5 (Tuỳ chọn) Email xác nhận booking
+- [x] 7.5 Notification bell trên header Barber & Admin — dropdown hiển thị thông báo chưa đọc + đánh dấu đã đọc
+- [ ] 7.6 (Tuỳ chọn) Email xác nhận booking — bỏ qua, không cần cho demo
 
 ### Giai đoạn 8 — Báo cáo (Admin)
 - [ ] 8.1 Trang báo cáo tổng quan
@@ -162,6 +163,7 @@ Cập nhật lần cuối  : 22/03/2026
 - **22/03/2026**: Refactor Dependency Injection — tách business logic ra Service layer (BarberService, ServiceService, ScheduleService). Controllers chỉ còn nhận request + gọi service + trả response. Xóa duplicate DAY_LABELS giữa Admin & Barber ScheduleController.
 - **22/03/2026**: Giai đoạn 6 mở rộng thêm so với kế hoạch: (1) Trang Booking theo tuần cho Barber — tách riêng với Dashboard theo ngày; (2) Trang Booking Admin — chọn thợ qua tabs + xem booking theo tuần; (3) Buttons action dùng style outlined (border + text color) thay vì filled để dễ đọc hơn.
 - **22/03/2026**: Refactor lớn — thêm PHP Enums (`BookingStatus`, `TimeSlotStatus`, `UserRole`) thay thế toàn bộ string literals. Thêm Events/Listeners cho booking lifecycle (Confirmed, Cancelled, Completed) → tự động ghi notification vào DB. Xóa file thừa từ module Customer cũ (`routes/customer.php`, `Customer/DashboardController`, `views/customer/`). Sửa broken route `customer.dashboard` → `client.profile.show`.
+- **22/03/2026**: Giai đoạn 7 hoàn thành — (1) ReviewService + StoreReviewRequest + ReviewController: client viết review cho booking completed, tự cập nhật barber rating trung bình; (2) Trang thợ có rating summary bar (biểu đồ phân bố sao) + danh sách review có toggle "xem tất cả"; (3) Notification bell trên header Barber & Admin — dropdown hiển thị 10 thông báo chưa đọc + nút "đánh dấu tất cả đã đọc"; (4) Sửa Listeners thiếu trường `type`/`title` khi tạo notification.
 
 ---
 

@@ -163,31 +163,94 @@
             @else
                 <div class="space-y-3">
                     @foreach($pastBookings as $booking)
-                        <div class="bg-white border border-muted/20 p-5 flex flex-col sm:flex-row sm:items-center gap-4 opacity-80">
-                            <div class="flex-shrink-0 w-14 h-14 bg-surface flex flex-col items-center justify-center">
-                                <span class="text-lg font-bold text-warm-gray leading-none">{{ \Carbon\Carbon::parse($booking->booking_date)->format('d') }}</span>
-                                <span class="text-[10px] uppercase tracking-wider text-muted">Thg {{ \Carbon\Carbon::parse($booking->booking_date)->format('m') }}</span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-sm font-semibold text-warm-gray">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</span>
-                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider
-                                        @if($booking->status === BookingStatus::Completed) bg-green-50 text-green-700 border border-green-200
-                                        @elseif($booking->status === BookingStatus::Cancelled) bg-red-50 text-red-700 border border-red-200
-                                        @else bg-surface text-muted border border-muted/20
-                                        @endif">
-                                        {{ $booking->status->label() }}
-                                    </span>
+                        <div class="bg-white border border-muted/20 p-5 opacity-80">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                <div class="flex-shrink-0 w-14 h-14 bg-surface flex flex-col items-center justify-center">
+                                    <span class="text-lg font-bold text-warm-gray leading-none">{{ \Carbon\Carbon::parse($booking->booking_date)->format('d') }}</span>
+                                    <span class="text-[10px] uppercase tracking-wider text-muted">Thg {{ \Carbon\Carbon::parse($booking->booking_date)->format('m') }}</span>
                                 </div>
-                                <p class="text-sm text-muted">
-                                    <span class="font-medium text-warm-gray">{{ $booking->barber->user->name }}</span>
-                                    &middot; {{ $booking->services->pluck('name')->join(', ') }}
-                                </p>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-sm font-semibold text-warm-gray">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider
+                                            @if($booking->status === BookingStatus::Completed) bg-green-50 text-green-700 border border-green-200
+                                            @elseif($booking->status === BookingStatus::Cancelled) bg-red-50 text-red-700 border border-red-200
+                                            @else bg-surface text-muted border border-muted/20
+                                            @endif">
+                                            {{ $booking->status->label() }}
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-muted">
+                                        <span class="font-medium text-warm-gray">{{ $booking->barber->user->name }}</span>
+                                        &middot; {{ $booking->services->pluck('name')->join(', ') }}
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-3 flex-shrink-0">
+                                    <span class="text-sm font-bold text-warm-gray">{{ number_format($booking->total_price, 0, ',', '.') }}d</span>
+                                    <span class="text-[10px] text-muted font-mono">{{ $booking->booking_code }}</span>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-3 flex-shrink-0">
-                                <span class="text-sm font-bold text-warm-gray">{{ number_format($booking->total_price, 0, ',', '.') }}d</span>
-                                <span class="text-[10px] text-muted font-mono">{{ $booking->booking_code }}</span>
-                            </div>
+
+                            {{-- Review section --}}
+                            @if($booking->status === BookingStatus::Completed)
+                                @if($booking->review)
+                                    {{-- Already reviewed --}}
+                                    <div class="mt-3 pt-3 border-t border-muted/10">
+                                        <div class="flex items-center gap-2 mb-1">
+                                            <div class="flex items-center gap-0.5">
+                                                @for($i = 1; $i <= 5; $i++)
+                                                    <span class="material-symbols-outlined {{ $i <= $booking->review->rating ? 'fill text-primary' : 'text-muted/30' }} text-sm">star</span>
+                                                @endfor
+                                            </div>
+                                            <span class="text-xs text-muted">{{ $booking->review->created_at->diffForHumans() }}</span>
+                                        </div>
+                                        @if($booking->review->comment)
+                                            <p class="text-sm text-warm-gray-light">{{ $booking->review->comment }}</p>
+                                        @endif
+                                    </div>
+                                @else
+                                    {{-- Review form --}}
+                                    <div class="mt-3 pt-3 border-t border-muted/10" x-data="{ open: false, rating: 0, hoverRating: 0 }">
+                                        <button @click="open = !open" type="button"
+                                            class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-primary hover:text-warm-gray transition-colors">
+                                            <span class="material-symbols-outlined text-sm">rate_review</span>
+                                            Danh gia
+                                        </button>
+                                        <div x-show="open" x-transition x-cloak class="mt-3">
+                                            <form method="POST" action="{{ route('client.reviews.store') }}">
+                                                @csrf
+                                                <input type="hidden" name="booking_id" value="{{ $booking->id }}">
+
+                                                {{-- Star rating --}}
+                                                <div class="flex items-center gap-1 mb-3">
+                                                    <span class="text-xs text-muted mr-2">Danh gia:</span>
+                                                    @for($i = 1; $i <= 5; $i++)
+                                                        <button type="button" @click="rating = {{ $i }}"
+                                                            @mouseenter="hoverRating = {{ $i }}" @mouseleave="hoverRating = 0"
+                                                            class="focus:outline-none">
+                                                            <span class="material-symbols-outlined text-xl transition-colors"
+                                                                :class="(hoverRating || rating) >= {{ $i }} ? 'fill text-primary' : 'text-muted/30'">star</span>
+                                                        </button>
+                                                    @endfor
+                                                    <input type="hidden" name="rating" :value="rating">
+                                                </div>
+
+                                                {{-- Comment --}}
+                                                <textarea name="comment" rows="2"
+                                                    class="w-full border border-muted/20 text-sm p-2 mb-2 focus:border-primary focus:outline-none"
+                                                    placeholder="Nhan xet cua ban (khong bat buoc)..."></textarea>
+
+                                                <button type="submit"
+                                                    class="px-4 py-2 bg-primary text-white text-xs font-bold uppercase tracking-widest hover:bg-warm-gray transition-colors"
+                                                    :disabled="rating === 0"
+                                                    :class="rating === 0 ? 'opacity-50 cursor-not-allowed' : ''">
+                                                    Gui danh gia
+                                                </button>
+                                            </form>
+                                        </div>
+                                    </div>
+                                @endif
+                            @endif
                         </div>
                     @endforeach
                 </div>

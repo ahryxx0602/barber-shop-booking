@@ -4,6 +4,7 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Client\BarberController as ClientBarberController;
 use App\Http\Controllers\Client\BookingController as ClientBookingController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
+use App\Http\Controllers\Client\ReviewController as ClientReviewController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,6 +29,7 @@ Route::name('client.')->group(function () {
         Route::get('/profile/edit', [ClientProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ClientProfileController::class, 'update'])->name('profile.update');
         Route::patch('/booking/{booking}/cancel', [ClientBookingController::class, 'cancel'])->name('booking.cancel');
+        Route::post('/reviews', [ClientReviewController::class, 'store'])->name('reviews.store');
     });
 });
 
@@ -44,6 +46,12 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile/breeze', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile/breeze', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile/breeze', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Notifications
+    Route::patch('/notifications/read-all', function () {
+        auth()->user()->notifications()->where('is_read', false)->update(['is_read' => true]);
+        return back();
+    })->name('notifications.read-all');
 });
 
 require __DIR__ . '/auth.php';

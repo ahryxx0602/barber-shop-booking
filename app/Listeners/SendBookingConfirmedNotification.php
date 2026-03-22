@@ -14,9 +14,11 @@ class SendBookingConfirmedNotification
 
         Notification::create([
             'user_id' => $booking->customer_id,
-            'message' => "Lịch hẹn #{$booking->booking_code} đã được xác nhận bởi {$booking->barber->user->name}. "
-                       . "Ngày: {$booking->booking_date->format('d/m/Y')}, "
-                       . "Giờ: {$booking->start_time}.",
+            'type' => 'booking_confirmed',
+            'title' => 'Lich hen da xac nhan',
+            'message' => "Lich hen #{$booking->booking_code} da duoc xac nhan boi {$booking->barber->user->name}. "
+                       . "Ngay: {$booking->booking_date->format('d/m/Y')}, "
+                       . "Gio: {$booking->start_time}.",
         ]);
     }
 }

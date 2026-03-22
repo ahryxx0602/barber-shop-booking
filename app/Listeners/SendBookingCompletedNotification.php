@@ -14,9 +14,11 @@ class SendBookingCompletedNotification
 
         Notification::create([
             'user_id' => $booking->customer_id,
-            'message' => "Lịch hẹn #{$booking->booking_code} đã hoàn thành. "
-                       . "Cảm ơn bạn đã sử dụng dịch vụ! "
-                       . "Hãy để lại đánh giá cho thợ cắt tóc nhé.",
+            'type' => 'booking_completed',
+            'title' => 'Lich hen hoan thanh',
+            'message' => "Lich hen #{$booking->booking_code} da hoan thanh. "
+                       . "Cam on ban da su dung dich vu! "
+                       . "Hay de lai danh gia cho tho cat toc nhe.",
         ]);
     }
 }
