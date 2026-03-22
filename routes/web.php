@@ -21,11 +21,12 @@ Route::name('client.')->group(function () {
     Route::post('/booking', [ClientBookingController::class, 'store'])->name('booking.store');
     Route::get('/booking/{booking}/confirmation', [ClientBookingController::class, 'confirmation'])->name('booking.confirmation');
 
-    // Profile requires authentication
+    // Profile & booking management requires authentication
     Route::middleware(['auth'])->group(function () {
         Route::get('/profile', [ClientProfileController::class, 'show'])->name('profile.show');
         Route::get('/profile/edit', [ClientProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ClientProfileController::class, 'update'])->name('profile.update');
+        Route::patch('/booking/{booking}/cancel', [ClientBookingController::class, 'cancel'])->name('booking.cancel');
     });
 });
 

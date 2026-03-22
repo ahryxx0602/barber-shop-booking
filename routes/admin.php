@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\BarberController;
+use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
@@ -18,4 +19,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');
         Route::get('schedules/{barber}/edit', [ScheduleController::class, 'edit'])->name('schedules.edit');
         Route::put('schedules/{barber}', [ScheduleController::class, 'update'])->name('schedules.update');
+
+        // Booking
+        Route::get('bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
     });

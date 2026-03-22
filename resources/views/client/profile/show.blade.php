@@ -82,35 +82,69 @@
             @else
                 <div class="space-y-3">
                     @foreach($upcomingBookings as $booking)
-                        <div class="bg-white border border-muted/20 p-5 flex flex-col sm:flex-row sm:items-center gap-4">
-                            <div class="flex-shrink-0 w-14 h-14 bg-primary/5 border border-primary/10 flex flex-col items-center justify-center">
-                                <span class="text-lg font-bold text-primary leading-none">{{ \Carbon\Carbon::parse($booking->booking_date)->format('d') }}</span>
-                                <span class="text-[10px] uppercase tracking-wider text-primary/70">Thg {{ \Carbon\Carbon::parse($booking->booking_date)->format('m') }}</span>
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex items-center gap-2 mb-1">
-                                    <span class="text-sm font-semibold text-warm-gray">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</span>
-                                    <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider
-                                        @if($booking->status === 'confirmed') bg-green-50 text-green-700 border border-green-200
-                                        @elseif($booking->status === 'pending') bg-yellow-50 text-yellow-700 border border-yellow-200
-                                        @else bg-surface text-muted border border-muted/20
-                                        @endif">
-                                        @if($booking->status === 'confirmed') Xac nhan
-                                        @elseif($booking->status === 'pending') Cho xac nhan
-                                        @elseif($booking->status === 'in_progress') Dang thuc hien
-                                        @else {{ ucfirst($booking->status) }}
-                                        @endif
-                                    </span>
+                        <div class="bg-white border border-muted/20 p-5">
+                            <div class="flex flex-col sm:flex-row sm:items-center gap-4">
+                                <div class="flex-shrink-0 w-14 h-14 bg-primary/5 border border-primary/10 flex flex-col items-center justify-center">
+                                    <span class="text-lg font-bold text-primary leading-none">{{ \Carbon\Carbon::parse($booking->booking_date)->format('d') }}</span>
+                                    <span class="text-[10px] uppercase tracking-wider text-primary/70">Thg {{ \Carbon\Carbon::parse($booking->booking_date)->format('m') }}</span>
                                 </div>
-                                <p class="text-sm text-muted">
-                                    <span class="font-medium text-warm-gray">{{ $booking->barber->user->name }}</span>
-                                    &middot; {{ $booking->services->pluck('name')->join(', ') }}
-                                </p>
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex items-center gap-2 mb-1">
+                                        <span class="text-sm font-semibold text-warm-gray">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</span>
+                                        <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider
+                                            @if($booking->status === 'confirmed') bg-green-50 text-green-700 border border-green-200
+                                            @elseif($booking->status === 'pending') bg-yellow-50 text-yellow-700 border border-yellow-200
+                                            @elseif($booking->status === 'in_progress') bg-purple-50 text-purple-700 border border-purple-200
+                                            @else bg-surface text-muted border border-muted/20
+                                            @endif">
+                                            @if($booking->status === 'confirmed') Xac nhan
+                                            @elseif($booking->status === 'pending') Cho xac nhan
+                                            @elseif($booking->status === 'in_progress') Dang thuc hien
+                                            @else {{ ucfirst($booking->status) }}
+                                            @endif
+                                        </span>
+                                    </div>
+                                    <p class="text-sm text-muted">
+                                        <span class="font-medium text-warm-gray">{{ $booking->barber->user->name }}</span>
+                                        &middot; {{ $booking->services->pluck('name')->join(', ') }}
+                                    </p>
+                                </div>
+                                <div class="flex items-center gap-3 flex-shrink-0">
+                                    <span class="text-sm font-bold text-warm-gray">{{ number_format($booking->total_price, 0, ',', '.') }}d</span>
+                                    <span class="text-[10px] text-muted font-mono">{{ $booking->booking_code }}</span>
+                                </div>
                             </div>
-                            <div class="flex items-center gap-3 flex-shrink-0">
-                                <span class="text-sm font-bold text-warm-gray">{{ number_format($booking->total_price, 0, ',', '.') }}d</span>
-                                <span class="text-[10px] text-muted font-mono">{{ $booking->booking_code }}</span>
-                            </div>
+                            {{-- Cancel Button --}}
+                            @if(in_array($booking->status, ['pending', 'confirmed']))
+                                @php
+                                    $appointmentTime = \Carbon\Carbon::parse($booking->booking_date . ' ' . $booking->start_time);
+                                    $canCancel = now()->diffInMinutes($appointmentTime, false) >= 120;
+                                @endphp
+                                <div class="mt-3 pt-3 border-t border-muted/10 flex items-center justify-between">
+                                    @if($canCancel)
+                                        <div x-data="{ open: false }" class="relative">
+                                            <button @click="open = !open" type="button"
+                                                class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-red-600 hover:text-red-800 transition-colors">
+                                                <span class="material-symbols-outlined text-sm">cancel</span>
+                                                Huy lich hen
+                                            </button>
+                                            <div x-show="open" @click.outside="open = false" x-transition
+                                                class="absolute z-10 mt-2 left-0 w-72 bg-white border border-muted/20 shadow-lg p-4">
+                                                <form method="POST" action="{{ route('client.booking.cancel', $booking) }}">
+                                                    @csrf @method('PATCH')
+                                                    <label class="block text-sm font-medium text-warm-gray mb-2">Ly do huy</label>
+                                                    <textarea name="cancel_reason" rows="2" class="w-full border border-muted/20 text-sm p-2" placeholder="Nhap ly do..."></textarea>
+                                                    <button type="submit" class="mt-2 w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-widest transition-colors">
+                                                        Xac nhan huy
+                                                    </button>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    @else
+                                        <p class="text-xs text-muted italic">Khong the huy lich hen trong vong 2 gio truoc gio hen.</p>
+                                    @endif
+                                </div>
+                            @endif
                         </div>
                     @endforeach
                 </div>

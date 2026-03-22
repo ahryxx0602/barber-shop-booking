@@ -79,7 +79,7 @@
 
           <!-- Menu: Booking -->
           <li>
-            <a href="#" @click="selected = 'Booking'" class="menu-item group"
+            <a href="{{ route('barber.bookings.index') }}" @click="selected = 'Booking'" class="menu-item group"
               :class="selected === 'Booking' ? 'menu-item-active' : 'menu-item-inactive'">
               <svg :class="selected === 'Booking' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
                 height="24" viewBox="0 0 24 24" fill="none">

@@ -8,8 +8,8 @@
 ## Trạng thái hiện tại
 
 ```
-Giai đoạn đang làm : 6 — Quản lý Booking
-Bước đang làm      : 6.1 — Dashboard Barber: danh sách booking theo ngày
+Giai đoạn đang làm : 7 — Review & Notification
+Bước đang làm      : 7.1 — Form viết review
 Cập nhật lần cuối  : 22/03/2026
 ```
 
@@ -27,7 +27,7 @@ Cập nhật lần cuối  : 22/03/2026
 | 5 | Core Booking — đặt lịch (Client) | ✅ Hoàn thành |
 | 5+ | Giao diện Client & Profile | ✅ Hoàn thành |
 | 5++ | Refactor: Dependency Injection cho Controllers | ✅ Hoàn thành |
-| 6 | Quản lý Booking (Barber + Client) | ⬜ Chưa bắt đầu |
+| 6 | Quản lý Booking (Barber + Client) | ✅ Hoàn thành |
 | 7 | Review & Notification | ⬜ Chưa bắt đầu |
 | 8 | Báo cáo doanh thu (Admin) | ⬜ Chưa bắt đầu |
 | 9 | Kiểm thử & Hoàn thiện | ⬜ Chưa bắt đầu |
@@ -103,11 +103,11 @@ Cập nhật lần cuối  : 22/03/2026
 - [x] 5++.7 Refactor `Barber\ScheduleController` → constructor injection `ScheduleService`
 
 ### Giai đoạn 6 — Quản lý Booking
-- [ ] 6.1 Dashboard Barber: danh sách booking theo ngày
-- [ ] 6.2 Thợ xác nhận / từ chối booking
-- [ ] 6.3 Thợ đánh dấu in_progress / completed
-- [ ] 6.4 Client huỷ booking (có kiểm tra 2 tiếng)
-- [ ] 6.5 Tạo `BookingPolicy`
+- [x] 6.1 Dashboard Barber: danh sách booking theo ngày
+- [x] 6.2 Thợ xác nhận / từ chối booking
+- [x] 6.3 Thợ đánh dấu in_progress / completed
+- [x] 6.4 Client huỷ booking (có kiểm tra 2 tiếng)
+- [x] 6.5 Tạo `BookingPolicy`
 
 ### Giai đoạn 7 — Review & Notification
 - [ ] 7.1 Form viết review (chỉ khi completed, chưa review)

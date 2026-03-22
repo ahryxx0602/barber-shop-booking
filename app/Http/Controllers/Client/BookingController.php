@@ -9,12 +9,16 @@ use App\Models\Booking;
 use App\Models\Service;
 use App\Models\TimeSlot;
 use App\Services\BookingService;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BookingController extends Controller
 {
+    use AuthorizesRequests;
+
     public function __construct(
         protected BookingService $bookingService,
     ) {}
@@ -69,5 +73,14 @@ class BookingController extends Controller
         $booking->load(['barber.user', 'services', 'timeSlot']);
 
         return view('client.booking.confirmation', compact('booking'));
+    }
+
+    public function cancel(Request $request, Booking $booking): RedirectResponse
+    {
+        $this->authorize('cancel', $booking);
+
+        $this->bookingService->cancel($booking, $request->input('cancel_reason'));
+
+        return back()->with('success', 'Da huy lich hen thanh cong.');
     }
 }

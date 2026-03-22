@@ -70,6 +70,64 @@ class BookingService
         );
     }
 
+    public function confirm(Booking $booking): Booking
+    {
+        $booking->update(['status' => 'confirmed']);
+
+        return $booking;
+    }
+
+    public function reject(Booking $booking, ?string $reason = null): Booking
+    {
+        return DB::transaction(function () use ($booking, $reason) {
+            $booking->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'cancel_reason' => $reason ?? 'Thu tu choi lich hen',
+            ]);
+
+            $this->reopenSlot($booking);
+
+            return $booking;
+        });
+    }
+
+    public function start(Booking $booking): Booking
+    {
+        $booking->update(['status' => 'in_progress']);
+
+        return $booking;
+    }
+
+    public function complete(Booking $booking): Booking
+    {
+        $booking->update(['status' => 'completed']);
+
+        return $booking;
+    }
+
+    public function cancel(Booking $booking, ?string $reason = null): Booking
+    {
+        return DB::transaction(function () use ($booking, $reason) {
+            $booking->update([
+                'status' => 'cancelled',
+                'cancelled_at' => now(),
+                'cancel_reason' => $reason ?? 'Khach hang huy lich',
+            ]);
+
+            $this->reopenSlot($booking);
+
+            return $booking;
+        });
+    }
+
+    protected function reopenSlot(Booking $booking): void
+    {
+        if ($booking->time_slot_id) {
+            TimeSlot::where('id', $booking->time_slot_id)->update(['status' => 'available']);
+        }
+    }
+
     protected function generateCode(): string
     {
         return 'BB-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
