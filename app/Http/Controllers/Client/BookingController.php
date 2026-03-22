@@ -63,7 +63,7 @@ class BookingController extends Controller
             );
 
             return redirect()->route('client.booking.confirmation', $booking)
-                ->with('success', 'Dat lich thanh cong!');
+                ->with('success', 'Đặt lịch thành công!');
         } catch (\App\Exceptions\SlotNotAvailableException $e) {
             return back()->withErrors(['time_slot_id' => $e->getMessage()])->withInput();
         }
@@ -82,6 +82,6 @@ class BookingController extends Controller
 
         $this->bookingService->cancel($booking, $request->input('cancel_reason'));
 
-        return back()->with('success', 'Da huy lich hen thanh cong.');
+        return back()->with('success', 'Đã huỷ lịch hẹn thành công.');
     }
 }

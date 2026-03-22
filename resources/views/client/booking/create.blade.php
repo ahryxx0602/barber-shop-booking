@@ -1,6 +1,6 @@
 @extends('layouts.client')
 
-@section('title', 'Dat lich')
+@section('title', 'Đặt lịch')
 
 @section('content')
 <section class="bg-bg-light min-h-screen py-12 px-4 sm:px-6 lg:px-8" x-data="bookingWizard()">
@@ -9,7 +9,7 @@
         <a href="{{ url()->previous() }}" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface transition-colors mr-4">
             <span class="material-symbols-outlined">arrow_back</span>
         </a>
-        <h1 class="text-2xl font-bold font-display tracking-tight text-warm-gray">Dat Lich Hen</h1>
+        <h1 class="text-2xl font-bold font-display tracking-tight text-warm-gray">Đặt Lịch Hẹn</h1>
     </div>
 
     {{-- Booking Form --}}
@@ -24,7 +24,7 @@
                     <div class="flex items-center mb-5">
                         <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold mr-3"
                             :class="selectedServices.length > 0 ? 'bg-primary text-white' : 'bg-surface text-warm-gray-light'">1</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Chon dich vu</h2>
+                        <h2 class="text-lg font-semibold font-display text-warm-gray">Chọn dịch vụ</h2>
                     </div>
                     <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                         @foreach($services as $service)
@@ -39,7 +39,7 @@
                                 <span class="font-medium" :class="selectedServices.includes({{ $service->id }}) ? 'text-primary' : 'text-warm-gray'">{{ $service->name }}</span>
                                 <span class="font-semibold" :class="selectedServices.includes({{ $service->id }}) ? 'text-primary' : 'text-warm-gray'">{{ number_format($service->price, 0, ',', '.') }}d</span>
                             </div>
-                            <span class="text-sm text-muted">{{ $service->duration_minutes }} phut. {{ Str::limit($service->description, 60) }}</span>
+                            <span class="text-sm text-muted">{{ $service->duration_minutes }} phút. {{ Str::limit($service->description, 60) }}</span>
                             <div class="absolute top-3 right-3" x-show="selectedServices.includes({{ $service->id }})">
                                 <span class="material-symbols-outlined fill text-primary text-lg">check_circle</span>
                             </div>
@@ -58,7 +58,7 @@
                     <div class="flex items-center mb-5">
                         <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold mr-3"
                             :class="selectedBarber ? 'bg-primary text-white' : 'bg-surface text-warm-gray-light'">2</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Chon tho cat</h2>
+                        <h2 class="text-lg font-semibold font-display text-warm-gray">Chọn thợ cắt</h2>
                     </div>
                     <div class="flex gap-6 overflow-x-auto pb-2 time-scroll">
                         @foreach($barbers as $barber)
@@ -102,13 +102,13 @@
                     <div class="flex items-center mb-6">
                         <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold mr-3"
                             :class="selectedSlot ? 'bg-primary text-white' : 'bg-surface text-warm-gray-light'">3</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Chon ngay & gio</h2>
+                        <h2 class="text-lg font-semibold font-display text-warm-gray">Chọn ngày & giờ</h2>
                     </div>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {{-- Date Selector --}}
                         <div>
-                            <h3 class="text-sm font-medium mb-3 text-warm-gray">Chon ngay</h3>
+                            <h3 class="text-sm font-medium mb-3 text-warm-gray">Chọn ngày</h3>
                             <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
                                 @for($i = 0; $i < 7; $i++)
                                     @php
@@ -132,7 +132,7 @@
 
                         {{-- Time Slots --}}
                         <div>
-                            <h3 class="text-sm font-medium mb-3 text-warm-gray">Gio trong</h3>
+                            <h3 class="text-sm font-medium mb-3 text-warm-gray">Giờ trống</h3>
 
                             {{-- Loading --}}
                             <div x-show="loadingSlots" class="flex items-center justify-center py-12">
@@ -141,12 +141,12 @@
 
                             {{-- No date selected --}}
                             <div x-show="!selectedDate && !loadingSlots" class="text-center py-12 text-muted text-sm">
-                                Vui long chon ngay truoc
+                                Vui lòng chọn ngày trước
                             </div>
 
                             {{-- No slots --}}
                             <div x-show="selectedDate && !loadingSlots && slots.length === 0" class="text-center py-12 text-muted text-sm">
-                                Khong co gio trong cho ngay nay
+                                Không có giờ trống cho ngày này
                             </div>
 
                             {{-- Slot grid --}}
@@ -178,22 +178,22 @@
                     <div class="flex items-center mb-5">
                         <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold mr-3"
                             :class="guestName && guestPhone && guestEmail ? 'bg-primary text-white' : 'bg-surface text-warm-gray-light'">4</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Thong tin lien he</h2>
+                        <h2 class="text-lg font-semibold font-display text-warm-gray">Thông tin liên hệ</h2>
                     </div>
-                    <p class="text-sm text-muted mb-4">Ban chua dang nhap. Vui long dien thong tin de chung toi lien he xac nhan lich hen.</p>
+                    <p class="text-sm text-muted mb-4">Bạn chưa đăng nhập. Vui lòng điền thông tin để chúng tôi liên hệ xác nhận lịch hẹn.</p>
                     <div class="space-y-4">
                         <div>
-                            <label for="guest_name" class="block text-sm font-medium text-warm-gray mb-2">Ho va ten <span class="text-primary">*</span></label>
+                            <label for="guest_name" class="block text-sm font-medium text-warm-gray mb-2">Họ và tên <span class="text-primary">*</span></label>
                             <input type="text" name="guest_name" id="guest_name" value="{{ old('guest_name') }}" required
                                 x-model="guestName"
-                                placeholder="Nguyen Van A"
+                                placeholder="Nguyễn Văn A"
                                 class="w-full px-4 py-3 border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
                             @error('guest_name')
                                 <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
                             @enderror
                         </div>
                         <div>
-                            <label for="guest_phone" class="block text-sm font-medium text-warm-gray mb-2">So dien thoai <span class="text-primary">*</span></label>
+                            <label for="guest_phone" class="block text-sm font-medium text-warm-gray mb-2">Số điện thoại <span class="text-primary">*</span></label>
                             <input type="tel" name="guest_phone" id="guest_phone" value="{{ old('guest_phone') }}" required
                                 x-model="guestPhone"
                                 placeholder="0901234567"
@@ -215,7 +215,7 @@
                     </div>
                     <p class="text-xs text-muted mt-3 flex items-center gap-1">
                         <span class="material-symbols-outlined text-[14px]">info</span>
-                        Da co tai khoan? <a href="{{ route('login') }}?redirect={{ urlencode(route('client.booking.create')) }}" class="text-primary hover:underline font-medium">Dang nhap tai day</a>
+                        Đã có tài khoản? <a href="{{ route('login') }}?redirect={{ urlencode(route('client.booking.create')) }}" class="text-primary hover:underline font-medium">Đăng nhập tại đây</a>
                     </p>
                 </section>
 
@@ -226,9 +226,9 @@
                 <section :class="selectedSlot ? 'opacity-100' : 'opacity-40 pointer-events-none'" class="transition-opacity duration-500">
                     <div class="flex items-center mb-4">
                         <span class="flex items-center justify-center w-7 h-7 rounded-full bg-surface text-warm-gray-light text-xs font-bold mr-3">@auth 4 @else 5 @endauth</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Ghi chu (tuy chon)</h2>
+                        <h2 class="text-lg font-semibold font-display text-warm-gray">Ghi chú (tuỳ chọn)</h2>
                     </div>
-                    <textarea name="note" rows="3" placeholder="Yeu cau dac biet, kieu toc mong muon..."
+                    <textarea name="note" rows="3" placeholder="Yêu cầu đặc biệt, kiểu tóc mong muốn..."
                         class="w-full px-4 py-3 border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none">{{ old('note') }}</textarea>
                 </section>
             </div>
@@ -237,26 +237,26 @@
             <div class="p-6 bg-surface/30 border-t border-muted/10">
                 {{-- Summary --}}
                 <div class="flex justify-between items-center mb-2 text-sm">
-                    <span class="text-muted">Dich vu</span>
-                    <span class="font-medium text-warm-gray" x-text="selectedServices.length + ' dich vu'">0 dich vu</span>
+                    <span class="text-muted">Dịch vụ</span>
+                    <span class="font-medium text-warm-gray" x-text="selectedServices.length + ' dịch vụ'">0 dịch vụ</span>
                 </div>
                 <div class="flex justify-between items-center mb-2 text-sm">
-                    <span class="text-muted">Thoi gian</span>
-                    <span class="font-medium text-warm-gray" x-text="totalDuration + ' phut'">0 phut</span>
+                    <span class="text-muted">Thời gian</span>
+                    <span class="font-medium text-warm-gray" x-text="totalDuration + ' phút'">0 phút</span>
                 </div>
                 <div class="flex justify-between items-center mb-4">
-                    <span class="text-muted text-sm">Tong cong</span>
+                    <span class="text-muted text-sm">Tổng cộng</span>
                     <span class="font-bold text-xl text-warm-gray" x-text="formatPrice(totalPrice)">0d</span>
                 </div>
                 <button type="submit"
                     :disabled="!canSubmit"
                     class="w-full py-4 text-white font-bold tracking-widest uppercase text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
                     :class="canSubmit ? 'bg-primary hover:bg-primary-dark cursor-pointer' : 'bg-muted/40 cursor-not-allowed'">
-                    Xac Nhan Dat Lich
+                    Xác Nhận Đặt Lịch
                 </button>
                 <p class="text-center text-xs text-muted mt-3 flex items-center justify-center gap-1">
                     <span class="material-symbols-outlined text-[14px]">lock</span>
-                    Thanh toan sau khi su dung dich vu.
+                    Thanh toán sau khi sử dụng dịch vụ.
                 </p>
             </div>
         </div>

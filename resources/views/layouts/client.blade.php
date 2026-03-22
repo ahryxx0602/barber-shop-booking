@@ -33,21 +33,21 @@
             {{-- Desktop Links --}}
             <div class="hidden md:flex items-center gap-10">
                 <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
-                    href="{{ url('/') }}#services">Dich vu</a>
+                    href="{{ url('/') }}#services">Dịch vụ</a>
                 <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
-                    href="{{ url('/') }}#story">Cau chuyen</a>
+                    href="{{ url('/') }}#story">Câu chuyện</a>
                 <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
-                    href="{{ route('client.barbers.index') }}">Tho cat</a>
+                    href="{{ route('client.barbers.index') }}">Thợ cắt</a>
                 @auth
                     <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
-                        href="{{ route('client.profile.show') }}">Tai khoan</a>
+                        href="{{ route('client.profile.show') }}">Tài khoản</a>
                 @else
                     <a class="text-warm-gray-light hover:text-primary transition-colors text-[11px] font-semibold tracking-[2.5px] uppercase"
-                        href="{{ route('login') }}">Dang nhap</a>
+                        href="{{ route('login') }}">Đăng nhập</a>
                 @endauth
                 <a href="{{ route('client.booking.create') }}"
-                    class="flex items-center justify-center h-[44px] px-6 bg-primary text-white text-[10px] font-bold uppercase tracking-[2.5px] hover:bg-warm-gray transition-colors duration-300">Dat
-                    lich</a>
+                    class="flex items-center justify-center h-[44px] px-6 bg-primary text-white text-[10px] font-bold uppercase tracking-[2.5px] hover:bg-warm-gray transition-colors duration-300">Đặt
+                    lịch</a>
             </div>
 
             {{-- Mobile Menu --}}
@@ -58,17 +58,17 @@
                 <div x-show="open" x-cloak @click.away="open = false" x-transition
                     class="absolute top-[72px] left-0 right-0 bg-bg-light border-b border-warm-gray/10 px-6 py-6 flex flex-col gap-4">
                     <a class="text-warm-gray-light hover:text-primary text-[11px] font-semibold tracking-[2.5px] uppercase"
-                        href="{{ url('/') }}#services">Dich vu</a>
+                        href="{{ url('/') }}#services">Dịch vụ</a>
                     <a class="text-warm-gray-light hover:text-primary text-[11px] font-semibold tracking-[2.5px] uppercase"
-                        href="{{ url('/') }}#story">Cau chuyen</a>
+                        href="{{ url('/') }}#story">Câu chuyện</a>
                     <a class="text-warm-gray-light hover:text-primary text-[11px] font-semibold tracking-[2.5px] uppercase"
-                        href="{{ route('client.barbers.index') }}">Tho cat</a>
+                        href="{{ route('client.barbers.index') }}">Thợ cắt</a>
                     @auth
                         <a class="text-warm-gray-light hover:text-primary text-[11px] font-semibold tracking-[2.5px] uppercase"
-                            href="{{ route('client.profile.show') }}">Tai khoan</a>
+                            href="{{ route('client.profile.show') }}">Tài khoản</a>
                     @else
                         <a class="text-warm-gray-light hover:text-primary text-[11px] font-semibold tracking-[2.5px] uppercase"
-                            href="{{ route('login') }}">Dang nhap</a>
+                            href="{{ route('login') }}">Đăng nhập</a>
                     @endauth
                     <a href="{{ route('client.booking.create') }}"
                         class="flex items-center justify-center h-[44px] bg-primary text-white text-[10px] font-bold uppercase tracking-[2.5px] hover:bg-warm-gray transition-colors">Dat
@@ -99,34 +99,34 @@
                         </div>
                         <span class="text-[14px] font-bold tracking-[3px] text-bg-light uppercase">Classic Cut</span>
                     </div>
-                    <p class="text-sm leading-relaxed text-bg-light/60 max-w-xs">Tiem cat toc nam phong cach vintage.
-                        Noi nghe thuat va phong cach hoi tu.</p>
+                    <p class="text-sm leading-relaxed text-bg-light/60 max-w-xs">Tiệm cắt tóc nam phong cách vintage.
+                        Nơi nghệ thuật và phong cách hội tụ.</p>
                 </div>
                 {{-- Quick Links --}}
                 <div>
-                    <h4 class="text-[10px] font-bold tracking-[3px] uppercase text-bg-light/40 mb-6">Lien ket</h4>
+                    <h4 class="text-[10px] font-bold tracking-[3px] uppercase text-bg-light/40 mb-6">Liên kết</h4>
                     <ul class="space-y-3">
-                        <li><a href="{{ url('/') }}#services" class="text-sm hover:text-primary transition-colors">Dich
-                                vu</a></li>
+                        <li><a href="{{ url('/') }}#services" class="text-sm hover:text-primary transition-colors">Dịch
+                                vụ</a></li>
                         <li><a href="{{ route('client.barbers.index') }}"
-                                class="text-sm hover:text-primary transition-colors">Doi ngu tho cat</a></li>
+                                class="text-sm hover:text-primary transition-colors">Đội ngũ thợ cắt</a></li>
                         <li><a href="{{ route('client.booking.create') }}"
-                                class="text-sm hover:text-primary transition-colors">Dat lich ngay</a></li>
+                                class="text-sm hover:text-primary transition-colors">Đặt lịch ngay</a></li>
                     </ul>
                 </div>
                 {{-- Hours --}}
                 <div>
-                    <h4 class="text-[10px] font-bold tracking-[3px] uppercase text-bg-light/40 mb-6">Gio lam viec</h4>
+                    <h4 class="text-[10px] font-bold tracking-[3px] uppercase text-bg-light/40 mb-6">Giờ làm việc</h4>
                     <ul class="space-y-2 text-sm">
                         <li class="flex justify-between"><span>Thu 2 - Thu 6</span><span>9:00 - 19:00</span></li>
                         <li class="flex justify-between"><span>Thu 7</span><span>9:00 - 17:00</span></li>
-                        <li class="flex justify-between"><span>Chu Nhat</span><span>Nghi</span></li>
+                        <li class="flex justify-between"><span>Chủ Nhật</span><span>Nghỉ</span></li>
                     </ul>
                 </div>
             </div>
             <div class="border-t border-bg-light/10 pt-8 flex flex-col md:flex-row justify-between items-center gap-4">
-                <p class="text-xs text-bg-light/40">&copy; {{ date('Y') }} Classic Cut Barbershop. Do an tot nghiep -
-                    Phan Van Thanh.</p>
+                <p class="text-xs text-bg-light/40">&copy; {{ date('Y') }} Classic Cut Barbershop. Đồ án tốt nghiệp -
+                    Phan Văn Thành.</p>
             </div>
         </div>
     </footer>

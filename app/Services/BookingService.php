@@ -25,7 +25,7 @@ class BookingService
             $slot = TimeSlot::lockForUpdate()->findOrFail($data['time_slot_id']);
 
             if ($slot->status !== TimeSlotStatus::Available) {
-                throw new SlotNotAvailableException('Slot nay vua duoc dat, vui long chon lai.');
+                throw new SlotNotAvailableException('Slot này vừa được đặt, vui lòng chọn lại.');
             }
 
             if (!$customer) {
@@ -91,7 +91,7 @@ class BookingService
             $booking->update([
                 'status' => BookingStatus::Cancelled,
                 'cancelled_at' => now(),
-                'cancel_reason' => $reason ?? 'Thu tu choi lich hen',
+                'cancel_reason' => $reason ?? 'Thợ từ chối lịch hẹn',
             ]);
 
             $this->reopenSlot($booking);
@@ -124,7 +124,7 @@ class BookingService
             $booking->update([
                 'status' => BookingStatus::Cancelled,
                 'cancelled_at' => now(),
-                'cancel_reason' => $reason ?? 'Khach hang huy lich',
+                'cancel_reason' => $reason ?? 'Khách hàng huỷ lịch',
             ]);
 
             $this->reopenSlot($booking);

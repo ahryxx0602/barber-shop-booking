@@ -15,17 +15,17 @@ class SendBookingCancelledNotification
         Notification::create([
             'user_id' => $booking->customer_id,
             'type' => 'booking_cancelled',
-            'title' => 'Lich hen da huy',
-            'message' => "Lich hen #{$booking->booking_code} da bi huy. "
-                       . "Ly do: {$booking->cancel_reason}.",
+            'title' => 'Lịch hẹn đã huỷ',
+            'message' => "Lịch hẹn #{$booking->booking_code} đã bị huỷ. "
+                       . "Lý do: {$booking->cancel_reason}.",
         ]);
 
         Notification::create([
             'user_id' => $booking->barber->user_id,
             'type' => 'booking_cancelled',
-            'title' => 'Lich hen da huy',
-            'message' => "Lich hen #{$booking->booking_code} ngay {$booking->booking_date->format('d/m/Y')} "
-                       . "luc {$booking->start_time} da bi huy.",
+            'title' => 'Lịch hẹn đã huỷ',
+            'message' => "Lịch hẹn #{$booking->booking_code} ngày {$booking->booking_date->format('d/m/Y')} "
+                       . "lúc {$booking->start_time} đã bị huỷ.",
         ]);
     }
 }

@@ -50,6 +50,6 @@ class ProfileController extends Controller
 
         $user->save();
 
-        return redirect()->route('client.profile.show')->with('success', 'Cap nhat thong tin thanh cong!');
+        return redirect()->route('client.profile.show')->with('success', 'Cập nhật thông tin thành công!');
     }
 }

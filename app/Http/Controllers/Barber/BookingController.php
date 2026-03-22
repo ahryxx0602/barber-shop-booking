@@ -66,7 +66,7 @@ class BookingController extends Controller
 
         $this->bookingService->confirm($booking);
 
-        return back()->with('success', 'Da xac nhan lich hen.');
+        return back()->with('success', 'Đã xác nhận lịch hẹn.');
     }
 
     public function reject(Request $request, Booking $booking): RedirectResponse
@@ -75,7 +75,7 @@ class BookingController extends Controller
 
         $this->bookingService->reject($booking, $request->input('cancel_reason'));
 
-        return back()->with('success', 'Da tu choi lich hen.');
+        return back()->with('success', 'Đã từ chối lịch hẹn.');
     }
 
     public function start(Booking $booking): RedirectResponse
@@ -84,7 +84,7 @@ class BookingController extends Controller
 
         $this->bookingService->start($booking);
 
-        return back()->with('success', 'Da bat dau phuc vu.');
+        return back()->with('success', 'Đã bắt đầu phục vụ.');
     }
 
     public function complete(Booking $booking): RedirectResponse
@@ -93,6 +93,6 @@ class BookingController extends Controller
 
         $this->bookingService->complete($booking);
 
-        return back()->with('success', 'Da hoan thanh lich hen.');
+        return back()->with('success', 'Đã hoàn thành lịch hẹn.');
     }
 }

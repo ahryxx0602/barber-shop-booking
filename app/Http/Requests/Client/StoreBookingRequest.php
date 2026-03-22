@@ -33,13 +33,13 @@ class StoreBookingRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'service_ids.required' => 'Vui long chon it nhat mot dich vu.',
-            'barber_id.required' => 'Vui long chon tho cat.',
-            'time_slot_id.required' => 'Vui long chon gio hen.',
-            'guest_name.required' => 'Vui long nhap ho ten.',
-            'guest_phone.required' => 'Vui long nhap so dien thoai.',
-            'guest_email.required' => 'Vui long nhap email.',
-            'guest_email.email' => 'Email khong hop le.',
+            'service_ids.required' => 'Vui lòng chọn ít nhất một dịch vụ.',
+            'barber_id.required' => 'Vui lòng chọn thợ cắt.',
+            'time_slot_id.required' => 'Vui lòng chọn giờ hẹn.',
+            'guest_name.required' => 'Vui lòng nhập họ tên.',
+            'guest_phone.required' => 'Vui lòng nhập số điện thoại.',
+            'guest_email.required' => 'Vui lòng nhập email.',
+            'guest_email.email' => 'Email không hợp lệ.',
         ];
     }
 }

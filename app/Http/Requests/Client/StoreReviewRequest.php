@@ -23,12 +23,12 @@ class StoreReviewRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'booking_id.required' => 'Thieu thong tin booking.',
-            'booking_id.exists' => 'Booking khong ton tai.',
-            'rating.required' => 'Vui long chon so sao danh gia.',
-            'rating.min' => 'Danh gia toi thieu la 1 sao.',
-            'rating.max' => 'Danh gia toi da la 5 sao.',
-            'comment.max' => 'Nhan xet khong duoc qua 1000 ky tu.',
+            'booking_id.required' => 'Thiếu thông tin booking.',
+            'booking_id.exists' => 'Booking không tồn tại.',
+            'rating.required' => 'Vui lòng chọn số sao đánh giá.',
+            'rating.min' => 'Đánh giá tối thiểu là 1 sao.',
+            'rating.max' => 'Đánh giá tối đa là 5 sao.',
+            'comment.max' => 'Nhận xét không được quá 1000 ký tự.',
         ];
     }
 }

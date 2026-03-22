@@ -12,8 +12,8 @@ use Illuminate\Support\Facades\DB;
 class ReviewService
 {
     /**
-     * Tao review cho booking da hoan thanh.
-     * Cap nhat rating trung binh cua barber.
+     * Tạo review cho booking đã hoàn thành.
+     * Cập nhật rating trung bình của barber.
      */
     public function store(array $data, User $customer): Review
     {
@@ -21,8 +21,8 @@ class ReviewService
             $booking = Booking::findOrFail($data['booking_id']);
 
             abort_if($booking->customer_id !== $customer->id, 403);
-            abort_if($booking->status !== BookingStatus::Completed, 422, 'Chi co the danh gia booking da hoan thanh.');
-            abort_if($booking->review !== null, 422, 'Booking nay da duoc danh gia.');
+            abort_if($booking->status !== BookingStatus::Completed, 422, 'Chỉ có thể đánh giá booking đã hoàn thành.');
+            abort_if($booking->review !== null, 422, 'Booking này đã được đánh giá.');
 
             $review = Review::create([
                 'booking_id' => $booking->id,
@@ -39,7 +39,7 @@ class ReviewService
     }
 
     /**
-     * Tinh lai rating trung binh cua barber tu tat ca reviews.
+     * Tính lại rating trung bình của barber từ tất cả reviews.
      */
     protected function updateBarberRating(int $barberId): void
     {

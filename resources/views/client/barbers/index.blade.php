@@ -1,6 +1,6 @@
 @extends('layouts.client')
 
-@section('title', 'Doi ngu tho cat')
+@section('title', 'Đội ngũ thợ cắt')
 
 @section('content')
 <section class="bg-bg-light min-h-screen">
@@ -9,11 +9,11 @@
         <div class="text-center mb-16">
             <div class="flex items-center justify-center gap-4 mb-6">
                 <div class="w-8 h-[1.5px] bg-primary"></div>
-                <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Doi ngu</span>
+                <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Đội ngũ</span>
                 <div class="w-8 h-[1.5px] bg-primary"></div>
             </div>
-            <h1 class="font-serif text-4xl md:text-5xl font-bold text-warm-gray mb-4">Tho Cat Cua Chung Toi</h1>
-            <p class="text-warm-gray-light max-w-md mx-auto">Doi ngu tho cat chuyen nghiep, giau kinh nghiem va dam me voi nghe.</p>
+            <h1 class="font-serif text-4xl md:text-5xl font-bold text-warm-gray mb-4">Thợ Cắt Của Chúng Tôi</h1>
+            <p class="text-warm-gray-light max-w-md mx-auto">Đội ngũ thợ cắt chuyên nghiệp, giàu kinh nghiệm và đam mê với nghề.</p>
         </div>
 
         {{-- Search --}}
@@ -21,7 +21,7 @@
             <form method="GET" action="{{ route('client.barbers.index') }}">
                 <div class="relative">
                     <span class="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-muted text-xl">search</span>
-                    <input type="text" name="search" x-model="search" placeholder="Tim tho cat theo ten..."
+                    <input type="text" name="search" x-model="search" placeholder="Tìm thợ cắt theo tên..."
                         class="w-full pl-12 pr-4 py-3 bg-white border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors" />
                 </div>
             </form>
@@ -31,7 +31,7 @@
         @if($barbers->isEmpty())
             <div class="text-center py-20">
                 <span class="material-symbols-outlined text-5xl text-muted/40 mb-4 block">content_cut</span>
-                <p class="text-warm-gray-light">Khong tim thay tho cat nao.</p>
+                <p class="text-warm-gray-light">Không tìm thấy thợ cắt nào.</p>
             </div>
         @else
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-10">
@@ -53,7 +53,7 @@
                     </div>
                     <div class="text-center">
                         <h3 class="text-xl font-bold text-warm-gray group-hover:text-primary transition-colors">{{ $barber->user->name }}</h3>
-                        <p class="text-sm text-warm-gray-light mt-1">{{ $barber->experience_years }} nam kinh nghiem</p>
+                        <p class="text-sm text-warm-gray-light mt-1">{{ $barber->experience_years }} năm kinh nghiệm</p>
                         @if($barber->rating > 0)
                         <div class="flex items-center justify-center gap-1 mt-2">
                             @for($i = 1; $i <= 5; $i++)

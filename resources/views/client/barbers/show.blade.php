@@ -8,7 +8,7 @@
         {{-- Back link --}}
         <a href="{{ route('client.barbers.index') }}" class="inline-flex items-center gap-2 text-warm-gray-light hover:text-primary transition-colors text-sm mb-10">
             <span class="material-symbols-outlined text-lg">arrow_back</span>
-            Quay lai danh sach
+            Quay lại danh sách
         </a>
 
         {{-- Profile --}}
@@ -29,14 +29,14 @@
             <div class="flex-1">
                 <div class="flex items-center gap-4 mb-4">
                     <div class="w-8 h-[1.5px] bg-primary"></div>
-                    <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Tho cat</span>
+                    <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Thợ cắt</span>
                 </div>
                 <h1 class="font-serif text-4xl md:text-5xl font-bold text-warm-gray mb-4">{{ $barber->user->name }}</h1>
 
                 <div class="flex items-center gap-6 mb-6 text-sm text-warm-gray-light">
                     <div class="flex items-center gap-1">
                         <span class="material-symbols-outlined text-base text-primary">work_history</span>
-                        {{ $barber->experience_years }} nam kinh nghiem
+                        {{ $barber->experience_years }} năm kinh nghiệm
                     </div>
                     @if($barber->rating > 0)
                     <div class="flex items-center gap-1">
@@ -44,7 +44,7 @@
                             <span class="material-symbols-outlined {{ $i <= round($barber->rating) ? 'fill text-primary' : 'text-muted/30' }} text-sm">star</span>
                         @endfor
                         <span class="font-medium text-warm-gray ml-1">{{ number_format($barber->rating, 1) }}</span>
-                        <span class="text-muted">({{ $barber->reviews->count() }} danh gia)</span>
+                        <span class="text-muted">({{ $barber->reviews->count() }} đánh giá)</span>
                     </div>
                     @endif
                 </div>
@@ -54,7 +54,7 @@
                 @endif
 
                 <a href="{{ route('client.booking.create') }}?barber_id={{ $barber->id }}" class="inline-flex items-center justify-center h-[52px] px-8 bg-primary text-white text-[11px] font-bold uppercase tracking-[2.5px] transition-all duration-300 hover:bg-warm-gray">
-                    Dat lich voi {{ $barber->user->name }}
+                    Đặt lịch với {{ $barber->user->name }}
                 </a>
             </div>
         </div>
@@ -64,7 +64,7 @@
         <div class="mb-16">
             <h2 class="text-xl font-bold text-warm-gray mb-6 flex items-center gap-3">
                 <span class="material-symbols-outlined text-primary">calendar_month</span>
-                Lich lam viec
+                Lịch làm việc
             </h2>
             <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
                 @php
@@ -80,12 +80,12 @@
                             <div class="text-sm font-medium text-warm-gray">
                                 {{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }}
                             </div>
-                            <div class="text-xs text-muted">den</div>
+                            <div class="text-xs text-muted">đến</div>
                             <div class="text-sm font-medium text-warm-gray">
                                 {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}
                             </div>
                         @else
-                            <div class="text-sm text-muted italic">Nghi</div>
+                            <div class="text-sm text-muted italic">Nghỉ</div>
                         @endif
                     </div>
                 @endfor
@@ -97,7 +97,7 @@
         <div>
             <h2 class="text-xl font-bold text-warm-gray mb-6 flex items-center gap-3">
                 <span class="material-symbols-outlined text-primary">rate_review</span>
-                Danh gia tu khach hang
+                Đánh giá từ khách hàng
                 @if($barber->reviews->isNotEmpty())
                     <span class="text-sm font-normal text-muted">({{ $barber->reviews->count() }})</span>
                 @endif
@@ -113,7 +113,7 @@
                                 <span class="material-symbols-outlined {{ $i <= round($barber->rating) ? 'fill text-primary' : 'text-muted/30' }} text-base">star</span>
                             @endfor
                         </div>
-                        <div class="text-xs text-muted mt-1">{{ $barber->reviews->count() }} danh gia</div>
+                        <div class="text-xs text-muted mt-1">{{ $barber->reviews->count() }} đánh giá</div>
                     </div>
                     <div class="flex-1 w-full space-y-1">
                         @for($star = 5; $star >= 1; $star--)
@@ -157,7 +157,7 @@
                     @if($barber->reviews->count() > 5)
                         <button @click="showAll = !showAll" type="button"
                             class="flex items-center gap-2 text-sm font-semibold text-primary hover:text-warm-gray transition-colors mx-auto">
-                            <span x-text="showAll ? 'Thu gon' : 'Xem tat ca {{ $barber->reviews->count() }} danh gia'"></span>
+                            <span x-text="showAll ? 'Thu gọn' : 'Xem tất cả {{ $barber->reviews->count() }} đánh giá'"></span>
                             <span class="material-symbols-outlined text-base" x-text="showAll ? 'expand_less' : 'expand_more'"></span>
                         </button>
                     @endif
@@ -165,7 +165,7 @@
             @else
                 <div class="bg-white border border-muted/10 p-8 text-center">
                     <span class="material-symbols-outlined text-3xl text-muted/30 mb-2">rate_review</span>
-                    <p class="text-sm text-muted">Chua co danh gia nao.</p>
+                    <p class="text-sm text-muted">Chưa có đánh giá nào.</p>
                 </div>
             @endif
         </div>

@@ -17,6 +17,6 @@ class ReviewController extends Controller
     {
         $this->reviewService->store($request->validated(), $request->user());
 
-        return back()->with('success', 'Cam on ban da danh gia!');
+        return back()->with('success', 'Cảm ơn bạn đã đánh giá!');
     }
 }

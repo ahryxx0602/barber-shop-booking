@@ -2,7 +2,7 @@
 
 @extends('layouts.client')
 
-@section('title', 'Thong tin ca nhan')
+@section('title', 'Thông tin cá nhân')
 
 @section('content')
 <section class="bg-bg-light min-h-screen py-12 px-4 sm:px-6 lg:px-8">
@@ -14,12 +14,12 @@
                 <a href="{{ url('/') }}" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface transition-colors mr-4">
                     <span class="material-symbols-outlined">arrow_back</span>
                 </a>
-                <h1 class="text-2xl font-bold font-display tracking-tight text-warm-gray">Thong Tin Ca Nhan</h1>
+                <h1 class="text-2xl font-bold font-display tracking-tight text-warm-gray">Thông Tin Cá Nhân</h1>
             </div>
             <a href="{{ route('client.profile.edit') }}"
                 class="flex items-center gap-2 h-10 px-5 border border-muted/20 text-warm-gray text-xs font-semibold uppercase tracking-widest hover:border-primary hover:text-primary transition-colors">
                 <span class="material-symbols-outlined text-base">edit</span>
-                Chinh sua
+                Chỉnh sửa
             </a>
         </div>
 
@@ -57,7 +57,7 @@
                             @endif
                             <div class="flex items-center gap-2 text-sm">
                                 <span class="material-symbols-outlined text-muted text-base">calendar_month</span>
-                                <span class="text-muted">Thanh vien tu {{ $user->created_at->format('d/m/Y') }}</span>
+                                <span class="text-muted">Thành viên từ {{ $user->created_at->format('d/m/Y') }}</span>
                             </div>
                         </div>
                     </div>
@@ -69,16 +69,16 @@
         <div class="mb-8">
             <h2 class="text-lg font-semibold font-display text-warm-gray mb-4 flex items-center gap-2">
                 <span class="material-symbols-outlined text-primary text-xl">event_upcoming</span>
-                Lich hen sap toi
+                Lịch hẹn sắp tới
             </h2>
 
             @if($upcomingBookings->isEmpty())
                 <div class="bg-white border border-muted/20 p-8 text-center">
                     <span class="material-symbols-outlined text-4xl text-muted/40 mb-2">calendar_today</span>
-                    <p class="text-muted text-sm">Chua co lich hen nao.</p>
+                    <p class="text-muted text-sm">Chưa có lịch hẹn nào.</p>
                     <a href="{{ route('client.booking.create') }}" class="inline-flex items-center gap-2 mt-4 px-5 h-10 bg-primary text-white text-xs font-bold uppercase tracking-widest hover:bg-warm-gray transition-colors">
                         <span class="material-symbols-outlined text-base">add</span>
-                        Dat lich ngay
+                        Đặt lịch ngay
                     </a>
                 </div>
             @else
@@ -115,7 +115,7 @@
                             {{-- Cancel Button --}}
                             @if(in_array($booking->status, [BookingStatus::Pending, BookingStatus::Confirmed]))
                                 @php
-                                    $appointmentTime = \Carbon\Carbon::parse($booking->booking_date . ' ' . $booking->start_time);
+                                    $appointmentTime = \Carbon\Carbon::parse($booking->booking_date->format('Y-m-d') . ' ' . $booking->start_time);
                                     $canCancel = now()->diffInMinutes($appointmentTime, false) >= 120;
                                 @endphp
                                 <div class="mt-3 pt-3 border-t border-muted/10 flex items-center justify-between">
@@ -124,22 +124,22 @@
                                             <button @click="open = !open" type="button"
                                                 class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-red-600 hover:text-red-800 transition-colors">
                                                 <span class="material-symbols-outlined text-sm">cancel</span>
-                                                Huy lich hen
+                                                Huỷ lịch hẹn
                                             </button>
                                             <div x-show="open" @click.outside="open = false" x-transition
                                                 class="absolute z-10 mt-2 left-0 w-72 bg-white border border-muted/20 shadow-lg p-4">
                                                 <form method="POST" action="{{ route('client.booking.cancel', $booking) }}">
                                                     @csrf @method('PATCH')
-                                                    <label class="block text-sm font-medium text-warm-gray mb-2">Ly do huy</label>
-                                                    <textarea name="cancel_reason" rows="2" class="w-full border border-muted/20 text-sm p-2" placeholder="Nhap ly do..."></textarea>
+                                                    <label class="block text-sm font-medium text-warm-gray mb-2">Lý do huỷ</label>
+                                                    <textarea name="cancel_reason" rows="2" class="w-full border border-muted/20 text-sm p-2" placeholder="Nhập lý do..."></textarea>
                                                     <button type="submit" class="mt-2 w-full px-3 py-2 bg-red-600 hover:bg-red-700 text-white text-xs font-bold uppercase tracking-widest transition-colors">
-                                                        Xac nhan huy
+                                                        Xác nhận huỷ
                                                     </button>
                                                 </form>
                                             </div>
                                         </div>
                                     @else
-                                        <p class="text-xs text-muted italic">Khong the huy lich hen trong vong 2 gio truoc gio hen.</p>
+                                        <p class="text-xs text-muted italic">Không thể huỷ lịch hẹn trong vòng 2 giờ trước giờ hẹn.</p>
                                     @endif
                                 </div>
                             @endif
@@ -153,12 +153,12 @@
         <div>
             <h2 class="text-lg font-semibold font-display text-warm-gray mb-4 flex items-center gap-2">
                 <span class="material-symbols-outlined text-muted text-xl">history</span>
-                Lich su dat lich
+                Lịch sử đặt lịch
             </h2>
 
             @if($pastBookings->isEmpty())
                 <div class="bg-white border border-muted/20 p-8 text-center">
-                    <p class="text-muted text-sm">Chua co lich su dat lich.</p>
+                    <p class="text-muted text-sm">Chưa có lịch sử đặt lịch.</p>
                 </div>
             @else
                 <div class="space-y-3">
@@ -214,7 +214,7 @@
                                         <button @click="open = !open" type="button"
                                             class="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-widest text-primary hover:text-warm-gray transition-colors">
                                             <span class="material-symbols-outlined text-sm">rate_review</span>
-                                            Danh gia
+                                            Đánh giá
                                         </button>
                                         <div x-show="open" x-transition x-cloak class="mt-3">
                                             <form method="POST" action="{{ route('client.reviews.store') }}">
@@ -223,7 +223,7 @@
 
                                                 {{-- Star rating --}}
                                                 <div class="flex items-center gap-1 mb-3">
-                                                    <span class="text-xs text-muted mr-2">Danh gia:</span>
+                                                    <span class="text-xs text-muted mr-2">Đánh giá:</span>
                                                     @for($i = 1; $i <= 5; $i++)
                                                         <button type="button" @click="rating = {{ $i }}"
                                                             @mouseenter="hoverRating = {{ $i }}" @mouseleave="hoverRating = 0"
@@ -238,13 +238,13 @@
                                                 {{-- Comment --}}
                                                 <textarea name="comment" rows="2"
                                                     class="w-full border border-muted/20 text-sm p-2 mb-2 focus:border-primary focus:outline-none"
-                                                    placeholder="Nhan xet cua ban (khong bat buoc)..."></textarea>
+                                                    placeholder="Nhận xét của bạn (không bắt buộc)..."></textarea>
 
                                                 <button type="submit"
                                                     class="px-4 py-2 bg-primary text-white text-xs font-bold uppercase tracking-widest hover:bg-warm-gray transition-colors"
                                                     :disabled="rating === 0"
                                                     :class="rating === 0 ? 'opacity-50 cursor-not-allowed' : ''">
-                                                    Gui danh gia
+                                                    Gửi đánh giá
                                                 </button>
                                             </form>
                                         </div>
@@ -263,7 +263,7 @@
                 @csrf
                 <button type="submit" class="flex items-center gap-2 text-sm text-muted hover:text-primary transition-colors">
                     <span class="material-symbols-outlined text-base">logout</span>
-                    Dang xuat
+                    Đăng xuất
                 </button>
             </form>
         </div>

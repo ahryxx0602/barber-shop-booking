@@ -1,6 +1,6 @@
 @extends('layouts.client')
 
-@section('title', 'Trang chu')
+@section('title', 'Trang chủ')
 
 @section('content')
     {{-- Hero Section --}}
@@ -36,25 +36,25 @@
                     </div>
                     <h1
                         class="font-serif text-5xl md:text-[68px] lg:text-[76px] font-bold leading-[1.02] tracking-[-0.015em] text-warm-gray">
-                        Nghe Thuat<br />Cat Toc Nam.
+                        Nghệ Thuật<br />Cắt Tóc Nam.
                     </h1>
                     <p class="text-base md:text-lg font-normal text-warm-gray-light leading-[1.7] max-w-sm">
-                        Trai nghiem tiem cat toc vintage cao cap. Su ket hop giua nghe thuat truyen thong va phong cach hien
-                        dai.
+                        Trải nghiệm tiệm cắt tóc vintage cao cấp. Sự kết hợp giữa nghệ thuật truyền thống và phong cách hiện
+                        đại.
                     </p>
                 </div>
                 <div class="flex items-center gap-8">
                     <a href="{{ route('client.booking.create') }}"
                         class="group relative flex items-center justify-center h-[52px] w-[200px] bg-primary text-white text-[11px] font-bold uppercase tracking-[2.5px] transition-all duration-300 hover:bg-warm-gray overflow-hidden">
-                        <span class="relative z-10 transition-transform duration-300 group-hover:-translate-y-10">Dat Lich
+                        <span class="relative z-10 transition-transform duration-300 group-hover:-translate-y-10">Đặt Lịch
                             Ngay</span>
                         <span
-                            class="absolute z-10 transition-transform duration-300 translate-y-10 group-hover:translate-y-0">Dat
-                            Lich Ngay</span>
+                            class="absolute z-10 transition-transform duration-300 translate-y-10 group-hover:translate-y-0">Đặt
+                            Lịch Ngay</span>
                     </a>
                     <a href="#services"
                         class="text-[11px] font-semibold tracking-[2px] uppercase text-warm-gray-light hover:text-primary transition-colors border-b border-warm-gray-light/40 pb-0.5">Xem
-                        Dich Vu</a>
+                        Dịch Vụ</a>
                 </div>
             </div>
         </div>
@@ -76,7 +76,7 @@
     <div class="h-24 bg-bg-light relative z-20 flex items-center justify-center border-t border-warm-gray/10">
         <div class="flex flex-col items-center gap-4">
             <div class="w-[1px] h-12 bg-warm-gray/20"></div>
-            <p class="text-warm-gray-light font-medium tracking-[4px] uppercase text-[10px]">Kham pha them</p>
+            <p class="text-warm-gray-light font-medium tracking-[4px] uppercase text-[10px]">Khám phá thêm</p>
         </div>
     </div>
 
@@ -91,7 +91,7 @@
                 <div class="relative flex justify-center">
                     <h2
                         class="bg-bg-light px-8 text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-warm-gray font-display">
-                        Dich Vu Cua Chung Toi</h2>
+                        Dịch Vụ Của Chúng Tôi</h2>
                 </div>
             </div>
 
@@ -100,7 +100,7 @@
                 $services = \App\Models\Service::where('is_active', true)->get();
                 $perCol = max(1, (int) ceil($services->count() / 3));
                 $chunks = $services->chunk($perCol);
-                $columnTitles = ['Cat Toc', 'Tao Kieu', 'Cham Soc'];
+                $columnTitles = ['Cắt Tóc', 'Tạo Kiểu', 'Chăm Sóc'];
             @endphp
 
             <div
@@ -109,7 +109,7 @@
                     <div
                         class="flex flex-col {{ $index < 2 ? 'lg:border-r' : '' }} border-muted/20 px-4 md:px-8 py-8 {{ $index > 0 ? 'border-t md:border-t-0' : '' }}">
                         <h3 class="text-xl font-bold mb-8 uppercase tracking-widest text-primary text-center">
-                            {{ $columnTitles[$index] ?? 'Dich Vu' }}</h3>
+                            {{ $columnTitles[$index] ?? 'Dịch Vụ' }}</h3>
                         <div class="flex flex-col gap-2">
                             @foreach($chunk as $service)
                                 <div class="group cursor-pointer flex justify-between items-end py-4 border-b border-muted/10 hover:bg-surface rounded-sm transition-colors duration-300 px-2 -mx-2 leader-line svc-row"
@@ -184,10 +184,10 @@
         {{-- ===== END FLOATING IMAGE PANEL ===== --}}
             {{-- CTA --}}
             <div class="mt-24 pt-12 border-t border-muted/20 text-center">
-                <h2 class="text-2xl font-light mb-8 font-display">San sang cho mot dien mao moi?</h2>
+                <h2 class="text-2xl font-light mb-8 font-display">Sẵn sàng cho một diện mạo mới?</h2>
                 <a href="{{ route('client.booking.create') }}"
                     class="inline-flex items-center justify-center h-14 px-8 bg-warm-gray text-bg-light text-sm font-bold uppercase tracking-widest transition-all duration-300 hover:bg-primary hover:text-white">
-                    Dat Lich Ngay
+                    Đặt Lịch Ngay
                 </a>
             </div>
         </div>
@@ -200,22 +200,22 @@
                 <div>
                     <div class="flex items-center gap-4 mb-8">
                         <div class="w-8 h-[1.5px] bg-primary"></div>
-                        <span class="text-[10px] font-semibold tracking-[4px] uppercase text-bg-light/50">Cau chuyen</span>
+                        <span class="text-[10px] font-semibold tracking-[4px] uppercase text-bg-light/50">Câu chuyện</span>
                     </div>
                     <h2 class="font-serif text-4xl md:text-5xl font-bold leading-tight mb-8 text-bg-light">
-                        Noi Nghe Thuat<br />Gap Go Phong Cach.
+                        Nơi Nghệ Thuật<br />Gặp Gỡ Phong Cách.
                     </h2>
                     <p class="text-base leading-[1.8] text-bg-light/70 mb-6">
-                        Classic Cut ra doi tu niem dam me voi nghe thuat cat toc truyen thong. Chung toi tin rang moi lan
-                        cat toc la mot trai nghiem — khong chi la dich vu.
+                        Classic Cut ra đời từ niềm đam mê với nghệ thuật cắt tóc truyền thống. Chúng tôi tin rằng mỗi lần
+                        cắt tóc là một trải nghiệm — không chỉ là dịch vụ.
                     </p>
                     <p class="text-base leading-[1.8] text-bg-light/70 mb-8">
-                        Doi ngu tho cat cua chung toi duoc dao tao bai ban, su dung ky thuat truyen thong ket hop cong cu
-                        hien dai de mang lai ket qua hoan hao nhat.
+                        Đội ngũ thợ cắt của chúng tôi được đào tạo bài bản, sử dụng kỹ thuật truyền thống kết hợp công cụ
+                        hiện đại để mang lại kết quả hoàn hảo nhất.
                     </p>
                     <a href="{{ route('client.barbers.index') }}"
                         class="text-[11px] font-semibold tracking-[2px] uppercase text-bg-light/60 hover:text-primary transition-colors border-b border-bg-light/20 pb-0.5">
-                        Gap go doi ngu &rarr;
+                        Gặp gỡ đội ngũ &rarr;
                     </a>
                 </div>
                 <div class="relative flex items-center justify-center">
@@ -248,10 +248,10 @@
             <div class="text-center mb-16">
                 <div class="flex items-center justify-center gap-4 mb-6">
                     <div class="w-8 h-[1.5px] bg-primary"></div>
-                    <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Doi ngu</span>
+                    <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Đội ngũ</span>
                     <div class="w-8 h-[1.5px] bg-primary"></div>
                 </div>
-                <h2 class="font-serif text-4xl md:text-5xl font-bold text-warm-gray">Tho Cat Cua Chung Toi</h2>
+                <h2 class="font-serif text-4xl md:text-5xl font-bold text-warm-gray">Thợ Cắt Của Chúng Tôi</h2>
             </div>
 
             <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -273,7 +273,7 @@
                         </div>
                         <h3 class="text-lg font-bold text-warm-gray group-hover:text-primary transition-colors">
                             {{ $barber->user->name }}</h3>
-                        <p class="text-sm text-warm-gray-light mt-1">{{ $barber->experience_years }} nam kinh nghiem</p>
+                        <p class="text-sm text-warm-gray-light mt-1">{{ $barber->experience_years }} năm kinh nghiệm</p>
                         @if($barber->rating > 0)
                             <div class="flex items-center justify-center gap-1 mt-2">
                                 <span class="material-symbols-outlined fill text-primary text-sm">star</span>
@@ -287,7 +287,7 @@
             <div class="text-center mt-12">
                 <a href="{{ route('client.barbers.index') }}"
                     class="text-[11px] font-semibold tracking-[2px] uppercase text-warm-gray-light hover:text-primary transition-colors border-b border-warm-gray-light/40 pb-0.5">Xem
-                    tat ca tho cat &rarr;</a>
+                    tất cả thợ cắt &rarr;</a>
             </div>
         </div>
     </section>
@@ -295,12 +295,12 @@
     {{-- CTA Banner --}}
     <section class="bg-primary noise-bg">
         <div class="max-w-[800px] mx-auto px-6 py-20 md:py-24 text-center">
-            <h2 class="font-serif text-3xl md:text-5xl font-bold text-white mb-6">San Sang Dat Lich?</h2>
-            <p class="text-white/70 text-base mb-10 max-w-md mx-auto">Chon dich vu, chon tho cat yeu thich, va dat lich ngay
-                hom nay.</p>
+            <h2 class="font-serif text-3xl md:text-5xl font-bold text-white mb-6">Sẵn Sàng Đặt Lịch?</h2>
+            <p class="text-white/70 text-base mb-10 max-w-md mx-auto">Chọn dịch vụ, chọn thợ cắt yêu thích, và đặt lịch ngay
+                hôm nay.</p>
             <a href="{{ route('client.booking.create') }}"
                 class="inline-flex items-center justify-center h-14 px-10 bg-white text-primary text-sm font-bold uppercase tracking-widest transition-all duration-300 hover:bg-bg-light">
-                Dat Lich Ngay
+                Đặt Lịch Ngay
             </a>
         </div>
     </section>
