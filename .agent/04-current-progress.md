@@ -28,6 +28,7 @@ Cập nhật lần cuối  : 22/03/2026
 | 5+ | Giao diện Client & Profile | ✅ Hoàn thành |
 | 5++ | Refactor: Dependency Injection cho Controllers | ✅ Hoàn thành |
 | 6 | Quản lý Booking (Barber + Client) | ✅ Hoàn thành |
+| 6+ | Enums + Events/Listeners refactor | ✅ Hoàn thành |
 | 7 | Review & Notification | ⬜ Chưa bắt đầu |
 | 8 | Báo cáo doanh thu (Admin) | ⬜ Chưa bắt đầu |
 | 9 | Kiểm thử & Hoàn thiện | ⬜ Chưa bắt đầu |
@@ -103,17 +104,37 @@ Cập nhật lần cuối  : 22/03/2026
 - [x] 5++.7 Refactor `Barber\ScheduleController` → constructor injection `ScheduleService`
 
 ### Giai đoạn 6 — Quản lý Booking
-- [x] 6.1 Dashboard Barber: danh sách booking theo ngày
-- [x] 6.2 Thợ xác nhận / từ chối booking
-- [x] 6.3 Thợ đánh dấu in_progress / completed
-- [x] 6.4 Client huỷ booking (có kiểm tra 2 tiếng)
-- [x] 6.5 Tạo `BookingPolicy`
+- [x] 6.1 Dashboard Barber: danh sách booking theo ngày (date picker, stats cards, booking list)
+- [x] 6.2 Thợ xác nhận / từ chối booking (Barber\BookingController + BookingService)
+- [x] 6.3 Thợ đánh dấu in_progress / completed (status transition + reopen slot khi reject/cancel)
+- [x] 6.4 Client huỷ booking (kiểm tra ≥2 tiếng trước giờ hẹn, form nhập lý do)
+- [x] 6.5 Tạo `BookingPolicy` (confirm, reject, start, complete, cancel)
+- [x] 6.6 Trang Booking theo tuần cho Barber (`/barber/bookings` — chuyển tuần, 7 ngày, stats tuần)
+- [x] 6.7 Trang Booking Admin (`/admin/bookings` — chọn thợ qua tabs, xem booking theo tuần)
+- [x] 6.8 Extract `barber/partials/booking-card.blade.php` — dùng chung cho dashboard + trang booking tuần
+- [x] 6.9 Sidebar: thêm mục Booking cho cả Admin và Barber
+
+### Giai đoạn 6+ — Enums + Events/Listeners Refactor
+- [x] 6+.1 Tạo Enums: `BookingStatus`, `TimeSlotStatus`, `UserRole` (app/Enums/)
+- [x] 6+.2 Cập nhật Models (Booking, TimeSlot, User) — thêm Enum casts
+- [x] 6+.3 Cập nhật BookingPolicy — dùng Enum thay string literals
+- [x] 6+.4 Cập nhật BookingService — dùng Enum + dispatch Events (BookingConfirmed, BookingCancelled, BookingCompleted)
+- [x] 6+.5 Cập nhật RoleMiddleware — dùng `UserRole::from()`
+- [x] 6+.6 Tạo Events: `BookingConfirmed`, `BookingCancelled`, `BookingCompleted`
+- [x] 6+.7 Tạo Listeners: `SendBookingConfirmedNotification`, `SendBookingCancelledNotification`, `SendBookingCompletedNotification`
+- [x] 6+.8 Đăng ký Events trong `AppServiceProvider::boot()`
+- [x] 6+.9 Cập nhật tất cả Controllers — dùng Enum thay string
+- [x] 6+.10 Cập nhật Blade views — dùng `@use()` + Enum + `->label()`
+- [x] 6+.11 Cập nhật TimeSlotService — dùng `TimeSlotStatus::Available`
+- [x] 6+.12 Xóa file thừa: `routes/customer.php`, `Customer/DashboardController.php`, `views/customer/`
+- [x] 6+.13 Sửa `RegisteredUserController` — route `customer.dashboard` → `client.profile.show`
+- [x] 6+.14 Sửa `web.php` — dùng `UserRole::Admin`, `UserRole::Barber` trong match
 
 ### Giai đoạn 7 — Review & Notification
 - [ ] 7.1 Form viết review (chỉ khi completed, chưa review)
 - [ ] 7.2 Hiển thị review + rating trên trang thợ
-- [ ] 7.3 Tạo Events: `BookingCreated`, `BookingConfirmed`, `BookingCancelled`
-- [ ] 7.4 In-app notification (ghi vào bảng `notifications`)
+- [x] 7.3 Tạo Events: `BookingConfirmed`, `BookingCancelled`, `BookingCompleted` (đã làm ở 6+)
+- [x] 7.4 In-app notification — Listeners ghi vào bảng `notifications` (đã làm ở 6+)
 - [ ] 7.5 (Tuỳ chọn) Email xác nhận booking
 
 ### Giai đoạn 8 — Báo cáo (Admin)
@@ -139,6 +160,8 @@ Cập nhật lần cuối  : 22/03/2026
 - **22/03/2026**: Booking không còn yêu cầu đăng nhập. Khách vãng lai có thể đặt lịch bằng cách điền tên + SĐT + email. Hệ thống tự `firstOrCreate` user theo email với mật khẩu ngẫu nhiên.
 - **22/03/2026**: Routes Breeze profile (`/profile`) đã đổi thành `/profile/breeze` để tránh xung đột với client profile route.
 - **22/03/2026**: Refactor Dependency Injection — tách business logic ra Service layer (BarberService, ServiceService, ScheduleService). Controllers chỉ còn nhận request + gọi service + trả response. Xóa duplicate DAY_LABELS giữa Admin & Barber ScheduleController.
+- **22/03/2026**: Giai đoạn 6 mở rộng thêm so với kế hoạch: (1) Trang Booking theo tuần cho Barber — tách riêng với Dashboard theo ngày; (2) Trang Booking Admin — chọn thợ qua tabs + xem booking theo tuần; (3) Buttons action dùng style outlined (border + text color) thay vì filled để dễ đọc hơn.
+- **22/03/2026**: Refactor lớn — thêm PHP Enums (`BookingStatus`, `TimeSlotStatus`, `UserRole`) thay thế toàn bộ string literals. Thêm Events/Listeners cho booking lifecycle (Confirmed, Cancelled, Completed) → tự động ghi notification vào DB. Xóa file thừa từ module Customer cũ (`routes/customer.php`, `Customer/DashboardController`, `views/customer/`). Sửa broken route `customer.dashboard` → `client.profile.show`.
 
 ---
 

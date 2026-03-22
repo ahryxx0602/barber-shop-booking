@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Barber;
 
+use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use Illuminate\Http\Request;
@@ -22,12 +23,12 @@ class DashboardController extends Controller
 
         $stats = [
             'total' => $bookings->count(),
-            'pending' => $bookings->where('status', 'pending')->count(),
-            'confirmed' => $bookings->where('status', 'confirmed')->count(),
-            'in_progress' => $bookings->where('status', 'in_progress')->count(),
-            'completed' => $bookings->where('status', 'completed')->count(),
-            'cancelled' => $bookings->where('status', 'cancelled')->count(),
-            'revenue' => $bookings->whereIn('status', ['confirmed', 'in_progress', 'completed'])->sum('total_price'),
+            'pending' => $bookings->where('status', BookingStatus::Pending)->count(),
+            'confirmed' => $bookings->where('status', BookingStatus::Confirmed)->count(),
+            'in_progress' => $bookings->where('status', BookingStatus::InProgress)->count(),
+            'completed' => $bookings->where('status', BookingStatus::Completed)->count(),
+            'cancelled' => $bookings->where('status', BookingStatus::Cancelled)->count(),
+            'revenue' => $bookings->whereIn('status', [BookingStatus::Confirmed, BookingStatus::InProgress, BookingStatus::Completed])->sum('total_price'),
         ];
 
         return view('barber.dashboard', compact('bookings', 'date', 'stats'));

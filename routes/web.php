@@ -1,5 +1,6 @@
 <?php
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Client\BarberController as ClientBarberController;
 use App\Http\Controllers\Client\BookingController as ClientBookingController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
@@ -33,8 +34,8 @@ Route::name('client.')->group(function () {
 Route::get('/dashboard', function () {
     $role = auth()->user()->role;
     return redirect(match ($role) {
-        'admin' => route('admin.dashboard'),
-        'barber' => route('barber.dashboard'),
+        UserRole::Admin => route('admin.dashboard'),
+        UserRole::Barber => route('barber.dashboard'),
         default => route('client.profile.show'),
     });
 })->middleware(['auth'])->name('dashboard');

@@ -1,3 +1,5 @@
+@use('App\Enums\BookingStatus')
+
 @extends('layouts.client')
 
 @section('title', 'Thong tin ca nhan')
@@ -92,16 +94,12 @@
                                     <div class="flex items-center gap-2 mb-1">
                                         <span class="text-sm font-semibold text-warm-gray">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</span>
                                         <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider
-                                            @if($booking->status === 'confirmed') bg-green-50 text-green-700 border border-green-200
-                                            @elseif($booking->status === 'pending') bg-yellow-50 text-yellow-700 border border-yellow-200
-                                            @elseif($booking->status === 'in_progress') bg-purple-50 text-purple-700 border border-purple-200
+                                            @if($booking->status === BookingStatus::Confirmed) bg-green-50 text-green-700 border border-green-200
+                                            @elseif($booking->status === BookingStatus::Pending) bg-yellow-50 text-yellow-700 border border-yellow-200
+                                            @elseif($booking->status === BookingStatus::InProgress) bg-purple-50 text-purple-700 border border-purple-200
                                             @else bg-surface text-muted border border-muted/20
                                             @endif">
-                                            @if($booking->status === 'confirmed') Xac nhan
-                                            @elseif($booking->status === 'pending') Cho xac nhan
-                                            @elseif($booking->status === 'in_progress') Dang thuc hien
-                                            @else {{ ucfirst($booking->status) }}
-                                            @endif
+                                            {{ $booking->status->label() }}
                                         </span>
                                     </div>
                                     <p class="text-sm text-muted">
@@ -115,7 +113,7 @@
                                 </div>
                             </div>
                             {{-- Cancel Button --}}
-                            @if(in_array($booking->status, ['pending', 'confirmed']))
+                            @if(in_array($booking->status, [BookingStatus::Pending, BookingStatus::Confirmed]))
                                 @php
                                     $appointmentTime = \Carbon\Carbon::parse($booking->booking_date . ' ' . $booking->start_time);
                                     $canCancel = now()->diffInMinutes($appointmentTime, false) >= 120;
@@ -174,14 +172,11 @@
                                 <div class="flex items-center gap-2 mb-1">
                                     <span class="text-sm font-semibold text-warm-gray">{{ \Carbon\Carbon::parse($booking->start_time)->format('H:i') }} - {{ \Carbon\Carbon::parse($booking->end_time)->format('H:i') }}</span>
                                     <span class="inline-flex items-center px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider
-                                        @if($booking->status === 'completed') bg-green-50 text-green-700 border border-green-200
-                                        @elseif($booking->status === 'cancelled') bg-red-50 text-red-700 border border-red-200
+                                        @if($booking->status === BookingStatus::Completed) bg-green-50 text-green-700 border border-green-200
+                                        @elseif($booking->status === BookingStatus::Cancelled) bg-red-50 text-red-700 border border-red-200
                                         @else bg-surface text-muted border border-muted/20
                                         @endif">
-                                        @if($booking->status === 'completed') Hoan thanh
-                                        @elseif($booking->status === 'cancelled') Da huy
-                                        @else {{ ucfirst($booking->status) }}
-                                        @endif
+                                        {{ $booking->status->label() }}
                                     </span>
                                 </div>
                                 <p class="text-sm text-muted">

@@ -1,3 +1,5 @@
+@use('App\Enums\BookingStatus')
+
 <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-5">
     <div class="flex flex-col sm:flex-row sm:items-start gap-4">
         {{-- Time --}}
@@ -12,18 +14,13 @@
                 <span class="font-semibold text-gray-800 dark:text-white">{{ $booking->customer->name }}</span>
                 {{-- Status Badge --}}
                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                    @if($booking->status === 'pending') bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
-                    @elseif($booking->status === 'confirmed') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
-                    @elseif($booking->status === 'in_progress') bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300
-                    @elseif($booking->status === 'completed') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
-                    @elseif($booking->status === 'cancelled') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                    @if($booking->status === BookingStatus::Pending) bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                    @elseif($booking->status === BookingStatus::Confirmed) bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                    @elseif($booking->status === BookingStatus::InProgress) bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300
+                    @elseif($booking->status === BookingStatus::Completed) bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                    @elseif($booking->status === BookingStatus::Cancelled) bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
                     @endif">
-                    @if($booking->status === 'pending') Cho xac nhan
-                    @elseif($booking->status === 'confirmed') Da xac nhan
-                    @elseif($booking->status === 'in_progress') Dang thuc hien
-                    @elseif($booking->status === 'completed') Hoan thanh
-                    @elseif($booking->status === 'cancelled') Da huy
-                    @endif
+                    {{ $booking->status->label() }}
                 </span>
             </div>
             <p class="text-sm text-gray-500 dark:text-gray-400">
@@ -53,9 +50,9 @@
     </div>
 
     {{-- Action Buttons --}}
-    @if($booking->status !== 'completed' && $booking->status !== 'cancelled')
+    @if($booking->status !== BookingStatus::Completed && $booking->status !== BookingStatus::Cancelled)
         <div class="mt-4 pt-4 border-t border-gray-100 dark:border-gray-700 flex flex-wrap gap-2">
-            @if($booking->status === 'pending')
+            @if($booking->status === BookingStatus::Pending)
                 <form method="POST" action="{{ route('barber.bookings.confirm', $booking) }}">
                     @csrf @method('PATCH')
                     <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 border-2 border-blue-600 text-blue-600 hover:bg-blue-600 hover:text-white text-sm font-semibold rounded-lg transition-colors">
@@ -82,7 +79,7 @@
                 </div>
             @endif
 
-            @if($booking->status === 'confirmed')
+            @if($booking->status === BookingStatus::Confirmed)
                 <form method="POST" action="{{ route('barber.bookings.start', $booking) }}">
                     @csrf @method('PATCH')
                     <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 border-2 border-purple-600 text-purple-600 hover:bg-purple-600 hover:text-white text-sm font-semibold rounded-lg transition-colors">
@@ -92,7 +89,7 @@
                 </form>
             @endif
 
-            @if($booking->status === 'in_progress')
+            @if($booking->status === BookingStatus::InProgress)
                 <form method="POST" action="{{ route('barber.bookings.complete', $booking) }}">
                     @csrf @method('PATCH')
                     <button type="submit" class="inline-flex items-center gap-1.5 px-4 py-2 border-2 border-green-600 text-green-600 hover:bg-green-600 hover:text-white text-sm font-semibold rounded-lg transition-colors">

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\Enums\TimeSlotStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreBookingRequest;
 use App\Models\Barber;
@@ -40,7 +41,7 @@ class BookingController extends Controller
 
         $slots = TimeSlot::where('barber_id', $request->barber_id)
             ->where('slot_date', $request->date)
-            ->where('status', 'available')
+            ->where('status', TimeSlotStatus::Available)
             ->orderBy('start_time')
             ->get()
             ->map(fn ($slot) => [

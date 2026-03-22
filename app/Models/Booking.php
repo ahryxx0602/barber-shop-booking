@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\BookingStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class Booking extends Model
@@ -20,6 +21,16 @@ class Booking extends Model
         'cancelled_at',
         'cancel_reason',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => BookingStatus::class,
+            'booking_date' => 'date',
+            'cancelled_at' => 'datetime',
+            'total_price' => 'decimal:2',
+        ];
+    }
 
     public function customer()
     {

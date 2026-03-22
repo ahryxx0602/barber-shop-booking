@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Barber;
 
+use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Services\BookingService;
@@ -48,9 +49,9 @@ class BookingController extends Controller
 
         $stats = [
             'total' => $bookings->count(),
-            'pending' => $bookings->where('status', 'pending')->count(),
-            'completed' => $bookings->where('status', 'completed')->count(),
-            'revenue' => $bookings->whereIn('status', ['confirmed', 'in_progress', 'completed'])->sum('total_price'),
+            'pending' => $bookings->where('status', BookingStatus::Pending)->count(),
+            'completed' => $bookings->where('status', BookingStatus::Completed)->count(),
+            'revenue' => $bookings->whereIn('status', [BookingStatus::Confirmed, BookingStatus::InProgress, BookingStatus::Completed])->sum('total_price'),
         ];
 
         $prevWeek = $weekStart->copy()->subWeek()->toDateString();

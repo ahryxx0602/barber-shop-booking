@@ -1,7 +1,7 @@
-# 💈 BarberBook — Hệ thống đặt lịch cắt tóc trực tuyến
+# BarberBook — Hệ thống đặt lịch cắt tóc trực tuyến
 
-> Đồ án tốt nghiệp — Phan Văn Thành — Khoa học Máy tính — Đại học Duy Tân  
-> Stack: **Laravel 12 + Blade + MySQL + Tailwind CSS + Alpine.js**
+> Đồ án tốt nghiệp — Phan Văn Thành — Khoa học Máy tính — Đại học Duy Tân
+> Stack: **Laravel 12 + Blade + SQLite + Tailwind CSS + Alpine.js**
 
 ---
 
@@ -13,9 +13,9 @@
 
 | Vai trò | Chức năng |
 |---|---|
-| **Khách hàng** | Xem thợ & dịch vụ, đặt lịch theo slot giờ, xem lịch sử, viết đánh giá, huỷ lịch |
-| **Thợ cắt** | Cài lịch làm việc, xem danh sách booking, xác nhận / từ chối, đánh dấu hoàn thành |
-| **Admin** | Quản lý thợ, dịch vụ, người dùng, xem báo cáo doanh thu |
+| **Khách hàng (Client)** | Xem thợ & dịch vụ, đặt lịch theo slot giờ (cả guest lẫn authenticated), xem lịch sử, viết đánh giá, huỷ lịch |
+| **Thợ cắt (Barber)** | Cài lịch làm việc, xem danh sách booking, xác nhận / từ chối, đánh dấu hoàn thành |
+| **Admin** | Quản lý thợ, dịch vụ, lịch làm việc, xem booking tất cả thợ, xem báo cáo doanh thu |
 
 ---
 
@@ -24,61 +24,61 @@
 ### 2.1 Tổng quan kiến trúc
 
 ```
-Request → Middleware → Controller → Service → Repository → Model → DB
-                                       ↓
-                                   Event/Listener
-                                       ↓
-                              Notification / Mail
+Request → Middleware(RoleMiddleware) → Controller → Service → Model → DB
+                                          ↓
+                                      Event/Listener
+                                          ↓
+                                    Notification (in-app)
 ```
 
 ### 2.2 Các Design Pattern sử dụng
-
-#### Repository Pattern
-Tách biệt logic truy vấn database khỏi Controller. Controller chỉ nhận request và trả response, không biết gì về DB.
-
-```
-app/Repositories/
-├── Contracts/
-│   ├── BookingRepositoryInterface.php
-│   └── BarberRepositoryInterface.php
-├── BookingRepository.php
-└── BarberRepository.php
-```
 
 #### Service Layer Pattern
 Toàn bộ business logic nằm trong Service. Controller gọi Service, không tự xử lý logic.
 
 ```
 app/Services/
-├── BookingService.php      ← tạo booking, huỷ, tính giá
-├── TimeSlotService.php     ← tính slot khả dụng, generate slot
-├── PaymentService.php      ← xử lý thanh toán
-└── NotificationService.php ← gửi thông báo
+├── BookingService.php      ← tạo booking, huỷ, xác nhận, hoàn thành
+├── BarberService.php       ← CRUD barber (tạo user + barber record)
+├── ScheduleService.php     ← quản lý working schedule + regenerate slots
+├── ServiceService.php      ← CRUD dịch vụ
+└── TimeSlotService.php     ← generate time slots từ working schedule
 ```
 
+#### Enum Pattern
+PHP 8.1 backed enums thay thế string literals, đảm bảo type-safety:
+
+```
+app/Enums/
+├── BookingStatus.php       ← Pending, Confirmed, InProgress, Completed, Cancelled
+├── TimeSlotStatus.php      ← Available, Booked
+└── UserRole.php            ← Admin, Barber, Customer
+```
+
+Mỗi Enum có methods: `label()` (tên tiếng Việt), `color()` (cho UI).
+`BookingStatus` có thêm `canTransitionTo()` để validate state machine.
+
 #### Observer / Event-Listener Pattern
-Dùng Laravel Events để gửi email và notification khi trạng thái booking thay đổi, tránh nhồi nhét logic vào Service.
+Dùng Laravel Events để gửi notification khi trạng thái booking thay đổi:
 
 ```
 app/Events/
-├── BookingCreated.php
 ├── BookingConfirmed.php
-└── BookingCancelled.php
+├── BookingCancelled.php
+└── BookingCompleted.php
 
 app/Listeners/
-├── SendBookingConfirmationEmail.php
-└── SendBookingNotification.php
+├── SendBookingConfirmedNotification.php
+├── SendBookingCancelledNotification.php
+└── SendBookingCompletedNotification.php
 ```
 
-#### Strategy Pattern (mở rộng sau)
-Cho phép thêm phương thức thanh toán mới mà không sửa code cũ.
+#### Policy Pattern
+Phân quyền hành động trên booking:
 
 ```
-app/Strategies/Payment/
-├── PaymentStrategyInterface.php
-├── CashStrategy.php
-├── VNPayStrategy.php
-└── MoMoStrategy.php
+app/Policies/
+└── BookingPolicy.php       ← confirm, reject, start, complete, cancel
 ```
 
 ---
@@ -88,27 +88,54 @@ app/Strategies/Payment/
 ```
 barbershop/
 ├── app/
+│   ├── Enums/
+│   │   ├── BookingStatus.php
+│   │   ├── TimeSlotStatus.php
+│   │   └── UserRole.php
+│   ├── Events/
+│   │   ├── BookingConfirmed.php
+│   │   ├── BookingCancelled.php
+│   │   └── BookingCompleted.php
+│   ├── Exceptions/
+│   │   └── SlotNotAvailableException.php
 │   ├── Http/
 │   │   ├── Controllers/
-│   │   │   ├── Customer/
-│   │   │   │   ├── BookingController.php
+│   │   │   ├── Client/
 │   │   │   │   ├── BarberController.php
-│   │   │   │   └── ReviewController.php
+│   │   │   │   ├── BookingController.php
+│   │   │   │   └── ProfileController.php
 │   │   │   ├── Barber/
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   ├── BookingController.php
+│   │   │   │   └── ScheduleController.php
+│   │   │   ├── Admin/
+│   │   │   │   ├── DashboardController.php
+│   │   │   │   ├── BarberController.php
+│   │   │   │   ├── ServiceController.php
 │   │   │   │   ├── ScheduleController.php
 │   │   │   │   └── BookingController.php
-│   │   │   └── Admin/
-│   │   │       ├── DashboardController.php
-│   │   │       ├── UserController.php
-│   │   │       ├── ServiceController.php
-│   │   │       └── BarberController.php
+│   │   │   └── Auth/
+│   │   │       ├── AuthenticatedSessionController.php
+│   │   │       ├── RegisteredUserController.php
+│   │   │       └── ...
 │   │   ├── Middleware/
-│   │   │   ├── RoleMiddleware.php
-│   │   │   └── EnsureBookingOwner.php
+│   │   │   └── RoleMiddleware.php
 │   │   └── Requests/
-│   │       ├── StoreBookingRequest.php
-│   │       └── StoreReviewRequest.php
-│   │
+│   │       ├── Admin/
+│   │       │   ├── StoreBarberRequest.php
+│   │       │   ├── UpdateBarberRequest.php
+│   │       │   ├── StoreServiceRequest.php
+│   │       │   └── UpdateServiceRequest.php
+│   │       ├── Barber/
+│   │       │   └── UpdateScheduleRequest.php
+│   │       ├── Client/
+│   │       │   └── StoreBookingRequest.php
+│   │       └── Auth/
+│   │           └── LoginRequest.php
+│   ├── Listeners/
+│   │   ├── SendBookingConfirmedNotification.php
+│   │   ├── SendBookingCancelledNotification.php
+│   │   └── SendBookingCompletedNotification.php
 │   ├── Models/
 │   │   ├── User.php
 │   │   ├── Barber.php
@@ -120,35 +147,51 @@ barbershop/
 │   │   ├── Payment.php
 │   │   ├── Review.php
 │   │   └── Notification.php
-│   │
+│   ├── Policies/
+│   │   └── BookingPolicy.php
+│   ├── Providers/
+│   │   └── AppServiceProvider.php
 │   ├── Services/
-│   ├── Repositories/
-│   ├── Events/
-│   ├── Listeners/
+│   │   ├── BookingService.php
+│   │   ├── BarberService.php
+│   │   ├── ScheduleService.php
+│   │   ├── ServiceService.php
+│   │   └── TimeSlotService.php
 │   └── Console/Commands/
-│       └── GenerateTimeSlots.php   ← artisan command tạo slot hàng ngày
+│       └── GenerateTimeSlots.php
 │
-├── database/
-│   ├── migrations/
-│   ├── seeders/
-│   └── factories/
-│
-├── resources/
-│   └── views/
-│       ├── layouts/
-│       │   ├── app.blade.php       ← layout khách hàng
-│       │   ├── barber.blade.php    ← layout thợ
-│       │   └── admin.blade.php     ← layout admin
-│       ├── customer/
-│       ├── barber/
-│       ├── admin/
-│       └── emails/
+├── resources/views/
+│   ├── layouts/
+│   │   ├── client.blade.php
+│   │   ├── tailadmin.blade.php
+│   │   ├── tailbarber.blade.php
+│   │   ├── guest.blade.php
+│   │   └── app.blade.php
+│   ├── client/
+│   │   ├── barbers/ (index, show)
+│   │   ├── booking/ (create, confirmation)
+│   │   └── profile/ (show, edit)
+│   ├── barber/
+│   │   ├── bookings/ (index)
+│   │   ├── partials/ (booking-card)
+│   │   ├── schedule/ (edit)
+│   │   └── dashboard.blade.php
+│   ├── admin/
+│   │   ├── barbers/ (index, create, edit)
+│   │   ├── services/ (index, create, edit)
+│   │   ├── bookings/ (index)
+│   │   ├── schedules/ (index, edit)
+│   │   └── dashboard.blade.php
+│   ├── auth/
+│   ├── components/
+│   └── partials/
 │
 └── routes/
-    ├── web.php
-    ├── customer.php
-    ├── barber.php
-    └── admin.php
+    ├── web.php         ← client routes + dashboard redirect
+    ├── admin.php       ← admin routes (role:admin middleware)
+    ├── barber.php      ← barber routes (role:barber,admin middleware)
+    ├── auth.php        ← Laravel Breeze auth routes
+    └── console.php     ← scheduler commands
 ```
 
 ---
@@ -180,7 +223,7 @@ users ──────────── notifications (1-n)
 | email | varchar(191) | unique |
 | phone | varchar(20) | nullable |
 | password | varchar(255) | |
-| role | enum | `customer`, `barber`, `admin` |
+| role | enum | `customer`, `barber`, `admin` — cast → `UserRole` |
 | avatar | varchar(255) | nullable, đường dẫn ảnh |
 | email_verified_at | timestamp | nullable |
 | remember_token | varchar | |
@@ -219,8 +262,6 @@ users ──────────── notifications (1-n)
 
 ### Bảng: `working_schedules`
 
-Lưu lịch làm việc mặc định mỗi tuần của thợ.
-
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
 | id | bigint PK | |
@@ -234,20 +275,15 @@ Lưu lịch làm việc mặc định mỗi tuần của thợ.
 
 ### Bảng: `time_slots`
 
-Slot giờ cụ thể cho từng ngày, được generate từ `working_schedules`.
-
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
 | id | bigint PK | |
 | barber_id | bigint FK | references barbers.id |
-| slot_date | date | ngày cụ thể |
+| slot_date | date | ngày cụ thể — cast → `date` |
 | start_time | time | |
 | end_time | time | |
-| status | enum | `available`, `booked`, `blocked` |
+| status | enum | `available`, `booked` — cast → `TimeSlotStatus` |
 | created_at / updated_at | timestamp | |
-
-**Unique:** `(barber_id, slot_date, start_time)`  
-**Index:** `(barber_id, slot_date, status)` để query nhanh
 
 ---
 
@@ -260,22 +296,15 @@ Slot giờ cụ thể cho từng ngày, được generate từ `working_schedule
 | customer_id | bigint FK | references users.id |
 | barber_id | bigint FK | references barbers.id |
 | time_slot_id | bigint FK | references time_slots.id |
-| booking_date | date | |
+| booking_date | date | cast → `date` |
 | start_time | time | snapshot từ time_slot |
 | end_time | time | tính theo tổng duration dịch vụ |
-| total_price | decimal(10,2) | tổng tiền snapshot |
-| status | enum | `pending`, `confirmed`, `in_progress`, `completed`, `cancelled` |
-| note | text | nullable, ghi chú của khách |
-| cancelled_at | timestamp | nullable |
+| total_price | decimal(10,2) | cast → `decimal:2` |
+| status | enum | cast → `BookingStatus` |
+| note | text | nullable |
+| cancelled_at | timestamp | nullable, cast → `datetime` |
 | cancel_reason | text | nullable |
 | created_at / updated_at | timestamp | |
-
-**Luồng trạng thái:**
-```
-pending → confirmed → in_progress → completed
-        ↘ cancelled (khách huỷ)
-                    ↘ cancelled (thợ từ chối)
-```
 
 ---
 
@@ -289,8 +318,6 @@ pending → confirmed → in_progress → completed
 | price_snapshot | decimal(10,2) | **giá tại thời điểm đặt** |
 | duration_snapshot | int | **thời gian tại thời điểm đặt** |
 
-> ⚠️ Quan trọng: Snapshot lại giá và duration để tránh bị ảnh hưởng khi admin sửa giá dịch vụ về sau.
-
 ---
 
 ### Bảng: `payments`
@@ -302,7 +329,7 @@ pending → confirmed → in_progress → completed
 | amount | decimal(10,2) | |
 | method | enum | `cash`, `vnpay`, `momo` |
 | status | enum | `pending`, `paid`, `refunded` |
-| transaction_id | varchar(255) | nullable, mã giao dịch từ cổng |
+| transaction_id | varchar(255) | nullable |
 | paid_at | timestamp | nullable |
 | created_at / updated_at | timestamp | |
 
@@ -313,14 +340,12 @@ pending → confirmed → in_progress → completed
 | Cột | Kiểu | Ghi chú |
 |---|---|---|
 | id | bigint PK | |
-| booking_id | bigint FK | unique (chỉ review 1 lần/booking) |
+| booking_id | bigint FK | unique |
 | customer_id | bigint FK | |
 | barber_id | bigint FK | |
 | rating | tinyint | 1–5 |
 | comment | text | nullable |
 | created_at / updated_at | timestamp | |
-
-**Ràng buộc:** Chỉ được review khi booking có status = `completed`.
 
 ---
 
@@ -330,29 +355,26 @@ pending → confirmed → in_progress → completed
 |---|---|---|
 | id | bigint PK | |
 | user_id | bigint FK | |
-| type | varchar(50) | `booking_created`, `booking_confirmed`, `booking_cancelled`... |
-| title | varchar(255) | |
 | message | text | |
-| is_read | boolean | default false |
+| read_at | timestamp | nullable |
 | created_at / updated_at | timestamp | |
 
 ---
 
 ## 5. Phân quyền (Role & Permission)
 
-Dùng **Laravel Gate + Policy** (không cần package ngoài cho đồ án cơ bản).
+Dùng **Laravel Gate + Policy + Enum** (không cần package ngoài).
 
 ```php
-// Middleware kiểm tra role
-Route::middleware(['auth', 'role:customer'])->group(...);
-Route::middleware(['auth', 'role:barber'])->group(...);
+// Middleware kiểm tra role (dùng UserRole enum)
 Route::middleware(['auth', 'role:admin'])->group(...);
+Route::middleware(['auth', 'role:barber,admin'])->group(...);
 ```
 
-| Hành động | Customer | Barber | Admin |
+| Hành động | Client | Barber | Admin |
 |---|:---:|:---:|:---:|
 | Xem danh sách thợ / dịch vụ | ✅ | ✅ | ✅ |
-| Tạo booking | ✅ | ❌ | ✅ |
+| Tạo booking | ✅ (+ guest) | ❌ | ✅ |
 | Huỷ booking của mình | ✅ | ❌ | ✅ |
 | Xác nhận / từ chối booking | ❌ | ✅ | ✅ |
 | Cài working schedule | ❌ | ✅ | ✅ |
@@ -366,30 +388,13 @@ Route::middleware(['auth', 'role:admin'])->group(...);
 ## 6. Artisan Commands tự định nghĩa
 
 ```bash
-# Tự động generate time slots cho 7 ngày tới (chạy qua Scheduler hằng ngày)
+# Tự động generate time slots cho 7 ngày tới
 php artisan slots:generate
 
-# Tự động huỷ booking pending quá 30 phút không có xác nhận
+# Tự động huỷ booking pending quá 30 phút
 php artisan bookings:expire
 ```
 
 ---
 
-## 7. Công nghệ sử dụng
-
-| Thành phần | Công nghệ |
-|---|---|
-| Backend Framework | Laravel 12 |
-| Template Engine | Blade |
-| CSS Framework | Tailwind CSS v3 |
-| JS nhẹ (UI) | Alpine.js |
-| Database | MySQL 8 |
-| Authentication | Laravel Breeze |
-| Email | Laravel Mail + Mailtrap (dev) |
-| Queue | Laravel Queue (database driver) |
-| Scheduler | Laravel Task Scheduling |
-| Version Control | Git + GitHub |
-
----
-
-*Tài liệu này mô tả toàn bộ kiến trúc và database của hệ thống BarberBook. Xem file `02_development_plan.md` để biết kế hoạch thực hiện chi tiết từng giai đoạn.*
+*Tài liệu này mô tả toàn bộ kiến trúc và database của hệ thống BarberBook. Xem file `02developer-plan.md` để biết kế hoạch thực hiện chi tiết từng giai đoạn.*

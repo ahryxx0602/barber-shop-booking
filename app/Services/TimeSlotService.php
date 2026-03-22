@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\TimeSlotStatus;
 use App\Models\TimeSlot;
 use App\Models\WorkingSchedule;
 use Carbon\Carbon;
@@ -35,7 +36,7 @@ class TimeSlotService
                 'start_time' => $current->format('H:i:s'),
             ], [
                 'end_time' => $current->copy()->addMinutes(30)->format('H:i:s'),
-                'status' => 'available',
+                'status' => TimeSlotStatus::Available,
             ]);
             $current->addMinutes(30);
         }

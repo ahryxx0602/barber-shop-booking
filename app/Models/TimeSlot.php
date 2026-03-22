@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TimeSlotStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class TimeSlot extends Model
@@ -13,6 +14,14 @@ class TimeSlot extends Model
         'end_time',
         'status',
     ];
+
+    protected function casts(): array
+    {
+        return [
+            'status' => TimeSlotStatus::class,
+            'slot_date' => 'date',
+        ];
+    }
 
     public function barber()
     {

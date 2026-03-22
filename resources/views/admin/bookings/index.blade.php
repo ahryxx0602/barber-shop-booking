@@ -1,3 +1,5 @@
+@use('App\Enums\BookingStatus')
+
 @extends('layouts.tailadmin')
 
 @section('page', 'adminBookings')
@@ -115,18 +117,13 @@
                                             <div class="flex items-center gap-2 mb-2">
                                                 <span class="font-semibold text-gray-800 dark:text-white">{{ $booking->customer->name }}</span>
                                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                                    @if($booking->status === 'pending') bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
-                                                    @elseif($booking->status === 'confirmed') bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
-                                                    @elseif($booking->status === 'in_progress') bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300
-                                                    @elseif($booking->status === 'completed') bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
-                                                    @elseif($booking->status === 'cancelled') bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
+                                                    @if($booking->status === BookingStatus::Pending) bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300
+                                                    @elseif($booking->status === BookingStatus::Confirmed) bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300
+                                                    @elseif($booking->status === BookingStatus::InProgress) bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300
+                                                    @elseif($booking->status === BookingStatus::Completed) bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300
+                                                    @elseif($booking->status === BookingStatus::Cancelled) bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300
                                                     @endif">
-                                                    @if($booking->status === 'pending') Cho xac nhan
-                                                    @elseif($booking->status === 'confirmed') Da xac nhan
-                                                    @elseif($booking->status === 'in_progress') Dang thuc hien
-                                                    @elseif($booking->status === 'completed') Hoan thanh
-                                                    @elseif($booking->status === 'cancelled') Da huy
-                                                    @endif
+                                                    {{ $booking->status->label() }}
                                                 </span>
                                             </div>
                                             <p class="text-sm text-gray-500 dark:text-gray-400">

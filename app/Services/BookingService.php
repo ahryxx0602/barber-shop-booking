@@ -2,6 +2,12 @@
 
 namespace App\Services;
 
+use App\Enums\BookingStatus;
+use App\Enums\TimeSlotStatus;
+use App\Enums\UserRole;
+use App\Events\BookingCancelled;
+use App\Events\BookingCompleted;
+use App\Events\BookingConfirmed;
 use App\Exceptions\SlotNotAvailableException;
 use App\Models\Booking;
 use App\Models\Service;
@@ -18,7 +24,7 @@ class BookingService
         return DB::transaction(function () use ($data, $customer) {
             $slot = TimeSlot::lockForUpdate()->findOrFail($data['time_slot_id']);
 
-            if ($slot->status !== 'available') {
+            if ($slot->status !== TimeSlotStatus::Available) {
                 throw new SlotNotAvailableException('Slot nay vua duoc dat, vui long chon lai.');
             }
 
@@ -41,7 +47,7 @@ class BookingService
                 'end_time' => $endTime,
                 'total_price' => $totalPrice,
                 'note' => $data['note'] ?? null,
-                'status' => 'pending',
+                'status' => BookingStatus::Pending,
             ]);
 
             foreach ($services as $service) {
@@ -51,7 +57,7 @@ class BookingService
                 ]);
             }
 
-            $slot->update(['status' => 'booked']);
+            $slot->update(['status' => TimeSlotStatus::Booked]);
 
             return $booking;
         });
@@ -65,14 +71,16 @@ class BookingService
                 'name' => $data['guest_name'],
                 'phone' => $data['guest_phone'],
                 'password' => bcrypt(Str::random(32)),
-                'role' => 'customer',
+                'role' => UserRole::Customer,
             ]
         );
     }
 
     public function confirm(Booking $booking): Booking
     {
-        $booking->update(['status' => 'confirmed']);
+        $booking->update(['status' => BookingStatus::Confirmed]);
+
+        event(new BookingConfirmed($booking));
 
         return $booking;
     }
@@ -81,12 +89,14 @@ class BookingService
     {
         return DB::transaction(function () use ($booking, $reason) {
             $booking->update([
-                'status' => 'cancelled',
+                'status' => BookingStatus::Cancelled,
                 'cancelled_at' => now(),
                 'cancel_reason' => $reason ?? 'Thu tu choi lich hen',
             ]);
 
             $this->reopenSlot($booking);
+
+            event(new BookingCancelled($booking));
 
             return $booking;
         });
@@ -94,14 +104,16 @@ class BookingService
 
     public function start(Booking $booking): Booking
     {
-        $booking->update(['status' => 'in_progress']);
+        $booking->update(['status' => BookingStatus::InProgress]);
 
         return $booking;
     }
 
     public function complete(Booking $booking): Booking
     {
-        $booking->update(['status' => 'completed']);
+        $booking->update(['status' => BookingStatus::Completed]);
+
+        event(new BookingCompleted($booking));
 
         return $booking;
     }
@@ -110,12 +122,14 @@ class BookingService
     {
         return DB::transaction(function () use ($booking, $reason) {
             $booking->update([
-                'status' => 'cancelled',
+                'status' => BookingStatus::Cancelled,
                 'cancelled_at' => now(),
                 'cancel_reason' => $reason ?? 'Khach hang huy lich',
             ]);
 
             $this->reopenSlot($booking);
+
+            event(new BookingCancelled($booking));
 
             return $booking;
         });
@@ -124,7 +138,7 @@ class BookingService
     protected function reopenSlot(Booking $booking): void
     {
         if ($booking->time_slot_id) {
-            TimeSlot::where('id', $booking->time_slot_id)->update(['status' => 'available']);
+            TimeSlot::where('id', $booking->time_slot_id)->update(['status' => TimeSlotStatus::Available]);
         }
     }
 

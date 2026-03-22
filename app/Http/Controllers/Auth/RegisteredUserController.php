@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Auth;
 
+use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\User;
 use Illuminate\Auth\Events\Registered;
@@ -42,13 +43,13 @@ class RegisteredUserController extends Controller
             'password' => Hash::make($request->password),
         ]);
 
-        $user->role = 'customer';
+        $user->role = UserRole::Customer;
         $user->save();
 
         event(new Registered($user));
 
         Auth::login($user);
 
-        return redirect(route('customer.dashboard', absolute: false));
+        return redirect(route('client.profile.show', absolute: false));
     }
 }

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -19,8 +20,8 @@ class ProfileController extends Controller
             ->orderByDesc('start_time')
             ->get();
 
-        $upcomingBookings = $bookings->filter(fn ($b) => $b->booking_date >= now()->toDateString() && !in_array($b->status, ['cancelled', 'completed']));
-        $pastBookings = $bookings->filter(fn ($b) => $b->booking_date < now()->toDateString() || in_array($b->status, ['cancelled', 'completed']));
+        $upcomingBookings = $bookings->filter(fn ($b) => $b->booking_date >= now()->toDateString() && !in_array($b->status, [BookingStatus::Cancelled, BookingStatus::Completed]));
+        $pastBookings = $bookings->filter(fn ($b) => $b->booking_date < now()->toDateString() || in_array($b->status, [BookingStatus::Cancelled, BookingStatus::Completed]));
 
         return view('client.profile.show', compact('user', 'upcomingBookings', 'pastBookings'));
     }
