@@ -1,15 +1,20 @@
 # Classic Cut - Barbershop Booking System
 
-Hệ thống đặt lịch cắt tóc trực tuyến (Barbershop) được xây dựng bằng Laravel 11, với thiết kế giao diện Classic/Vintage đặc trưng. Dự án hỗ trợ đa người dùng (Admin, Thợ cắt tóc, Khách hàng) với các luồng nghiệp vụ đầy đủ từ đặt lịch, thanh toán đến báo cáo thống kê.
+Hệ thống đặt lịch cắt tóc trực tuyến (Barbershop) được xây dựng bằng Laravel 11, với thiết kế giao diện Classic/Vintage đặc trưng. Dự án hỗ trợ 4 vai trò người dùng (Admin, Thợ cắt tóc, Khách hàng đã đăng ký, Khách vãng lai) với các luồng nghiệp vụ đầy đủ từ đặt lịch, thanh toán đến báo cáo thống kê.
 
 ## 🌟 Chức năng nổi bật
 
-### Dành cho Khách hàng
+### Dành cho Khách hàng (Client)
 - Giao diện đẹp mắt mang phong cách vintage.
 - Đặt lịch qua 4 bước (Booking Wizard): Chọn dịch vụ -> Chọn thợ -> Chọn giờ -> Điền thông tin.
-- Hệ thống thanh toán tích hợp **VNPay**.
-- Quản lý lịch hẹn cá nhân, huỷ lịch, đánh giá dịch vụ.
-- Hỗ trợ khách vãng lai đặt lịch mà không cần tạo tài khoản trước (hệ thống tự tạo tài khoản guest).
+- Hệ thống thanh toán tích hợp **VNPay** và **MoMo** (Sandbox).
+- Quản lý lịch hẹn cá nhân, huỷ lịch (trước 2 giờ), đánh giá dịch vụ (Rating/Review).
+- Quản lý hồ sơ cá nhân, upload avatar.
+
+### Dành cho Khách vãng lai (Guest)
+- Đặt lịch **không cần đăng ký tài khoản** — chỉ cần điền Tên, SĐT, Email.
+- Hệ thống tự động tạo tài khoản guest ngầm (`findOrCreateGuest`).
+- Sau khi có tài khoản, khách vãng lai có thể đăng nhập để xem lại lịch sử booking.
 
 ### Dành cho Thợ cắt tóc (Barber)
 - Dashboard quản lý công việc riêng biệt.
@@ -28,7 +33,16 @@ Hệ thống đặt lịch cắt tóc trực tuyến (Barbershop) được xây 
 - **Backend:** Laravel 11.x, PHP 8.2+
 - **Frontend:** Blade Templates, Tailwind CSS (Vanilla setup), Alpine.js
 - **Database:** MySQL
-- **Others:** Chart.js, VNPay SDK
+- **Payment:** VNPay Sandbox, MoMo Sandbox
+- **Others:** Chart.js
+
+## 🔒 Bảo mật
+- **Payment Idempotency** — Callback VNPay/MoMo chống xử lý trùng lặp.
+- **MoMo Signature Verification** — HMAC SHA256 chống giả mạo webhook.
+- **VNPay IPN** — Server-to-server callback đảm bảo cập nhật thanh toán.
+- **FSM Guard** — Booking status chỉ chuyển trạng thái hợp lệ (`canTransitionTo`).
+- **Rate Limiting** — Chống spam đặt lịch/thanh toán (`throttle:5,1`).
+- **Pessimistic Locking** — `lockForUpdate()` chống double-booking time slot.
 
 ## 🚀 Hướng dẫn cài đặt
 
@@ -85,5 +99,13 @@ Dự án sử dụng file `index.css` với các CSS Custom Properties để duy
 - Colors: `--v-ink`, `--v-cream`, `--v-copper`, `--v-surface`
 - Fonts: Serif (Playfair Display) và Sans (Inter)
 
+## 📚 Tài liệu dự án
+
+| Tài liệu | Mô tả |
+|-----------|-------|
+| [Kiến trúc hệ thống](docs/architecture.md) | Service Layer Pattern, cấu trúc thư mục, luồng booking, FSM, bảo mật |
+| [Database Schema](docs/database-schema.md) | ERD diagram + chi tiết 10 bảng |
+| [API Routes](docs/api-routes.md) | Tất cả routes theo role (Client, Admin, Barber) |
+| [Tính năng chi tiết](docs/features.md) | 4 vai trò, thanh toán, tự động hoá, thiết kế |
+
 ---
-*Dự án được xây dựng dưới sự hỗ trợ chuyên môn và tối ưu hoá luồng hệ thống toàn diện.*

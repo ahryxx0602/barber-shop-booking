@@ -312,13 +312,21 @@ $bookings->where('status', 'completed')
 ---
 
 ## 9. Bảo mật cần nhớ
-
-- **CSRF**: Blade tự động có `@csrf` trong form, không bỏ sót
+- **CSRF**: Blade tự động có `@csrf` trong form, không bỏ sót. Ngoại lệ: route IPN từ payment gateway cần `->withoutMiddleware(['csrf'])`
 - **Authorization**: Luôn dùng `$this->authorize()` trong Controller hoặc `Policy` trước khi xử lý
 - **Mass assignment**: Khai báo `$fillable` đầy đủ trong Model, không dùng `$guarded = []`
 - **SQL Injection**: Luôn dùng Eloquent hoặc Query Builder với binding, không nối chuỗi SQL
 - **File upload**: Validate `mimes`, `max` size; lưu bằng `Storage::disk('public')`, không lưu thẳng vào `public/`
+- **Rate Limiting**: Dùng `throttle:5,1` middleware cho POST routes nhạy cảm (booking, payment)
 
+### Payment Security
+- **Idempotency**: Luôn check `$payment->status` đã là `Paid`/`Failed` chưa trước khi xử lý callback
+- **Signature Verification**: Dùng `hash_equals()` (timing-safe) để verify HMAC signature từ gateway
+- **IPN Endpoint**: Server-to-server callback luôn cần route riêng, exclude CSRF, return JSON response code
+
+### FSM Guard — Booking Status
+- Luôn gọi `$booking->status->canTransitionTo(...)` trước khi `update(['status' => ...])` trong Service
+- Throw `InvalidArgumentException` nếu transition không hợp lệ
 ---
 
 ## 10. Một số helper hay dùng trong project

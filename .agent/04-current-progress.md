@@ -8,8 +8,8 @@
 ## Trạng thái hiện tại
 
 ```
-Giai đoạn đang làm : Hoàn thành
-Bước đang làm      : Hoàn thành toàn bộ dự án
+Giai đoạn đang làm : 10 — Post-Review Improvements
+Bước đang làm      : Hoàn thành 9 cải thiện từ review
 Cập nhật lần cuối  : 23/03/2026
 ```
 
@@ -34,7 +34,8 @@ Cập nhật lần cuối  : 23/03/2026
 | 8 | Báo cáo doanh thu (Admin) | ✅ Hoàn thành |
 | 8+ | Quản lý tài khoản (Admin) | ✅ Hoàn thành |
 | 8++ | DTO Refactor + Fix Barber Bookings | ✅ Hoàn thành |
-| 9 | Kiểm thử & Hoàn thiện | ⬜ Chưa bắt đầu |
+| 9 | Kiểm thử & Hoàn thiện | ✅ Hoàn thành |
+| 10 | Post-Review Improvements | ✅ Hoàn thành |
 
 ---
 
@@ -206,6 +207,18 @@ Cập nhật lần cuối  : 23/03/2026
 - [x] 23/03/2026: Giai đoạn 8++ hoàn thành — DTO Refactor + Fix Barber Bookings: (1) Tạo 6 DTO classes trong `app/DTOs/` (`CreateBookingData`, `CreateBarberData`, `UpdateBarberData`, `StoreReviewData`, `ScheduleItemData`, `UpdateScheduleData`) — dùng PHP 8.2 readonly class + named arguments; (2) Refactor 4 Services (`BookingService`, `BarberService`, `ReviewService`, `ScheduleService`) — thay `array $data` bằng typed DTO; (3) Refactor 5 Controllers dùng `DTO::fromRequest()` / `DTO::fromArray()`; (4) Fix giao diện `barber/bookings/index.blade.php` — chuyển từ card-based sang compact table style giống admin (grouped by day, inline action icon buttons); (5) Fix lỗi filter `booking_date` (Carbon vs string) trong `Barber\BookingController` — dùng `filter()` với `format('Y-m-d')` giống admin; (6) Cập nhật `03-Conventions.md` thêm quy ước DTO.
 - **23/03/2026**: Bước 9.8 hoàn thành — Audit & Tối ưu 7 lỗi N+1 Queries: (1) `ScheduleService` dùng `upsert` gom 14 queries thành 1; (2) `TimeSlotService` pre-load schedule 7 ngày trước loop; (3) `BarberService` và `ReviewService` eager load models tránh queries ẩn; (4) Thêm `load('user')` trong `Admin\ScheduleController`; (5) Dùng `withCount('reviews')` cho danh sách thợ cắt tóc của client; (6) Gom 5 truy vấn `count()` riêng rẽ trên dashboard admin thành 2 câu `selectRaw` tổng hợp kết hợp `CASE WHEN`. Thống kê SQL queries giảm đáng kể tại các trang tải nặng.
 - **23/03/2026**: Tích hợp thanh toán Sandbox — (1) Chuyển toàn bộ VNPay Sandbox timestamp sang `Asia/Ho_Chi_Minh` để chặn báo lỗi Session Timeout ngay lúc redirect do Server/App chạy múi giờ default; (2) Redesign trang Chọn Phương Thức Thanh Toán thành `Layout 2 Cột` (Summary đơn hàng + Nút radio thanh toán) cho Tablet/Desktop nhằm loại bỏ action cuộn chuột làm gãy UI luồng thanh toán; (3) Sử dụng custom `v-btn-primary` thay vì btn viền mỏng nhỏ cho form confirm thanh toán để đồng bộ hệ thống nút lớn toàn site.
+- **23/03/2026**: Giai đoạn 10 hoàn thành — Post-Review Improvements (9 items): (1) Idempotency check VNPay/MoMo callback; (2) MoMo HMAC SHA256 signature verification; (3) VNPay IPN server-to-server endpoint + CSRF excluded route; (4) FSM `canTransitionTo()` guard trong BookingService (5 transitions); (5) Rate limiting `throttle:5,1` cho booking/payment POST routes; (6) Batch `upsert()` thay `firstOrCreate` loop trong TimeSlotService; (7) `Http::post()` thay raw cURL cho MoMo; (8) Thêm log cho `start()` method; (9) Thêm `PaymentStatus::Failed` enum + migration.
+
+### Giai đoạn 10 — Post-Review Improvements
+- [x] 10.1 Idempotency check cho VNPay/MoMo callback (PaymentService)
+- [x] 10.2 MoMo callback signature verification — HMAC SHA256 (PaymentService)
+- [x] 10.3 VNPay IPN endpoint — server-to-server (PaymentController + web.php)
+- [x] 10.4 Enforce `canTransitionTo()` FSM guard — 5 transitions (BookingService)
+- [x] 10.5 Rate limiting `throttle:5,1` cho POST /booking và POST /payment/{booking}
+- [x] 10.6 Batch `upsert()` thay `firstOrCreate` loop (TimeSlotService)
+- [x] 10.7 `Http::post()` thay raw cURL cho MoMo API (PaymentService)
+- [x] 10.8 Thêm log cho `start()` method + xoá dead code (BookingService)
+- [x] 10.9 Thêm `PaymentStatus::Failed` enum case + migration bổ sung DB enum
 
 ---
 
@@ -214,9 +227,9 @@ Cập nhật lần cuối  : 23/03/2026
 Khi hoàn thành 1 bước, đổi `- [ ]` thành `- [x]` và cập nhật phần "Trạng thái hiện tại":
 
 ```
-Giai đoạn đang làm : 6 — Quản lý Booking
-Bước đang làm      : 6.1 — Dashboard Barber
-Cập nhật lần cuối  : 22/03/2026
+Giai đoạn đang làm : Hoàn thành
+Bước đang làm      : Hoàn thành toàn bộ dự án
+Cập nhật lần cuối  : 23/03/2026
 ```
 
 Khi hoàn thành cả giai đoạn, đổi `⬜ Chưa bắt đầu` thành `✅ Hoàn thành` trong bảng tổng quan.
