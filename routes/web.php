@@ -7,6 +7,7 @@ use App\Http\Controllers\Client\FavoriteBarberController as ClientFavoriteBarber
 use App\Http\Controllers\Client\PaymentController as ClientPaymentController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
 use App\Http\Controllers\Client\ReviewController as ClientReviewController;
+use App\Http\Controllers\Client\WaitlistController as ClientWaitlistController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
 
@@ -43,6 +44,7 @@ Route::name('client.')->group(function () {
         Route::patch('/booking/{booking}/cancel', [ClientBookingController::class, 'cancel'])->name('booking.cancel');
         Route::post('/reviews', [ClientReviewController::class, 'store'])->name('reviews.store');
         Route::post('/barbers/{barber}/favorite', [ClientFavoriteBarberController::class, 'toggle'])->name('barbers.favorite');
+        Route::post('/waitlist', [ClientWaitlistController::class, 'store'])->name('waitlist.store');
     });
 });
 
