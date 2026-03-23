@@ -29,5 +29,9 @@ Thumbs.db
 /_agent
 /_agents
 GEMINI.md
+Security.md
+Monitoring.md
+Caching.md
 .cursorrules
 .cursor/
+/example
