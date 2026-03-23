@@ -27,6 +27,7 @@
                 Chỉnh sửa
             </a>
         </div>
+        </div>
 
         @if(session('success'))
             <div style="margin-bottom:24px;padding:16px;border:1px solid var(--v-copper);background:rgba(176,137,104,0.06);color:var(--v-copper-dk);font-size:14px;font-weight:500;">
