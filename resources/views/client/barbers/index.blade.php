@@ -71,6 +71,14 @@
                                         </div>
                                     @endif
                                 </div>
+                                @auth
+                                <button type="button" @click.prevent="toggleFavorite($event, {{ $barber->id }}, $el)"
+                                    style="position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid var(--v-rule);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:all 0.2s;box-shadow:2px 2px 0 rgba(0,0,0,0.1);"
+                                    onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+                                    <span class="material-symbols-outlined {{ auth()->user()->favoriteBarbers->contains($barber->id) ? 'fill' : '' }}" 
+                                          style="font-size:16px; transition:color 0.2s; color:{{ auth()->user()->favoriteBarbers->contains($barber->id) ? '#dc2626' : 'var(--v-muted)' }};">favorite</span>
+                                </button>
+                                @endauth
                                 <div class="corner corner-tl"></div>
                                 <div class="corner corner-br"></div>
                             </div>
@@ -107,9 +115,9 @@
                 <div x-show="showAll" x-transition.duration.300ms style="margin-top:24px;">
                     <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:16px;">
                         @foreach($barbers as $barber)
-                        <a href="{{ route('client.barbers.show', $barber) }}" style="text-decoration:none;display:block;border:1px solid var(--v-rule);background:#fff;overflow:hidden;transition:box-shadow 0.2s,transform 0.2s;"
+                        <a href="{{ route('client.barbers.show', $barber) }}" style="position:relative;text-decoration:none;display:block;border:1px solid var(--v-rule);background:#fff;overflow:hidden;transition:box-shadow 0.2s,transform 0.2s;"
                             onmouseover="this.style.boxShadow='3px 3px 0 var(--v-copper)';this.style.transform='translate(-1px,-1px)'" onmouseout="this.style.boxShadow='none';this.style.transform=''">
-                            <div style="aspect-ratio:1/1;width:100%;background:var(--v-surface);overflow:hidden;">
+                            <div style="aspect-ratio:1/1;width:100%;background:var(--v-surface);overflow:hidden;position:relative;">
                                 @if($barber->user->avatar)
                                     <img src="{{ Storage::url($barber->user->avatar) }}" alt="{{ $barber->user->name }}"
                                         class="v-img-grayscale" style="width:100%;height:100%;object-fit:cover;display:block;" />
@@ -177,6 +185,35 @@
 
 @push('scripts')
 <script>
+function toggleFavorite(event, barberId, btn) {
+    if (event) event.preventDefault();
+    const icon = btn.querySelector('span');
+    fetch(`/barbers/${barberId}/favorite`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(res => {
+        if (!res.ok) {
+            if (res.status === 401) window.location.href = '/login';
+            throw new Error('Unauthorized or Error');
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.status === 'attached') {
+            icon.classList.add('fill');
+            icon.style.color = '#dc2626';
+        } else {
+            icon.classList.remove('fill');
+            icon.style.color = 'var(--v-muted)';
+        }
+    })
+    .catch(err => console.error(err));
+}
+
 function scrollCarousel() {
     return {
         init() {

@@ -57,9 +57,21 @@
                     <p style="font-size:13px;line-height:1.7;color:var(--v-muted);margin-bottom:16px;">{{ Str::limit($barber->bio, 150) }}</p>
                     @endif
 
-                    <a href="{{ route('client.booking.create') }}?barber_id={{ $barber->id }}" class="v-btn-primary" style="align-self:flex-start;height:44px;padding:0 28px;font-size:9px;">
-                        Đặt lịch ngay
-                    </a>
+                    <div style="display:flex;align-items:center;gap:12px;margin-top:auto;">
+                        <a href="{{ route('client.booking.create') }}?barber_id={{ $barber->id }}" class="v-btn-primary" style="height:44px;padding:0 28px;font-size:9px;">
+                            Đặt lịch ngay
+                        </a>
+                        
+                        @auth
+                        <button type="button" @click.prevent="toggleFavorite($event, {{ $barber->id }}, $el)"
+                            style="width:44px;height:44px;border-radius:2px;background:#fff;border:1px solid var(--v-rule);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;box-shadow:4px 4px 0 var(--v-copper);"
+                            onmouseover="this.style.boxShadow='2px 2px 0 var(--v-copper-dk)';this.style.transform='translate(2px,2px)'" 
+                            onmouseout="this.style.boxShadow='4px 4px 0 var(--v-copper)';this.style.transform='translate(0,0)'">
+                            <span class="material-symbols-outlined {{ auth()->user()->favoriteBarbers->contains($barber->id) ? 'fill' : '' }}" 
+                                  style="font-size:20px; transition:color 0.2s; color:{{ auth()->user()->favoriteBarbers->contains($barber->id) ? '#dc2626' : 'var(--v-muted)' }};">favorite</span>
+                        </button>
+                        @endauth
+                    </div>
                 </div>
             </div>
         </div>
@@ -179,5 +191,38 @@
         .sm\:h-auto { height: auto; }
     }
 </style>
+@endpush
+
+@push('scripts')
+<script>
+function toggleFavorite(event, barberId, btn) {
+    if (event) event.preventDefault();
+    const icon = btn.querySelector('span');
+    fetch(`/barbers/${barberId}/favorite`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'X-CSRF-TOKEN': '{{ csrf_token() }}'
+        }
+    })
+    .then(res => {
+        if (!res.ok) {
+            if (res.status === 401) window.location.href = '/login';
+            throw new Error('Unauthorized or Error');
+        }
+        return res.json();
+    })
+    .then(data => {
+        if (data.status === 'attached') {
+            icon.classList.add('fill');
+            icon.style.color = '#dc2626';
+        } else {
+            icon.classList.remove('fill');
+            icon.style.color = 'var(--v-muted)';
+        }
+    })
+    .catch(err => console.error(err));
+}
+</script>
 @endpush
 @endsection
