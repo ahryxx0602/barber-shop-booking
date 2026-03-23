@@ -16,6 +16,7 @@ use App\Models\TimeSlot;
 use App\Models\User;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class BookingService
@@ -60,6 +61,13 @@ class BookingService
 
             $slot->update(['status' => TimeSlotStatus::Booked]);
 
+            Log::channel('booking')->info('Booking created', [
+                'booking_code' => $booking->booking_code,
+                'customer_id'  => $customer->id,
+                'barber_id'    => $data->barber_id,
+                'total_price'  => $totalPrice,
+            ]);
+
             return $booking;
         });
     }
@@ -81,6 +89,10 @@ class BookingService
     {
         $booking->update(['status' => BookingStatus::Confirmed]);
 
+        Log::channel('booking')->info('Booking confirmed', [
+            'booking_code' => $booking->booking_code,
+        ]);
+
         event(new BookingConfirmed($booking));
 
         return $booking;
@@ -96,6 +108,11 @@ class BookingService
             ]);
 
             $this->reopenSlot($booking);
+
+            Log::channel('booking')->info('Booking rejected', [
+                'booking_code' => $booking->booking_code,
+                'reason'       => $reason,
+            ]);
 
             event(new BookingCancelled($booking));
 
@@ -114,6 +131,10 @@ class BookingService
     {
         $booking->update(['status' => BookingStatus::Completed]);
 
+        Log::channel('booking')->info('Booking completed', [
+            'booking_code' => $booking->booking_code,
+        ]);
+
         event(new BookingCompleted($booking));
 
         return $booking;
@@ -129,6 +150,11 @@ class BookingService
             ]);
 
             $this->reopenSlot($booking);
+
+            Log::channel('booking')->info('Booking cancelled', [
+                'booking_code' => $booking->booking_code,
+                'reason'       => $reason,
+            ]);
 
             event(new BookingCancelled($booking));
 

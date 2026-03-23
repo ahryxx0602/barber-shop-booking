@@ -14,6 +14,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $middleware->alias([
             'role' => \App\Http\Middleware\RoleMiddleware::class,
         ]);
+
+        // Ghi log hành động thay đổi dữ liệu (POST/PUT/PATCH/DELETE)
+        $middleware->web(append: [
+            \App\Http\Middleware\LogActivity::class,
+            \App\Http\Middleware\SecurityHeaders::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         //

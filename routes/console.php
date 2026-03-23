@@ -11,3 +11,9 @@ Artisan::command('inspire', function () {
 // Tự động generate time slots cho 7 ngày tới, chạy hằng ngày lúc 00:30
 Schedule::command('slots:generate')->dailyAt('00:30');
 
+// Tự động huỷ booking pending quá 30 phút, chạy mỗi 5 phút
+Schedule::command('bookings:expire')->everyFiveMinutes();
+
+// Dọn dẹp log cũ hơn 30 ngày, chạy mỗi Chủ nhật lúc 02:00
+Schedule::command('logs:cleanup')->weeklyOn(0, '02:00');
+

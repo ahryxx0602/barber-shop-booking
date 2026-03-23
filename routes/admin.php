@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
+use App\Http\Controllers\Admin\SystemLogController;
 use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
@@ -32,4 +33,7 @@ Route::middleware(['auth', 'role:admin'])
         // Báo cáo
         Route::get('reports/chart-data', [ReportController::class, 'chartData'])->name('reports.chartData');
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
+
+        // Hệ thống
+        Route::get('system/logs', [SystemLogController::class, 'index'])->name('system.logs');
     });
