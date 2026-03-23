@@ -17,8 +17,12 @@ class ReportController extends Controller
         $overview = $this->reportService->getMonthlyOverview();
         $dailyRevenue = $this->reportService->getDailyRevenue();
         $availableYears = $this->reportService->getAvailableYears();
+        $topBarbers = $this->reportService->getTopBarbers();
+        $topServices = $this->reportService->getTopServices();
 
-        return view('admin.reports.index', compact('overview', 'dailyRevenue', 'availableYears'));
+        return view('admin.reports.index', compact(
+            'overview', 'dailyRevenue', 'availableYears', 'topBarbers', 'topServices'
+        ));
     }
 
     /**

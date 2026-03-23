@@ -19,6 +19,7 @@
 | **6** | Quản lý booking (Barber + Customer) | 2–3 ngày |
 | **7** | Review & Notification | 2 ngày |
 | **8** | Báo cáo doanh thu (Admin) | 1–2 ngày |
+| **8+** | Quản lý tài khoản (Admin) | 1 ngày |
 | **9** | Kiểm thử & hoàn thiện UI | 3–4 ngày |
 
 ---
@@ -855,6 +856,62 @@ Top thợ theo số booking completed, top dịch vụ theo số lần được 
 ---
 
 ---
+
+## 👥 Giai đoạn 8+ — Quản lý tài khoản (Admin) *(bổ sung)*
+
+**Mục tiêu:** Admin xem, sửa, bật/tắt tài khoản người dùng (customer, barber, admin). Không tạo user mới từ đây (barber tạo qua module Thợ cắt, customer tự đăng ký).
+
+### Bước 8+.1 — Tạo `Admin\UserController` + routes
+
+```bash
+# Tạo thủ công: app/Http/Controllers/Admin/UserController.php
+```
+
+**Methods:**
+- `index(Request)` — danh sách users, hỗ trợ filter `?role=customer|barber|admin` và `?search=...` (tìm theo name, email, phone). Phân trang 15/trang.
+- `show(User)` — chi tiết user. Nếu user là customer → kèm lịch sử 10 booking gần nhất. Nếu user là barber → kèm info barber (rating, experience_years).
+- `edit(User)` — form sửa thông tin.
+- `update(Request, User)` — lưu thay đổi. Validate: name (required, max:255), email (required, email, unique bỏ qua current), phone (nullable, max:20).
+- `toggleActive(User)` — bật/tắt trạng thái tài khoản (thêm cột `is_active` vào bảng `users` nếu chưa có, hoặc dùng soft soft-delete). Admin không toggle chính mình.
+
+**Routes (thêm vào `routes/admin.php`):**
+```php
+Route::resource('users', UserController::class)->only(['index', 'show', 'edit', 'update']);
+Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggleActive');
+```
+
+### Bước 8+.2 — View `admin/users/index.blade.php`
+
+Danh sách dạng bảng:
+- Cột: Avatar | Tên | Email | SĐT | Vai trò (badge màu) | Trạng thái | Ngày tạo | Actions
+- Filter bar: dropdown chọn role + ô tìm kiếm (name/email/phone)
+- Badge role: Admin = đỏ, Barber = xanh dương, Customer = xanh lá
+- Pagination 15/trang
+- Nút: Xem chi tiết, Sửa
+
+### Bước 8+.3 — View `admin/users/show.blade.php`
+
+Card thông tin user + phần bổ sung tuỳ role:
+- **Customer:** Bảng 10 booking gần nhất (mã booking, ngày, thợ, trạng thái, tổng tiền)
+- **Barber:** Info barber (bio, kinh nghiệm, rating, số booking tháng này)
+- **Admin:** Chỉ hiển thị thông tin cơ bản
+
+### Bước 8+.4 — View `admin/users/edit.blade.php`
+
+Form sửa:
+- Tên, Email, SĐT
+- Dropdown đổi vai trò (chỉ cho phép đổi nếu phù hợp — ví dụ không đổi barber sang customer nếu đang có booking active)
+- Nút toggle "Kích hoạt / Vô hiệu hoá" (confirm dialog)
+- Không cho sửa/vô hiệu admin đang đăng nhập
+
+### Bước 8+.5 — Thêm mục "Người dùng" vào sidebar admin
+
+Thêm menu item vào `partials/tailadmin-sidebar.blade.php`, đặt giữa "Booking" và "Báo cáo":
+- Icon: Users (SVG)
+- Link: `{{ route('admin.users.index') }}`
+- Active state khi đang ở `/admin/users*`
+
+**✅ Kiểm tra giai đoạn 8+:** Admin thấy danh sách users, filter theo role, xem chi tiết, sửa thông tin, toggle active/inactive.
 
 ## 🧪 Giai đoạn 9 — Kiểm thử & Hoàn thiện
 

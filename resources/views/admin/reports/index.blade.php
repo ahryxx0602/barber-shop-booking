@@ -161,6 +161,104 @@
         </div>
     </div>
 
+    {{-- Top Thợ & Top Dịch vụ --}}
+    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+
+        {{-- Top Thợ theo doanh thu --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Top thợ cắt</h3>
+                <span class="text-xs text-gray-400 dark:text-gray-500">Theo doanh thu tháng này</span>
+            </div>
+
+            @if (count($topBarbers) > 0)
+                <div class="space-y-3">
+                    @foreach ($topBarbers as $index => $barber)
+                        <div class="flex items-center gap-3 p-3 rounded-lg {{ $index === 0 ? 'bg-amber-50 dark:bg-amber-500/5 border border-amber-100 dark:border-amber-500/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50' }} transition-colors">
+                            {{-- Rank badge --}}
+                            <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
+                                {{ $index === 0 ? 'bg-amber-400 text-white' : ($index === 1 ? 'bg-gray-300 dark:bg-gray-500 text-white' : ($index === 2 ? 'bg-orange-400 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400')) }}">
+                                {{ $index + 1 }}
+                            </div>
+
+                            {{-- Avatar --}}
+                            @if ($barber['avatar'])
+                                <img src="{{ asset('storage/' . $barber['avatar']) }}" alt="{{ $barber['name'] }}"
+                                    class="w-9 h-9 rounded-full object-cover flex-shrink-0">
+                            @else
+                                <div class="w-9 h-9 rounded-full bg-green-100 dark:bg-green-500/10 flex items-center justify-center flex-shrink-0">
+                                    <span class="text-sm font-medium text-green-600 dark:text-green-400">{{ mb_substr($barber['name'], 0, 1) }}</span>
+                                </div>
+                            @endif
+
+                            {{-- Info --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-white truncate">{{ $barber['name'] }}</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500">{{ $barber['bookings'] }} booking · ⭐ {{ number_format($barber['rating'], 1) }}</p>
+                            </div>
+
+                            {{-- Revenue --}}
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ number_format($barber['revenue'], 0, ',', '.') }} ₫</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Chưa có dữ liệu</p>
+            @endif
+        </div>
+
+        {{-- Top Dịch vụ theo số lần đặt --}}
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Top dịch vụ</h3>
+                <span class="text-xs text-gray-400 dark:text-gray-500">Theo số lần đặt tháng này</span>
+            </div>
+
+            @if (count($topServices) > 0)
+                <div class="space-y-3">
+                    @foreach ($topServices as $index => $service)
+                        <div class="flex items-center gap-3 p-3 rounded-lg {{ $index === 0 ? 'bg-blue-50 dark:bg-blue-500/5 border border-blue-100 dark:border-blue-500/10' : 'hover:bg-gray-50 dark:hover:bg-gray-700/50' }} transition-colors">
+                            {{-- Rank badge --}}
+                            <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold
+                                {{ $index === 0 ? 'bg-blue-500 text-white' : ($index === 1 ? 'bg-gray-300 dark:bg-gray-500 text-white' : ($index === 2 ? 'bg-orange-400 text-white' : 'bg-gray-100 dark:bg-gray-700 text-gray-500 dark:text-gray-400')) }}">
+                                {{ $index + 1 }}
+                            </div>
+
+                            {{-- Service image --}}
+                            @if ($service['image'])
+                                <img src="{{ asset('storage/' . $service['image']) }}" alt="{{ $service['name'] }}"
+                                    class="w-9 h-9 rounded-lg object-cover flex-shrink-0">
+                            @else
+                                <div class="w-9 h-9 rounded-lg bg-blue-100 dark:bg-blue-500/10 flex items-center justify-center flex-shrink-0">
+                                    <svg class="w-4 h-4 text-blue-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                        <path stroke-linecap="round" stroke-linejoin="round" d="M14.121 14.121L19 19m-7-7l7-7m-7 7l-2.879 2.879M12 12L9.121 9.121m0 5.758a3 3 0 10-4.243 4.243 3 3 0 004.243-4.243z" />
+                                    </svg>
+                                </div>
+                            @endif
+
+                            {{-- Info --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-white truncate">{{ $service['name'] }}</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500">{{ number_format($service['price'], 0, ',', '.') }} ₫/lần</p>
+                            </div>
+
+                            {{-- Times booked --}}
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-sm font-semibold text-gray-800 dark:text-white">{{ $service['times_booked'] }} lần</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500">{{ number_format($service['revenue'], 0, ',', '.') }} ₫</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Chưa có dữ liệu</p>
+            @endif
+        </div>
+
+    </div>
+
     {{-- Ghi chú --}}
     <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
         <p class="text-sm text-gray-500 dark:text-gray-400">

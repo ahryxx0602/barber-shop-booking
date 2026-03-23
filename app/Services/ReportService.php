@@ -4,9 +4,12 @@ namespace App\Services;
 
 use App\Enums\BookingStatus;
 use App\Enums\UserRole;
+use App\Models\Barber;
 use App\Models\Booking;
+use App\Models\Service;
 use App\Models\User;
 use Carbon\Carbon;
+use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
@@ -159,6 +162,73 @@ class ReportService
         }
 
         return $years;
+    }
+
+    /**
+     * Top thợ theo doanh thu (tháng hiện tại).
+     */
+    public function getTopBarbers(int $limit = 5): array
+    {
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        $revenueStatuses = [
+            BookingStatus::Confirmed,
+            BookingStatus::InProgress,
+            BookingStatus::Completed,
+        ];
+
+        return Barber::select('barbers.*')
+            ->selectRaw('COALESCE(SUM(bookings.total_price), 0) as total_revenue')
+            ->selectRaw('COUNT(bookings.id) as total_bookings')
+            ->leftJoin('bookings', function ($join) use ($startOfMonth, $endOfMonth, $revenueStatuses) {
+                $join->on('barbers.id', '=', 'bookings.barber_id')
+                    ->whereBetween('bookings.booking_date', [$startOfMonth, $endOfMonth])
+                    ->whereIn('bookings.status', $revenueStatuses);
+            })
+            ->with('user:id,name,avatar')
+            ->groupBy('barbers.id')
+            ->orderByDesc('total_revenue')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($barber) => [
+                'name' => $barber->user->name,
+                'avatar' => $barber->user->avatar,
+                'revenue' => (float) $barber->total_revenue,
+                'bookings' => (int) $barber->total_bookings,
+                'rating' => (float) $barber->rating,
+            ])
+            ->toArray();
+    }
+
+    /**
+     * Top dịch vụ theo số lần đặt (tháng hiện tại).
+     */
+    public function getTopServices(int $limit = 5): array
+    {
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        return Service::select('services.id', 'services.name', 'services.price', 'services.image')
+            ->selectRaw('COUNT(booking_services.id) as times_booked')
+            ->selectRaw('COALESCE(SUM(booking_services.price_snapshot), 0) as total_revenue')
+            ->leftJoin('booking_services', 'services.id', '=', 'booking_services.service_id')
+            ->leftJoin('bookings', function ($join) use ($startOfMonth, $endOfMonth) {
+                $join->on('booking_services.booking_id', '=', 'bookings.id')
+                    ->whereBetween('bookings.booking_date', [$startOfMonth, $endOfMonth]);
+            })
+            ->groupBy('services.id', 'services.name', 'services.price', 'services.image')
+            ->orderByDesc('times_booked')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($service) => [
+                'name' => $service->name,
+                'price' => (float) $service->price,
+                'image' => $service->image,
+                'times_booked' => (int) $service->times_booked,
+                'revenue' => (float) $service->total_revenue,
+            ])
+            ->toArray();
     }
 
     /**
