@@ -48,6 +48,10 @@ Hệ thống đặt lịch cắt tóc trực tuyến. Tên: **BarberBook**.
 | `barber` | `/barber/...` | `layouts.tailbarber` | `UserRole::Barber` |
 | `admin` | `/admin/...` | `layouts.tailadmin` | `UserRole::Admin` |
 
+Auth pages (login, register, forgot/reset password, verify email, confirm password): dùng `layouts.client` — **không dùng** `layouts.guest`.
+
+Error pages (403, 404, 419, 429, 500, 503): standalone HTML vintage — **không dùng** layout nào.
+
 Middleware bảo vệ: `role:admin`, `role:barber,admin`
 
 ---

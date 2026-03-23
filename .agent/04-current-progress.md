@@ -9,8 +9,8 @@
 
 ```
 Giai đoạn đang làm : 8 — Báo cáo doanh thu (Admin)
-Bước đang làm      : 8.1 — Trang báo cáo tổng quan
-Cập nhật lần cuối  : 22/03/2026
+Bước đang làm      : 8.2 — Biểu đồ doanh thu theo ngày
+Cập nhật lần cuối  : 23/03/2026
 ```
 
 ---
@@ -30,7 +30,8 @@ Cập nhật lần cuối  : 22/03/2026
 | 6 | Quản lý Booking (Barber + Client) | ✅ Hoàn thành |
 | 6+ | Enums + Events/Listeners refactor | ✅ Hoàn thành |
 | 7 | Review & Notification | ✅ Hoàn thành |
-| 8 | Báo cáo doanh thu (Admin) | ⬜ Chưa bắt đầu |
+| 7+ | Auth Pages & Error Pages Vintage Redesign | ✅ Hoàn thành |
+| 8 | Báo cáo doanh thu (Admin) | 🔄 Đang làm |
 | 9 | Kiểm thử & Hoàn thiện | ⬜ Chưa bắt đầu |
 
 ---
@@ -138,8 +139,22 @@ Cập nhật lần cuối  : 22/03/2026
 - [x] 7.5 Notification bell trên header Barber & Admin — dropdown hiển thị thông báo chưa đọc + đánh dấu đã đọc
 - [ ] 7.6 (Tuỳ chọn) Email xác nhận booking — bỏ qua, không cần cho demo
 
+### Giai đoạn 7+ — Auth Pages & Error Pages Vintage Redesign (bổ sung)
+- [x] 7+.1 Redesign trang Login (`auth/login.blade.php`) — dùng `layouts.client`, vintage card style, show/hide password toggle (Alpine.js)
+- [x] 7+.2 Redesign trang Register (`auth/register.blade.php`) — vintage card, validate fields, link đăng nhập
+- [x] 7+.3 Redesign trang Forgot Password (`auth/forgot-password.blade.php`) — vintage card, gửi link reset
+- [x] 7+.4 Redesign trang Reset Password (`auth/reset-password.blade.php`) — vintage card, xác nhận mật khẩu mới
+- [x] 7+.5 Redesign trang Verify Email (`auth/verify-email.blade.php`) — vintage card, gửi lại email xác thực
+- [x] 7+.6 Redesign trang Confirm Password (`auth/confirm-password.blade.php`) — vintage card
+- [x] 7+.7 Xóa chức năng tự xóa tài khoản — bỏ `destroy()` khỏi ProfileController, xóa route `profile.destroy`, giữ lại `delete-user-form.blade.php` (không sử dụng)
+- [x] 7+.8 Thêm chức năng upload avatar cho Client — `Client\ProfileController::update()` hỗ trợ upload ảnh avatar, validate `image|mimes:jpg,jpeg,png,webp|max:2048`
+- [x] 7+.9 Hiển thị avatar trong Client nav — `layouts/client.blade.php` hiện avatar user trong navigation (desktop + mobile)
+- [x] 7+.10 Thêm upload avatar cho Breeze ProfileController — `ProfileController::update()` cũng hỗ trợ avatar upload
+- [x] 7+.11 Hiển thị avatar trong Admin & Barber header — `partials/tailadmin-header.blade.php` và `partials/tailbarber-header.blade.php` hiện avatar user
+- [x] 7+.12 Tạo 6 trang lỗi tuỳ chỉnh vintage style — `errors/403.blade.php`, `404.blade.php`, `419.blade.php`, `429.blade.php`, `500.blade.php`, `503.blade.php` — standalone HTML (không dùng layout), custom CSS với theme vintage
+
 ### Giai đoạn 8 — Báo cáo (Admin)
-- [ ] 8.1 Trang báo cáo tổng quan
+- [x] 8.1 Trang báo cáo tổng quan — ReportService + Admin\ReportController + view admin/reports/index + sidebar
 - [ ] 8.2 Biểu đồ doanh thu theo ngày (Chart.js)
 - [ ] 8.3 Bảng top thợ, top dịch vụ
 
@@ -164,6 +179,7 @@ Cập nhật lần cuối  : 22/03/2026
 - **22/03/2026**: Giai đoạn 6 mở rộng thêm so với kế hoạch: (1) Trang Booking theo tuần cho Barber — tách riêng với Dashboard theo ngày; (2) Trang Booking Admin — chọn thợ qua tabs + xem booking theo tuần; (3) Buttons action dùng style outlined (border + text color) thay vì filled để dễ đọc hơn.
 - **22/03/2026**: Refactor lớn — thêm PHP Enums (`BookingStatus`, `TimeSlotStatus`, `UserRole`) thay thế toàn bộ string literals. Thêm Events/Listeners cho booking lifecycle (Confirmed, Cancelled, Completed) → tự động ghi notification vào DB. Xóa file thừa từ module Customer cũ (`routes/customer.php`, `Customer/DashboardController`, `views/customer/`). Sửa broken route `customer.dashboard` → `client.profile.show`.
 - **22/03/2026**: Giai đoạn 7 hoàn thành — (1) ReviewService + StoreReviewRequest + ReviewController: client viết review cho booking completed, tự cập nhật barber rating trung bình; (2) Trang thợ có rating summary bar (biểu đồ phân bố sao) + danh sách review có toggle "xem tất cả"; (3) Notification bell trên header Barber & Admin — dropdown hiển thị 10 thông báo chưa đọc + nút "đánh dấu tất cả đã đọc"; (4) Sửa Listeners thiếu trường `type`/`title` khi tạo notification.
+- **23/03/2026**: Giai đoạn 7+ hoàn thành — (1) Redesign toàn bộ 6 trang auth (login, register, forgot-password, reset-password, verify-email, confirm-password) sang vintage barbershop style, dùng `layouts.client` thay vì `layouts.guest`; (2) Xóa chức năng tự xóa tài khoản (destroy) khỏi ProfileController và routes; (3) Thêm upload avatar cho client profile (`Client\ProfileController`) và Breeze profile (`ProfileController`); (4) Hiển thị avatar user trong navigation client, admin header, barber header; (5) Tạo 6 trang lỗi tuỳ chỉnh (403, 404, 419, 429, 500, 503) với vintage standalone design — mỗi trang có icon riêng, animation CSS, nội dung tiếng Việt phù hợp.
 
 ---
 

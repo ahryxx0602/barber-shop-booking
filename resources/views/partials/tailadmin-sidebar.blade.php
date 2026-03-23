@@ -167,6 +167,20 @@
           </li>
           <!-- /Booking -->
 
+          <!-- Menu: Báo cáo -->
+          <li>
+            <a href="{{ route('admin.reports.index') }}" @click="selected = 'BaoCao'" class="menu-item group"
+              :class="selected === 'BaoCao' ? 'menu-item-active' : 'menu-item-inactive'">
+              <svg :class="selected === 'BaoCao' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
+                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18 20V10M12 20V4M6 20v-6" />
+              </svg>
+              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Báo cáo</span>
+            </a>
+          </li>
+          <!-- /Báo cáo -->
+
         </ul>
       </div>
       <!-- /Menu Group CHÍNH -->

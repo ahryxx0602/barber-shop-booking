@@ -185,9 +185,27 @@ barbershop/
 │   │   ├── bookings/ (index)
 │   │   ├── schedules/ (index, edit)
 │   │   └── dashboard.blade.php
-│   ├── auth/
+│   ├── auth/                       ← vintage style, dùng layouts.client
+│   │   ├── login.blade.php
+│   │   ├── register.blade.php
+│   │   ├── forgot-password.blade.php
+│   │   ├── reset-password.blade.php
+│   │   ├── verify-email.blade.php
+│   │   └── confirm-password.blade.php
+│   ├── errors/                     ← standalone vintage HTML (không dùng layout)
+│   │   ├── 403.blade.php
+│   │   ├── 404.blade.php
+│   │   ├── 419.blade.php
+│   │   ├── 429.blade.php
+│   │   ├── 500.blade.php
+│   │   └── 503.blade.php
+│   ├── profile/                    ← Breeze profile (admin/barber)
+│   │   ├── edit.blade.php
+│   │   └── partials/
 │   ├── components/
 │   └── partials/
+│       ├── tailadmin-header.blade.php  ← avatar + notification bell
+│       └── tailbarber-header.blade.php ← avatar + notification bell
 │
 └── routes/
     ├── web.php         ← client routes + dashboard redirect

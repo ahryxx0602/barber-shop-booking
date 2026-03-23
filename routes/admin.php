@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\BarberController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
 use Illuminate\Support\Facades\Route;
@@ -22,4 +23,7 @@ Route::middleware(['auth', 'role:admin'])
 
         // Booking
         Route::get('bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+
+        // Báo cáo
+        Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     });
