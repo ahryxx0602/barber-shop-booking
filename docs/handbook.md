@@ -20,7 +20,8 @@
 11. [Middleware — Bộ lọc request](#11-middleware--bộ-lọc-request)
 12. [Policy — Phân quyền chi tiết](#12-policy--phân-quyền-chi-tiết)
 13. [Console Commands — Tác vụ nền](#13-console-commands--tác-vụ-nền)
-14. [Tổng kết sơ đồ kiến trúc](#14-tổng-kết-sơ-đồ-kiến-trúc)
+14. [Database Schema — Sơ đồ CSDL](#14-database-schema--sơ-đồ-cơ-sở-dữ-liệu)
+15. [Tổng kết sơ đồ kiến trúc](#15-tổng-kết-sơ-đồ-kiến-trúc)
 
 ---
 
@@ -309,36 +310,159 @@ enum BookingStatus: string
 }
 ```
 
-**Đặc biệt: Có FSM (Finite State Machine)** — Kiểm soát chuyển trạng thái hợp lệ:
+**Đặc biệt: Có FSM (Finite State Machine) — Máy trạng thái hữu hạn**
+
+#### FSM là gì?
+
+FSM = **quy tắc kiểm soát một đối tượng chỉ được chuyển từ trạng thái A sang trạng thái B theo đúng luồng cho phép**, không được nhảy loạn.
+
+**Ví dụ đời thực — Đèn giao thông:**
+```
+Xanh ──→ Vàng ──→ Đỏ ──→ Xanh (lặp lại)
+
+✅ Xanh → Vàng     (hợp lệ)
+✅ Vàng → Đỏ       (hợp lệ)
+❌ Xanh → Đỏ       (KHÔNG hợp lệ — phải qua Vàng trước)
+❌ Đỏ → Vàng       (KHÔNG hợp lệ — đèn đỏ chỉ chuyển sang Xanh)
+```
+
+Đèn giao thông **KHÔNG THỂ** nhảy lung tung. Booking cũng vậy!
+
+#### Sơ đồ FSM của Booking trong dự án
 
 ```
-Pending ──→ Confirmed ──→ InProgress ──→ Completed
-   │             │
-   └──→ Cancelled ←──┘
+                    ┌─────────────────────────────────────────────────┐
+                    │          BOOKING STATE MACHINE                   │
+                    │                                                 │
+                    │   ┌──────────┐    xác nhận    ┌──────────┐     │
+                    │   │ PENDING  │ ──────────────→│CONFIRMED │     │
+                    │   │(Chờ xác  │                │(Đã xác   │     │
+                    │   │  nhận)   │                │  nhận)   │     │
+                    │   └────┬─────┘                └────┬─────┘     │
+                    │        │                           │           │
+                    │        │ từ chối/                   │ bắt đầu  │
+                    │        │ khách hủy      khách hủy  │ phục vụ  │
+                    │        │                    │       │           │
+                    │        ▼                    ▼       ▼           │
+                    │   ┌──────────┐         ┌──────────┐            │
+                    │   │CANCELLED │         │IN_PROGRESS│            │
+                    │   │(Đã hủy)  │         │(Đang phục│            │
+                    │   │          │         │   vụ)    │            │
+                    │   └──────────┘         └────┬─────┘            │
+                    │   (Trạng thái               │                  │
+                    │    cuối cùng)          hoàn thành               │
+                    │                             │                  │
+                    │                             ▼                  │
+                    │                        ┌──────────┐            │
+                    │                        │COMPLETED │            │
+                    │                        │(Hoàn     │            │
+                    │                        │  thành)  │            │
+                    │                        └──────────┘            │
+                    │                        (Trạng thái             │
+                    │                         cuối cùng)             │
+                    └─────────────────────────────────────────────────┘
 ```
+
+#### Bảng chuyển trạng thái đầy đủ
+
+| Trạng thái hiện tại | Được chuyển sang | KHÔNG được chuyển sang |
+|---------------------|-----------------|----------------------|
+| **Pending** | ✅ Confirmed, ✅ Cancelled | ❌ InProgress, ❌ Completed |
+| **Confirmed** | ✅ InProgress, ✅ Cancelled | ❌ Pending, ❌ Completed |
+| **InProgress** | ✅ Completed | ❌ Pending, ❌ Confirmed, ❌ Cancelled |
+| **Completed** | _(không chuyển được nữa)_ | ❌ Tất cả |
+| **Cancelled** | _(không chuyển được nữa)_ | ❌ Tất cả |
+
+#### Ví dụ cụ thể: Hợp lệ vs Không hợp lệ
+
+```
+✅ HỢP LỆ — Luồng bình thường:
+   Pending → Confirmed → InProgress → Completed
+   "Khách đặt → Barber xác nhận → Bắt đầu cắt → Cắt xong"
+
+✅ HỢP LỆ — Khách hủy sớm:
+   Pending → Cancelled
+   "Khách đặt → Khách đổi ý, hủy"
+
+✅ HỢP LỆ — Barber từ chối:
+   Pending → Cancelled
+   "Khách đặt → Barber bận, từ chối"
+
+✅ HỢP LỆ — Khách hủy sau khi xác nhận:
+   Pending → Confirmed → Cancelled
+   "Khách đặt → Barber xác nhận → Khách hủy (trước 2 tiếng)"
+
+❌ KHÔNG HỢP LỆ:
+   Pending → Completed     ← Chưa xác nhận mà hoàn thành?!
+   Pending → InProgress    ← Chưa xác nhận mà bắt đầu phục vụ?!
+   Completed → Cancelled   ← Đã cắt xong rồi mà hủy?!
+   InProgress → Cancelled  ← Đang cắt dở mà hủy?! (khách phải chờ xong)
+   Cancelled → Pending     ← Đã hủy rồi mà mở lại?!
+```
+
+#### Code FSM trong Enum
 
 ```php
-// Method canTransitionTo() kiểm tra quy tắc chuyển trạng thái
+// File: app/Enums/BookingStatus.php
+
 public function canTransitionTo(self $target): bool
 {
     return match ($this) {
+        //  Từ trạng thái    →  Được chuyển sang
         self::Pending    => in_array($target, [self::Confirmed, self::Cancelled]),
         self::Confirmed  => in_array($target, [self::InProgress, self::Cancelled]),
-        self::InProgress => $target === self::Completed,
-        self::Completed, self::Cancelled => false, // không thể chuyển tiếp
+        self::InProgress => $target === self::Completed,  // Chỉ 1 hướng duy nhất
+        
+        // Trạng thái cuối cùng — không chuyển đi đâu được nữa
+        self::Completed, self::Cancelled => false,
     };
 }
 ```
 
-**Cách dùng trong Service:**
+#### Cách Service dùng FSM
+
 ```php
 // BookingService::confirm()
-if (!$booking->status->canTransitionTo(BookingStatus::Confirmed)) {
-    throw new \InvalidArgumentException('Không thể xác nhận ở trạng thái này');
+public function confirm(Booking $booking): Booking
+{
+    // BƯỚC 1: Hỏi FSM — "Từ trạng thái hiện tại có được chuyển sang Confirmed không?"
+    if (!$booking->status->canTransitionTo(BookingStatus::Confirmed)) {
+        // VD: booking đang InProgress → canTransitionTo(Confirmed) = false
+        throw new \InvalidArgumentException(
+            'Không thể xác nhận booking ở trạng thái: ' . $booking->status->label()
+        );
+    }
+
+    // BƯỚC 2: FSM cho phép → cập nhật trạng thái
+    $booking->update(['status' => BookingStatus::Confirmed]);
+    
+    return $booking;
 }
 ```
 
-> 🎯 **Tác dụng**: Ngăn việc chuyển trạng thái sai (VD: không thể "hoàn thành" booking đang "chờ xác nhận").
+**Mọi method trong BookingService đều gọi `canTransitionTo()` trước khi đổi trạng thái:**
+```
+confirm()  → canTransitionTo(Confirmed)    ← chỉ Pending mới confirm được
+reject()   → canTransitionTo(Cancelled)    ← chỉ Pending mới reject được
+start()    → canTransitionTo(InProgress)   ← chỉ Confirmed mới start được
+complete() → canTransitionTo(Completed)    ← chỉ InProgress mới complete được
+cancel()   → canTransitionTo(Cancelled)    ← chỉ Pending/Confirmed mới cancel được
+```
+
+#### Nếu KHÔNG có FSM?
+
+```php
+// ❌ Không có FSM — ai cũng có thể đổi status bất kỳ lúc nào
+$booking->update(['status' => 'completed']);
+// → Booking đang 'pending' mà nhảy thẳng 'completed'?! Chưa ai xác nhận!
+// → Booking đang 'cancelled' mà bỗng 'completed'?! Đã hủy rồi mà!
+
+// ✅ Có FSM — chặn mọi chuyển trạng thái sai
+$booking->status->canTransitionTo(BookingStatus::Completed);
+// Pending → Completed = false → throw exception → KHÔNG CHO PHÉP
+```
+
+> 🎯 **Tóm lại**: FSM = "cảnh sát giao thông" cho trạng thái — đảm bảo booking đi đúng luồng, không ai hack hay lỗi code gây nhảy trạng thái lung tung.
 
 **Helper methods cho UI:**
 ```php
@@ -964,34 +1088,116 @@ class SendBookingNotificationJob implements ShouldQueue  // ← ShouldQueue = as
 
 ## 10. Caching — CacheService
 
-### Cache là gì?
+### Cache là gì? Ví dụ đời thực
 
-Cache = **lưu kết quả truy vấn DB vào bộ nhớ nhanh** (RAM/Redis/file), lần sau truy cập lại thì lấy từ cache thay vì query DB mới. Giúp **tăng tốc đáng kể** cho dữ liệu ít thay đổi.
+Hãy tưởng tượng bạn đang ở **quán cà phê**:
 
-### CacheService hoạt động thế nào?
+> **Không có cache**: Mỗi lần khách hỏi "có bao nhiêu món?", nhân viên phải chạy vào kho đếm lại từ đầu → mất 5 phút.  
+> **Có cache**: Lần đầu đếm xong, ghi ra **bảng menu treo tường** → khách hỏi lại thì nhìn bảng → 1 giây.  
+> **Cache hết hạn (TTL)**: Mỗi 1 tiếng xóa bảng cũ, đếm lại → đảm bảo thông tin không quá cũ.  
+> **Cache invalidation**: Thêm món mới → **xóa bảng cũ ngay lập tức** → đếm lại.
+
+Trong code cũng vậy:
+
+```
+Không cache:  Request → Query DB (chậm, ~50ms) → Response
+Có cache:     Request → Đọc từ RAM/File (nhanh, ~1ms) → Response
+```
+
+### Tại sao cần Cache?
+
+| Không cache ❌ | Có cache ✅ |
+|---|---|
+| Mỗi request đều query DB | Đọc từ bộ nhớ nhanh, không cần DB |
+| 100 user = 100 lần query giống nhau | 100 user = **1 lần** query, 99 lần đọc cache |
+| Chậm khi nhiều user đồng thời | Nhanh gấp **10-50 lần** |
+| DB chịu tải cao | DB nhẹ nhàng |
+
+### 2 method quan trọng nhất
+
+#### `Cache::remember()` — Lấy dữ liệu (tự động cache)
+
+```php
+$result = Cache::remember('cache_key', $seconds, function () {
+    // Code chỉ chạy KHI CHƯA CÓ CACHE
+    return DB::table('services')->get();
+});
+```
+
+**Logic bên trong:**
+```
+Cache::remember('active_services', 3600, fn() => query DB)
+    │
+    ├── Cache có key 'active_services'?
+    │       │
+    │       ├── CÓ (cache hit) → return dữ liệu từ cache (NHANH!)
+    │       │
+    │       └── KHÔNG (cache miss) → chạy fn() → query DB
+    │                                   │
+    │                                   ├── Lưu kết quả vào cache với key 'active_services'
+    │                                   │   (tự xóa sau 3600 giây)
+    │                                   │
+    │                                   └── return kết quả
+```
+
+#### `Cache::forget()` — Xóa cache (khi dữ liệu thay đổi)
+
+```php
+Cache::forget('active_services');
+// Lần sau gọi Cache::remember() → cache miss → query DB lại → cache mới
+```
+
+### TTL (Time To Live) là gì?
+
+TTL = **thời gian cache tồn tại** trước khi tự hết hạn. Sau TTL, cache tự xóa → lần sau phải query DB lại.
+
+```
+TTL = 3600 giây (1 giờ)
+
+Timeline:
+0s     → Cache::remember() → cache miss → query DB → lưu cache
+10s    → Cache::remember() → cache hit ✅ → return từ cache
+1800s  → Cache::remember() → cache hit ✅ → return từ cache
+3600s  → Cache hết hạn, tự xóa
+3601s  → Cache::remember() → cache miss → query DB lại → lưu cache mới
+```
+
+**Chọn TTL thế nào?**
+
+| Loại dữ liệu | TTL gợi ý | Lý do |
+|--------------|-----------|-------|
+| Dữ liệu gần như không đổi (danh mục, cấu hình) | 2-24 giờ | Ít thay đổi |
+| Dữ liệu thay đổi vài lần/ngày (danh sách sản phẩm) | 30-60 phút | Cân bằng tốc độ vs độ tươi |
+| Dữ liệu thay đổi thường xuyên (báo cáo) | 5-15 phút | Cần tương đối mới |
+| Dữ liệu thay đổi liên tục (giỏ hàng, trạng thái) | ❌ KHÔNG CACHE | Luôn cần chính xác |
+
+### CacheService — Quản lý tập trung
 
 ```php
 class CacheService
 {
-    // 1. Định nghĩa keys và thời gian sống (TTL)
+    // ── BƯỚC 1: Định nghĩa keys + TTL tại 1 nơi duy nhất ──
     private const KEY_ACTIVE_SERVICES = 'active_services';
+    private const KEY_ACTIVE_BARBERS = 'active_barbers';
     private const TTL_SERVICES = 3600;     // 1 giờ
+    private const TTL_BARBERS = 1800;      // 30 phút
 
-    // 2. Lấy dữ liệu: có cache → trả cache, không → query DB rồi lưu cache
+    // ── BƯỚC 2: Method lấy dữ liệu (có cache) ──
     public function getActiveServices()
     {
         return Cache::remember(
-            self::KEY_ACTIVE_SERVICES,    // cache key
-            self::TTL_SERVICES,           // TTL: 3600 giây  
+            self::KEY_ACTIVE_SERVICES,     // key
+            self::TTL_SERVICES,            // TTL: 3600 giây
             function () {
-                return Service::where('is_active', true)  // Query DB
+                // Closure này CHỈ chạy khi cache miss
+                return Service::where('is_active', true)
                     ->orderBy('name')
                     ->get();
             }
         );
     }
 
-    // 3. Xóa cache khi dữ liệu thay đổi (invalidation)
+    // ── BƯỚC 3: Method xóa cache (gọi khi dữ liệu thay đổi) ──
     public function clearServiceCache(): void
     {
         Cache::forget(self::KEY_ACTIVE_SERVICES);
@@ -999,31 +1205,95 @@ class CacheService
 }
 ```
 
-### Sơ đồ hoạt động
+### Thực tế: Cache được dùng ở đâu trong code?
+
+**1. BarberService — Xóa cache khi tạo/sửa/xóa barber:**
+
+```php
+// File: app/Services/BarberService.php
+
+class BarberService
+{
+    public function __construct(private CacheService $cacheService) {}
+    //                                  ^^^^^^^^^^^^ Inject CacheService
+
+    public function create(CreateBarberData $data): Barber
+    {
+        $barber = DB::transaction(function () use ($data) {
+            $user = User::create([...]);
+            return Barber::create([...]);
+        });
+
+        // Tạo barber mới → cache danh sách barber cũ KHÔNG CÒN ĐÚNG
+        // → Xóa cache để lần sau query DB lấy danh sách mới
+        $this->cacheService->clearBarberCache();
+
+        return $barber;
+    }
+
+    public function delete(Barber $barber): void
+    {
+        DB::transaction(function () use ($barber) {
+            $barber->user->delete();
+        });
+
+        $this->cacheService->clearBarberCache();  // Xóa cache khi xóa barber
+    }
+}
+```
+
+**2. Booking form — Dùng cache cho danh sách dịch vụ:**
 
 ```
-Lần 1:  Request → CacheService → Cache::remember()
-                                      │
-                                  Cache miss ❌ (chưa có)
-                                      │
-                                  Query DB → lưu vào Cache
-                                      │
-                                  Return kết quả
+Khách mở form đặt lịch → cần hiển thị danh sách dịch vụ
+    │
+    ▼
+$cacheService->getActiveServices()
+    │
+    ├── Có cache? → Trả về ngay (1ms) ✅
+    │
+    └── Không cache? → SELECT * FROM services WHERE is_active=1 (50ms)
+                       → Lưu cache → Trả về
+```
 
-Lần 2:  Request → CacheService → Cache::remember()
-                                      │
-                                  Cache hit ✅ (đã có)
-                                      │
-                                  Return từ cache (NHANH!)
+### Sơ đồ tổng thể luồng cache
 
-Khi admin sửa dịch vụ:
-        ServiceController::update()
-              │
-              └── $cacheService->clearServiceCache()
-                        │
-                        └── Cache::forget('active_services')  → Xóa cache
-                        
-Lần sau:  Cache miss → Query DB lại → Lưu cache mới
+```
+                    Lần 1 (cache miss)
+Request ──→ CacheService ──→ Cache::remember()
+                                  │
+                              key không tồn tại
+                                  │
+                              Query DB: SELECT * FROM services...
+                                  │
+                              Lưu kết quả vào cache (TTL=3600s)
+                                  │
+                              Return kết quả cho user
+
+                    Lần 2-1000 (cache hit)
+Request ──→ CacheService ──→ Cache::remember()
+                                  │
+                              key tồn tại + chưa hết hạn
+                                  │
+                              Return từ cache (NHANH! không query DB)
+
+                    Admin sửa dịch vụ
+Admin POST ──→ ServiceController ──→ ServiceService::update()
+                                          │
+                                      Update DB
+                                          │
+                                      $cacheService->clearServiceCache()
+                                          │
+                                      Cache::forget('active_services')
+
+                    Lần tiếp theo (cache miss do vừa xóa)
+Request ──→ CacheService ──→ Cache::remember()
+                                  │
+                              key không tồn tại (vừa bị forget)
+                                  │
+                              Query DB lại → lấy dữ liệu MỚI
+                                  │
+                              Lưu cache mới → Return
 ```
 
 ### 3 loại cache trong dự án
@@ -1034,17 +1304,31 @@ Lần sau:  Cache miss → Query DB lại → Lưu cache mới
 | `active_barbers` | 30 phút | Danh sách thợ đang hoạt động | Admin tạo/sửa/xóa thợ |
 | `report_*` | 15 phút | Kết quả báo cáo thống kê | Admin xem báo cáo mới |
 
-### Tại sao cache tập trung trong CacheService?
+### Tại sao quản lý cache TẬP TRUNG trong CacheService?
 
 ```
-❌ Cache rải rác:
-Controller A: Cache::remember('services', ...)
-Controller B: Cache::forget('service_list')   ← Sai key! Cache cũ tồn tại
+❌ Cache rải rác (mỗi nơi tự viết key):
+    Controller A: Cache::remember('services', ...)
+    Controller B: Cache::forget('service_list')   ← SAI KEY! Cache cũ KHÔNG bị xóa
+    → Bug: user thấy dữ liệu cũ mãi
 
-✅ Cache tập trung:
-Controller A: $cacheService->getActiveServices()
-Controller B: $cacheService->clearServiceCache()
-→ Cùng 1 nơi quản lý key → không thể sai key
+✅ Cache tập trung (CacheService quản lý key):
+    Controller A: $cacheService->getActiveServices()     ← key nằm BÊN TRONG CacheService
+    Controller B: $cacheService->clearServiceCache()     ← cũng dùng key BÊN TRONG
+    → Không bao giờ sai key vì DEV không cần biết key là gì
+```
+
+### Khi nào KHÔNG nên cache?
+
+```
+❌ Dữ liệu thay đổi mỗi giây       → Giỏ hàng, session
+❌ Dữ liệu cần chính xác real-time  → Số dư ví, trạng thái thanh toán
+❌ Dữ liệu khác nhau theo user      → Profile riêng (trừ khi cache theo user_id)
+❌ Dữ liệu rất nhỏ, query rất nhanh → SELECT COUNT(*) đơn giản
+
+✅ Danh sách ít thay đổi             → Dịch vụ, danh mục, barbers
+✅ Kết quả tính toán phức tạp        → Báo cáo, thống kê
+✅ Dữ liệu GIỐNG NHAU cho mọi user  → Menu, cấu hình hệ thống
 ```
 
 ---
@@ -1128,57 +1412,244 @@ Request
 
 ## 12. Policy — Phân quyền chi tiết
 
-### Policy là gì? Khác gì với Middleware Role?
+### Policy là gì?
 
-| Middleware `role:admin` | Policy |
-|------------------------|--------|
-| Kiểm tra **vai trò chung** | Kiểm tra **quyền cụ thể trên từng record** |
-| "Chỉ admin vào được trang này" | "User này có được cancel booking này không?" |
-| Kiểm tra trước Controller | Kiểm tra trong Controller |
+Hãy tưởng tượng thế này:
 
-### BookingPolicy
+> **Middleware** giống như **bảo vệ ở cổng tòa nhà**: "Anh là nhân viên (admin) thì vào, không phải thì đi về."  
+> **Policy** giống như **khóa phòng bên trong tòa nhà**: "Anh là nhân viên, nhưng chỉ được vào phòng CỦA ANH, không được vào phòng người khác."
+
+Policy = **quy tắc kiểm tra quyền trên từng record cụ thể** (từng booking, từng đơn hàng...).
+
+### So sánh chi tiết: Middleware vs Policy
+
+| | Middleware `role:admin` | Policy |
+|--|------------------------|--------|
+| **Câu hỏi** | "User có PHẢI role này không?" | "User có ĐƯỢC PHÉP làm hành động này VỚI record này không?" |
+| **Phạm vi** | Kiểm tra **cả route/trang** | Kiểm tra **từng record** |
+| **Ví dụ** | "Chỉ admin vào trang quản lý" | "Barber A chỉ xác nhận booking CỦA barber A" |
+| **Vị trí** | Chạy TRƯỚC Controller | Chạy BÊN TRONG Controller |
+| **Return** | Cho qua hoặc abort(403) | `true` (cho phép) hoặc `false` (cấm) |
+
+### Ví dụ thực tế để hiểu rõ
+
+Hệ thống có 3 barber: **Tuấn**, **Minh**, **Hùng**.
+
+```
+Middleware role:barber bảo vệ route /barber/bookings/{booking}/confirm
+    → Cả 3 barber đều QUA ĐƯỢC middleware (vì đều là role barber)
+
+NHƯNG:
+    → Booking #10 là của barber Tuấn
+    → Minh vào /barber/bookings/10/confirm → KHÔNG ĐƯỢC! (không phải booking của Minh)
+    → Policy kiểm tra: user.barber.id === booking.barber_id → false → abort(403)
+```
+
+```
+                       Middleware                          Policy
+                    ┌─────────────┐                  ┌─────────────┐
+Tuấn (barber) ────▶│ role:barber  │──── PASS ✅ ───▶│ confirm()   │──── booking CỦA Tuấn? ✅ PASS
+                    │             │                  │             │
+Minh (barber) ────▶│ role:barber  │──── PASS ✅ ───▶│ confirm()   │──── booking CỦA Minh? ❌ DENY
+                    │             │                  │             │
+Khách (customer) ──▶│ role:barber  │──── DENY ❌     │             │    (không bao giờ đến đây)
+                    └─────────────┘                  └─────────────┘
+```
+
+### BookingPolicy — Phân tích từng method
 
 ```php
+// File: app/Policies/BookingPolicy.php
+
 class BookingPolicy
 {
-    // Barber chỉ xác nhận booking CỦA MÌNH + đang Pending
+    /**
+     * Barber có được XÁC NHẬN booking này không?
+     * Điều kiện:
+     *   1. User phải là barber (có bản ghi trong bảng barbers)
+     *   2. Booking phải thuộc VỀ barber này (không phải barber khác)
+     *   3. Booking phải đang ở trạng thái Pending (chưa ai xác nhận)
+     */
     public function confirm(User $user, Booking $booking): bool
+    {
+        return $user->barber                                    // 1. User là barber?
+            && $user->barber->id === $booking->barber_id        // 2. Booking của barber này?
+            && $booking->status === BookingStatus::Pending;     // 3. Đang pending?
+    }
+
+    /**
+     * Barber có được TỪ CHỐI booking này không?
+     * Điều kiện giống confirm: phải là barber của booking + đang Pending
+     */
+    public function reject(User $user, Booking $booking): bool
     {
         return $user->barber 
             && $user->barber->id === $booking->barber_id
             && $booking->status === BookingStatus::Pending;
     }
 
-    // Khách chỉ hủy booking CỦA MÌNH + Pending/Confirmed + trước 2 tiếng
+    /**
+     * Barber có được BẮT ĐẦU PHỤC VỤ booking này không?
+     * Điều kiện: là barber của booking + booking đã Confirmed
+     */
+    public function start(User $user, Booking $booking): bool
+    {
+        return $user->barber 
+            && $user->barber->id === $booking->barber_id
+            && $booking->status === BookingStatus::Confirmed;  // Phải confirmed trước
+    }
+
+    /**
+     * Barber có được HOÀN THÀNH booking này không?
+     * Điều kiện: là barber của booking + đang InProgress
+     */
+    public function complete(User $user, Booking $booking): bool
+    {
+        return $user->barber 
+            && $user->barber->id === $booking->barber_id
+            && $booking->status === BookingStatus::InProgress;  // Phải đang phục vụ
+    }
+
+    /**
+     * Khách hàng có được HỦY booking này không?
+     * Điều kiện phức tạp hơn:
+     *   1. Phải là khách hàng CỦA booking này
+     *   2. Booking phải đang Pending hoặc Confirmed
+     *   3. Phải hủy TRƯỚC giờ hẹn ít nhất 2 tiếng
+     */
     public function cancel(User $user, Booking $booking): bool
     {
-        if ($user->id !== $booking->customer_id) return false;
-        
+        // 1. Chỉ khách hàng của booking
+        if ($user->id !== $booking->customer_id) {
+            return false;
+        }
+
+        // 2. Chỉ hủy khi Pending hoặc Confirmed
         if (!in_array($booking->status, [BookingStatus::Pending, BookingStatus::Confirmed])) {
             return false;
         }
-        
-        // Phải hủy trước giờ hẹn ít nhất 2 tiếng
+
+        // 3. Phải trước giờ hẹn ít nhất 2 tiếng (120 phút)
+        //    VD: Hẹn 10:00 → phải hủy trước 8:00
         $appointmentTime = Carbon::parse($booking->booking_date . ' ' . $booking->start_time);
         return now()->diffInMinutes($appointmentTime, false) >= 120;
     }
 }
 ```
 
-### Cách dùng trong Controller:
+### Cách gọi Policy trong Controller
 
 ```php
-public function confirm(Booking $booking): RedirectResponse
+// Barber\BookingController.php
+
+class BookingController extends Controller
 {
-    $this->authorize('confirm', $booking);  // ← Policy check
-    // Nếu Policy return false → tự động abort(403)
-    
-    $this->bookingService->confirm($booking);
-    return back()->with('success', 'Đã xác nhận.');
+    use AuthorizesRequests;  // ← Cần trait này để dùng $this->authorize()
+
+    public function confirm(Booking $booking): RedirectResponse
+    {
+        // authorize('tên_method_trong_policy', $model)
+        $this->authorize('confirm', $booking);
+        // ↑ Laravel tự động:
+        //   1. Tìm BookingPolicy (vì truyền $booking là Booking model)
+        //   2. Gọi BookingPolicy::confirm(auth()->user(), $booking)
+        //   3. Nếu return false → abort(403) Forbidden
+        //   4. Nếu return true → tiếp tục ↓
+
+        $this->bookingService->confirm($booking);
+        return back()->with('success', 'Đã xác nhận lịch hẹn.');
+    }
+
+    public function reject(Request $request, Booking $booking): RedirectResponse
+    {
+        $this->authorize('reject', $booking);  // Policy check
+
+        $this->bookingService->reject($booking, $request->input('cancel_reason'));
+        return back()->with('success', 'Đã từ chối lịch hẹn.');
+    }
 }
 ```
 
----
+### Luồng authorize hoạt động thế nào?
+
+```
+$this->authorize('confirm', $booking)
+         │              │         │
+         │              │         └── Model → Laravel biết tìm BookingPolicy
+         │              └──────────── Tên method trong Policy
+         │
+         ▼
+┌─────────────────────────────────────────────────────┐
+│ Laravel tự động làm:                                 │
+│                                                      │
+│ 1. $booking là Booking model                         │
+│    → Tìm file: App\Policies\BookingPolicy            │
+│                                                      │
+│ 2. Gọi: BookingPolicy::confirm(auth()->user(), $booking) │
+│                                                      │
+│ 3. Kết quả:                                          │
+│    return true  → ✅ tiếp tục code phía dưới        │
+│    return false → ❌ abort(403) Forbidden            │
+└─────────────────────────────────────────────────────┘
+```
+
+### Laravel tìm Policy thế nào?
+
+Laravel dùng **quy ước đặt tên** (convention) để tự động ghép Model ↔ Policy:
+
+| Model | Policy (Laravel tự tìm) |
+|-------|------------------------|
+| `App\Models\Booking` | `App\Policies\BookingPolicy` |
+| `App\Models\Order` | `App\Policies\OrderPolicy` |
+| `App\Models\Product` | `App\Policies\ProductPolicy` |
+
+Quy tắc: **Tên Model + "Policy"** → `Booking` + `Policy` = `BookingPolicy`.
+
+### Nếu KHÔNG có Policy thì sao?
+
+```php
+// ❌ Không dùng Policy — kiểm tra thủ công trong Controller
+public function confirm(Booking $booking)
+{
+    $user = auth()->user();
+    
+    if (!$user->barber) {
+        abort(403);
+    }
+    if ($user->barber->id !== $booking->barber_id) {
+        abort(403);
+    }
+    if ($booking->status !== BookingStatus::Pending) {
+        abort(403);
+    }
+    
+    // Logic xác nhận...
+}
+
+// ❌ Vấn đề: copy-paste logic này ở MỌI method (confirm, reject, start, complete)
+//    → Code lặp, khó maintain, dễ quên
+```
+
+```php
+// ✅ Dùng Policy — 1 dòng duy nhất, logic tập trung
+public function confirm(Booking $booking)
+{
+    $this->authorize('confirm', $booking);  // ← Sạch, gọn, rõ ràng
+    
+    // Logic xác nhận...
+}
+```
+
+### Tóm tắt: Khi nào dùng Policy?
+
+```
+□ Khi cần kiểm tra "user này có quyền trên RECORD CỤ THỂ này không?"
+□ Khi logic phân quyền phức tạp (nhiều điều kiện: role + ownership + status + thời gian)
+□ Khi cùng 1 kiểu kiểm tra lặp lại ở nhiều Controller methods
+□ Khi muốn tách logic phân quyền ra khỏi Controller cho gọn
+```
+
+
 
 ## 13. Console Commands — Tác vụ nền
 
@@ -1204,7 +1675,270 @@ public function confirm(Booking $booking): RedirectResponse
 
 ---
 
-## 14. Tổng kết sơ đồ kiến trúc
+## 14. Database Schema — Sơ đồ cơ sở dữ liệu
+
+### Sơ đồ quan hệ (ER Diagram)
+
+```
+┌──────────────────────┐
+│       users           │
+│──────────────────────│          ┌──────────────────────┐
+│ id (PK)              │          │      barbers          │
+│ name                 │          │──────────────────────│
+│ email (unique)       │──1──────1│ id (PK)              │
+│ phone                │          │ user_id (FK → users)  │
+│ avatar               │          │ bio                   │
+│ role (enum)          │          │ experience_years      │
+│ password             │          │ rating                │
+│ is_active            │          │ is_active             │
+└──────────┬───────────┘          └───────┬──────────────┘
+           │                              │
+           │ 1                            │ 1
+           │                              │
+           │ N                            │ N
+┌──────────┴───────────┐     ┌────────────┴─────────────┐
+│    notifications      │     │    working_schedules      │
+│──────────────────────│     │──────────────────────────│
+│ id (PK)              │     │ id (PK)                  │
+│ user_id (FK → users) │     │ barber_id (FK → barbers) │
+│ type                 │     │ day_of_week (0-6)        │
+│ title                │     │ start_time               │
+│ message              │     │ end_time                 │
+│ is_read              │     │ is_day_off               │
+└──────────────────────┘     └──────────────────────────┘
+                                          │
+                                          │ 1 barber → N slots
+                                          │
+                              ┌────────────┴─────────────┐
+                              │       time_slots          │
+                              │──────────────────────────│
+                              │ id (PK)                  │
+                              │ barber_id (FK → barbers) │
+                              │ slot_date                │
+                              │ start_time               │
+                              │ end_time                 │
+                              │ status (enum)            │
+                              └────────────┬─────────────┘
+                                           │
+                                           │ 1 slot → 1 booking
+                                           │
+┌──────────────────┐          ┌─────────────┴────────────┐
+│    services       │          │       bookings            │
+│──────────────────│          │──────────────────────────│
+│ id (PK)          │          │ id (PK)                  │
+│ name             │          │ booking_code (unique)    │
+│ description      │          │ customer_id (FK → users) │
+│ price            │          │ barber_id (FK → barbers) │
+│ duration_minutes │          │ time_slot_id (FK)        │
+│ image            │          │ booking_date             │
+│ is_active        │          │ start_time / end_time    │
+└────────┬─────────┘          │ total_price              │
+         │                    │ status (enum/FSM)        │
+         │ N                  │ note                     │
+         │                    │ cancelled_at             │
+         └──────────┐         │ cancel_reason            │
+                    │         └──┬──────────┬────────────┘
+         N──M qua pivot         │          │
+                    │           │ 1        │ 1
+         ┌──────────┴──────┐    │          │
+         │booking_services │    │          │
+         │(PIVOT TABLE)    │    │          │
+         │─────────────────│    │          │
+         │ id (PK)         │    │          │
+         │ booking_id (FK) │◄───┘          │
+         │ service_id (FK) │               │
+         │ price_snapshot   │    ┌──────────┴───────────┐
+         │ duration_snapshot │    │      payments         │
+         └─────────────────┘    │──────────────────────│
+                                │ id (PK)              │
+                                │ booking_id (FK,uniq) │
+                                │ amount               │
+                                │ method (enum)        │
+                                │ status (enum)        │
+                                │ transaction_id       │
+                                │ paid_at              │
+                                └──────────────────────┘
+
+┌──────────────────────────┐
+│        reviews            │
+│──────────────────────────│
+│ id (PK)                  │
+│ booking_id (FK, unique)  │  ← 1 booking chỉ có 1 review
+│ customer_id (FK → users) │
+│ barber_id (FK → barbers) │
+│ rating (1-5)             │
+│ comment                  │
+└──────────────────────────┘
+```
+
+### Bảng chi tiết từng table
+
+#### `users` — Người dùng (customer, barber, admin)
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | Auto increment |
+| name | varchar(255) | Tên hiển thị |
+| email | varchar(255) UNIQUE | Email đăng nhập |
+| phone | varchar(20) NULL | Số điện thoại |
+| avatar | varchar(255) NULL | Đường dẫn ảnh đại diện |
+| role | enum('customer','barber','admin') | Vai trò, default: customer |
+| is_active | boolean | Tài khoản còn hoạt động? |
+| password | varchar(255) | Bcrypt hash |
+| email_verified_at | timestamp NULL | Xác thực email |
+
+#### `barbers` — Thợ cắt tóc (mở rộng từ users)
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | |
+| user_id | FK → users | **1-1**: mỗi barber gắn 1 user, cascade delete |
+| bio | text NULL | Giới thiệu bản thân |
+| experience_years | tinyint | Số năm kinh nghiệm |
+| rating | decimal(3,2) | Rating trung bình (0.00 - 5.00), tự tính |
+| is_active | boolean | Barber còn làm việc? |
+
+#### `services` — Dịch vụ (cắt tóc, gội đầu...)
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | |
+| name | varchar(100) | Tên dịch vụ |
+| description | text NULL | Mô tả |
+| price | decimal(10,2) | Giá (VND) |
+| duration_minutes | int | Thời gian phục vụ (phút) |
+| image | varchar(255) NULL | Ảnh minh họa |
+| is_active | boolean | Dịch vụ còn hoạt động? |
+
+#### `working_schedules` — Lịch làm việc tuần
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | |
+| barber_id | FK → barbers | Cascade delete |
+| day_of_week | tinyint | 0=Chủ nhật, 1=Thứ 2 ... 6=Thứ 7 |
+| start_time | time | Giờ bắt đầu (VD: 08:00) |
+| end_time | time | Giờ kết thúc (VD: 17:00) |
+| is_day_off | boolean | Ngày nghỉ? |
+| | UNIQUE | (barber_id, day_of_week) — mỗi barber 1 bản ghi/ngày |
+
+#### `time_slots` — Khung giờ đặt lịch
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | |
+| barber_id | FK → barbers | Cascade delete |
+| slot_date | date | Ngày cụ thể (VD: 2026-03-24) |
+| start_time | time | Bắt đầu khung (VD: 10:00) |
+| end_time | time | Kết thúc khung (VD: 10:30) |
+| status | enum('available','booked','blocked') | Trạng thái slot |
+| | UNIQUE | (barber_id, slot_date, start_time) |
+| | INDEX | (barber_id, slot_date, status) — tìm slot trống nhanh |
+
+#### `bookings` — Lịch hẹn
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | |
+| booking_code | varchar(20) UNIQUE | Mã lịch hẹn (VD: BK20260324001) |
+| customer_id | FK → users | Cascade delete |
+| barber_id | FK → barbers | Cascade delete |
+| time_slot_id | FK → time_slots | **Restrict** delete (không xóa slot đang có booking) |
+| booking_date | date | Ngày hẹn |
+| start_time | time | Giờ bắt đầu |
+| end_time | time | Giờ kết thúc (tính từ tổng duration dịch vụ) |
+| total_price | decimal(10,2) | Tổng tiền |
+| status | enum (FSM) | pending → confirmed → in_progress → completed / cancelled |
+| note | text NULL | Ghi chú của khách |
+| cancelled_at | timestamp NULL | Thời điểm hủy |
+| cancel_reason | text NULL | Lý do hủy |
+
+#### `booking_services` — Bảng trung gian (Pivot)
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | |
+| booking_id | FK → bookings | Cascade delete |
+| service_id | FK → services | **Restrict** delete (không xóa service đang dùng) |
+| price_snapshot | decimal(10,2) | **Giá tại thời điểm đặt** (giá gốc có thể đổi sau) |
+| duration_snapshot | int | **Thời gian tại thời điểm đặt** |
+
+> 🎯 `price_snapshot` rất quan trọng: nếu admin tăng giá cắt tóc từ 50k → 70k, booking cũ vẫn hiển thị đúng 50k.
+
+#### `payments` — Thanh toán
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | |
+| booking_id | FK → bookings UNIQUE | **1-1**: mỗi booking chỉ 1 payment |
+| amount | decimal(10,2) | Số tiền thanh toán |
+| method | enum('cash','vnpay','momo') | Phương thức |
+| status | enum('pending','paid','failed','refunded') | Trạng thái |
+| transaction_id | varchar(255) NULL | Mã giao dịch VNPay/MoMo |
+| paid_at | timestamp NULL | Thời điểm thanh toán thành công |
+
+#### `reviews` — Đánh giá
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | |
+| booking_id | FK → bookings UNIQUE | **1-1**: mỗi booking chỉ 1 review |
+| customer_id | FK → users | Cascade delete |
+| barber_id | FK → barbers | Cascade delete |
+| rating | tinyint | 1-5 sao |
+| comment | text NULL | Nhận xét |
+
+#### `notifications` — Thông báo
+
+| Cột | Kiểu | Ghi chú |
+|-----|------|---------|
+| id | bigint PK | |
+| user_id | FK → users | Cascade delete |
+| type | varchar(50) | Loại thông báo (booking_confirmed, ...) |
+| title | varchar(255) | Tiêu đề |
+| message | text | Nội dung |
+| is_read | boolean | Đã đọc chưa? |
+
+### Tổng hợp quan hệ
+
+```
+users ──1:1──→ barbers         (Mỗi barber là 1 user)
+users ──1:N──→ bookings        (Khách đặt nhiều lịch)
+users ──1:N──→ notifications   (Nhận nhiều thông báo)
+
+barbers ──1:N──→ working_schedules  (Lịch 7 ngày/tuần)
+barbers ──1:N──→ time_slots         (Nhiều slot mỗi ngày)
+barbers ──1:N──→ bookings           (Nhiều lịch hẹn)
+barbers ──1:N──→ reviews            (Nhiều đánh giá)
+
+bookings ──N:M──→ services     (Nhiều dịch vụ, qua booking_services)
+bookings ──1:1──→ payments     (1 thanh toán)
+bookings ──1:1──→ reviews      (1 đánh giá)
+bookings ──1:1──→ time_slots   (Gắn 1 slot cụ thể)
+```
+
+### Cascade Delete — Xóa user thì sao?
+
+```
+Xóa User (role=barber)
+    │
+    ├── CASCADE → barbers (xóa barber)
+    │       ├── CASCADE → working_schedules (xóa lịch làm việc)
+    │       ├── CASCADE → time_slots (xóa slots)
+    │       ├── CASCADE → bookings (xóa bookings)
+    │       │       ├── CASCADE → booking_services (xóa pivot)
+    │       │       ├── CASCADE → payments (xóa thanh toán)
+    │       │       └── CASCADE → reviews (xóa đánh giá)  
+    │       └── CASCADE → reviews (xóa đánh giá trực tiếp)
+    │
+    └── CASCADE → notifications (xóa thông báo)
+```
+
+> ⚠️ **Lưu ý**: `time_slots` dùng `restrictOnDelete` với `bookings` — nghĩa là **không thể xóa time_slot đang có booking**. Phải hủy booking trước.
+
+---
+
+## 15. Tổng kết sơ đồ kiến trúc
 
 ```
 ┌─────────────────────────────────────────────────────────────┐

@@ -24,6 +24,8 @@ class BookingService
     public function create(CreateBookingData $data, ?User $customer = null): Booking
     {
         return DB::transaction(function () use ($data, $customer) {
+            // Ai đến trước → giữ khóa, người sau phải CHỜ 
+            // SELECT * FROM time_slots WHERE id = 5 FOR UPDATE;
             $slot = TimeSlot::lockForUpdate()->findOrFail($data->time_slot_id);
 
             if ($slot->status !== TimeSlotStatus::Available) {
@@ -63,9 +65,9 @@ class BookingService
 
             Log::channel('booking')->info('Booking created', [
                 'booking_code' => $booking->booking_code,
-                'customer_id'  => $customer->id,
-                'barber_id'    => $data->barber_id,
-                'total_price'  => $totalPrice,
+                'customer_id' => $customer->id,
+                'barber_id' => $data->barber_id,
+                'total_price' => $totalPrice,
             ]);
 
             return $booking;
@@ -119,7 +121,7 @@ class BookingService
 
             Log::channel('booking')->info('Booking rejected', [
                 'booking_code' => $booking->booking_code,
-                'reason'       => $reason,
+                'reason' => $reason,
             ]);
 
             event(new BookingCancelled($booking));
@@ -177,7 +179,7 @@ class BookingService
 
             Log::channel('booking')->info('Booking cancelled', [
                 'booking_code' => $booking->booking_code,
-                'reason'       => $reason,
+                'reason' => $reason,
             ]);
 
             event(new BookingCancelled($booking));
