@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
+use App\Services\LoyaltyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -61,6 +62,15 @@ class ProfileController extends Controller
         $user->save();
 
         return redirect()->route('client.profile.show')->with('success', 'Cập nhật thông tin thành công!');
+    }
+
+    public function loyalty(Request $request, LoyaltyService $loyaltyService): View
+    {
+        $user = $request->user();
+        $balance = $loyaltyService->getBalance($user);
+        $history = $loyaltyService->getHistory($user);
+
+        return view('client.profile.loyalty', compact('user', 'balance', 'history'));
     }
 }
 

@@ -38,6 +38,7 @@ Route::name('client.')->group(function () {
         Route::get('/profile', [ClientProfileController::class, 'show'])->name('profile.show');
         Route::get('/profile/edit', [ClientProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ClientProfileController::class, 'update'])->name('profile.update');
+        Route::get('/profile/loyalty', [ClientProfileController::class, 'loyalty'])->name('profile.loyalty');
         Route::patch('/booking/{booking}/cancel', [ClientBookingController::class, 'cancel'])->name('booking.cancel');
         Route::post('/reviews', [ClientReviewController::class, 'store'])->name('reviews.store');
     });

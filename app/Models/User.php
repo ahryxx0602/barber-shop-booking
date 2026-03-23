@@ -46,6 +46,12 @@ class User extends Authenticatable
         return $this->hasMany(Notification::class);
     }
 
+    // users ──────────── loyalty_points (1-n) lịch sử điểm thưởng
+    public function loyaltyPoints()
+    {
+        return $this->hasMany(LoyaltyPoint::class);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

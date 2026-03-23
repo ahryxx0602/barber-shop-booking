@@ -17,6 +17,11 @@
                 </a>
                 <h1 class="v-title-sm">Thông Tin Cá Nhân</h1>
             </div>
+        <div style="display:flex;align-items:center;gap:8px;">
+            <a href="{{ route('client.profile.loyalty') }}" class="v-btn-outline v-btn-sm" style="gap:8px;">
+                <span class="material-symbols-outlined" style="font-size:14px;">stars</span>
+                Điểm thưởng
+            </a>
             <a href="{{ route('client.profile.edit') }}" class="v-btn-outline v-btn-sm" style="gap:8px;">
                 <span class="material-symbols-outlined" style="font-size:14px;">edit</span>
                 Chỉnh sửa

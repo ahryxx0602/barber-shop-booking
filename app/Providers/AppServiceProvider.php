@@ -5,6 +5,7 @@ namespace App\Providers;
 use App\Events\BookingCancelled;
 use App\Events\BookingCompleted;
 use App\Events\BookingConfirmed;
+use App\Listeners\RewardPointsForBooking;
 use App\Listeners\SendBookingCancelledNotification;
 use App\Listeners\SendBookingCompletedNotification;
 use App\Listeners\SendBookingConfirmedNotification;
@@ -33,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
         Event::listen(BookingConfirmed::class, SendBookingConfirmedNotification::class);
         Event::listen(BookingCancelled::class, SendBookingCancelledNotification::class);
         Event::listen(BookingCompleted::class, SendBookingCompletedNotification::class);
+        Event::listen(BookingCompleted::class, RewardPointsForBooking::class);
 
         // Rate limiting
         RateLimiter::for('login', function (Request $request) {
