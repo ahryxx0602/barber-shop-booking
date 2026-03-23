@@ -14,10 +14,16 @@
         <div class="p-5 mb-6 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
             <div class="flex flex-col gap-5 sm:flex-row sm:items-center">
                 {{-- Avatar --}}
-                <div class="w-20 h-20 overflow-hidden border-2 border-gray-200 rounded-full dark:border-gray-700 flex items-center justify-center bg-brand-500">
-                    <span class="text-2xl font-bold text-white">
-                        {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-                    </span>
+                <div class="w-20 h-20 overflow-hidden border-2 border-gray-200 rounded-full dark:border-gray-700 flex items-center justify-center">
+                    @if(auth()->user()->avatar)
+                        <img src="{{ Storage::url(auth()->user()->avatar) }}" class="w-full h-full object-cover" alt="" />
+                    @else
+                        <div class="w-full h-full flex items-center justify-center bg-brand-500">
+                            <span class="text-2xl font-bold text-white">
+                                {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+                            </span>
+                        </div>
+                    @endif
                 </div>
                 {{-- Info --}}
                 <div>
@@ -42,11 +48,6 @@
         {{-- Update Password --}}
         <div class="p-5 mb-6 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
             @include('profile.partials.update-password-form')
-        </div>
-
-        {{-- Delete Account --}}
-        <div class="p-5 border border-gray-200 rounded-2xl dark:border-gray-800 lg:p-6">
-            @include('profile.partials.delete-user-form')
         </div>
     </div>
 @endsection

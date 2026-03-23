@@ -42,12 +42,13 @@ Route::get('/dashboard', function () {
     });
 })->middleware(['auth'])->name('dashboard');
 
-Route::middleware('auth')->group(function () {
+Route::middleware(['auth', 'role:admin,barber'])->group(function () {
     Route::get('/profile/breeze', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile/breeze', [ProfileController::class, 'update'])->name('profile.update');
-    Route::delete('/profile/breeze', [ProfileController::class, 'destroy'])->name('profile.destroy');
+});
 
-    // Notifications
+// Notifications - all authenticated users
+Route::middleware('auth')->group(function () {
     Route::patch('/notifications/read-all', function () {
         auth()->user()->notifications()->where('is_read', false)->update(['is_read' => true]);
         return back();
