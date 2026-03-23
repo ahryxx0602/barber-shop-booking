@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTOs\CreateBookingData;
 use App\Enums\BookingStatus;
 use App\Enums\TimeSlotStatus;
 use App\Enums\UserRole;
@@ -19,10 +20,10 @@ use Illuminate\Support\Str;
 
 class BookingService
 {
-    public function create(array $data, ?User $customer = null): Booking
+    public function create(CreateBookingData $data, ?User $customer = null): Booking
     {
         return DB::transaction(function () use ($data, $customer) {
-            $slot = TimeSlot::lockForUpdate()->findOrFail($data['time_slot_id']);
+            $slot = TimeSlot::lockForUpdate()->findOrFail($data->time_slot_id);
 
             if ($slot->status !== TimeSlotStatus::Available) {
                 throw new SlotNotAvailableException('Slot này vừa được đặt, vui lòng chọn lại.');
@@ -32,7 +33,7 @@ class BookingService
                 $customer = $this->findOrCreateGuest($data);
             }
 
-            $services = Service::whereIn('id', $data['service_ids'])->get();
+            $services = Service::whereIn('id', $data->service_ids)->get();
             $totalPrice = $services->sum('price');
             $totalDuration = $services->sum('duration_minutes');
             $endTime = Carbon::parse($slot->start_time)->addMinutes($totalDuration)->format('H:i:s');
@@ -40,13 +41,13 @@ class BookingService
             $booking = Booking::create([
                 'booking_code' => $this->generateCode(),
                 'customer_id' => $customer->id,
-                'barber_id' => $data['barber_id'],
+                'barber_id' => $data->barber_id,
                 'time_slot_id' => $slot->id,
                 'booking_date' => $slot->slot_date,
                 'start_time' => $slot->start_time,
                 'end_time' => $endTime,
                 'total_price' => $totalPrice,
-                'note' => $data['note'] ?? null,
+                'note' => $data->note,
                 'status' => BookingStatus::Pending,
             ]);
 
@@ -63,13 +64,13 @@ class BookingService
         });
     }
 
-    protected function findOrCreateGuest(array $data): User
+    protected function findOrCreateGuest(CreateBookingData $data): User
     {
         return User::firstOrCreate(
-            ['email' => $data['guest_email']],
+            ['email' => $data->guest_email],
             [
-                'name' => $data['guest_name'],
-                'phone' => $data['guest_phone'],
+                'name' => $data->guest_name,
+                'phone' => $data->guest_phone,
                 'password' => bcrypt(Str::random(32)),
                 'role' => UserRole::Customer,
             ]

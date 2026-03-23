@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\DTOs\CreateBarberData;
+use App\DTOs\UpdateBarberData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreBarberRequest;
 use App\Http\Requests\Admin\UpdateBarberRequest;
@@ -30,7 +32,7 @@ class BarberController extends Controller
     public function store(StoreBarberRequest $request): RedirectResponse
     {
         $this->barberService->create(
-            $request->validated(),
+            CreateBarberData::fromRequest($request),
             $request->file('avatar'),
         );
 
@@ -48,7 +50,7 @@ class BarberController extends Controller
     {
         $this->barberService->update(
             $barber,
-            $request->validated(),
+            UpdateBarberData::fromRequest($request),
             $request->file('avatar'),
         );
 

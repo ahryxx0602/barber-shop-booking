@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\DTOs\CreateBookingData;
 use App\Enums\TimeSlotStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreBookingRequest;
@@ -58,7 +59,7 @@ class BookingController extends Controller
     {
         try {
             $booking = $this->bookingService->create(
-                $request->validated(),
+                CreateBookingData::fromRequest($request),
                 $request->user()
             );
 

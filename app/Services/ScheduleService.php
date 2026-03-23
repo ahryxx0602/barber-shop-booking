@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTOs\UpdateScheduleData;
 use App\Models\Barber;
 use App\Models\WorkingSchedule;
 use Illuminate\Support\Facades\DB;
@@ -89,20 +90,20 @@ class ScheduleService
     /**
      * Lưu schedule cho barber + regenerate time slots.
      */
-    public function updateSchedule(Barber $barber, array $schedulesData): void
+    public function updateSchedule(Barber $barber, UpdateScheduleData $data): void
     {
-        DB::transaction(function () use ($barber, $schedulesData) {
-            foreach ($schedulesData as $data) {
-                $isDayOff = !isset($data['is_working']) || !$data['is_working'];
+        DB::transaction(function () use ($barber, $data) {
+            foreach ($data->schedules as $item) {
+                $isDayOff = !$item->is_working;
 
                 WorkingSchedule::updateOrCreate(
                     [
                         'barber_id'   => $barber->id,
-                        'day_of_week' => $data['day_of_week'],
+                        'day_of_week' => $item->day_of_week,
                     ],
                     [
-                        'start_time' => $isDayOff ? '00:00:00' : $data['start_time'] . ':00',
-                        'end_time'   => $isDayOff ? '00:00:00' : $data['end_time'] . ':00',
+                        'start_time' => $isDayOff ? '00:00:00' : $item->start_time . ':00',
+                        'end_time'   => $isDayOff ? '00:00:00' : $item->end_time . ':00',
                         'is_day_off' => $isDayOff,
                     ]
                 );

@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\DTOs\CreateBarberData;
+use App\DTOs\UpdateBarberData;
 use App\Models\Barber;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -11,15 +13,15 @@ use Illuminate\Support\Facades\Storage;
 
 class BarberService
 {
-    public function create(array $data, ?UploadedFile $avatar = null): Barber
+    public function create(CreateBarberData $data, ?UploadedFile $avatar = null): Barber
     {
         return DB::transaction(function () use ($data, $avatar) {
             $userData = [
-                'name'     => $data['name'],
-                'email'    => $data['email'],
-                'password' => Hash::make($data['password']),
+                'name'     => $data->name,
+                'email'    => $data->email,
+                'password' => Hash::make($data->password),
                 'role'     => 'barber',
-                'phone'    => $data['phone'] ?? null,
+                'phone'    => $data->phone,
             ];
 
             if ($avatar) {
@@ -30,24 +32,24 @@ class BarberService
 
             return Barber::create([
                 'user_id'          => $user->id,
-                'bio'              => $data['bio'] ?? null,
-                'experience_years' => $data['experience_years'],
-                'is_active'        => $data['is_active'] ?? true,
+                'bio'              => $data->bio,
+                'experience_years' => $data->experience_years,
+                'is_active'        => $data->is_active,
             ]);
         });
     }
 
-    public function update(Barber $barber, array $data, ?UploadedFile $avatar = null): Barber
+    public function update(Barber $barber, UpdateBarberData $data, ?UploadedFile $avatar = null): Barber
     {
         return DB::transaction(function () use ($barber, $data, $avatar) {
             $userData = [
-                'name'  => $data['name'],
-                'email' => $data['email'],
-                'phone' => $data['phone'] ?? null,
+                'name'  => $data->name,
+                'email' => $data->email,
+                'phone' => $data->phone,
             ];
 
-            if (!empty($data['password'])) {
-                $userData['password'] = Hash::make($data['password']);
+            if (!empty($data->password)) {
+                $userData['password'] = Hash::make($data->password);
             }
 
             if ($avatar) {
@@ -58,9 +60,9 @@ class BarberService
             $barber->user->update($userData);
 
             $barber->update([
-                'bio'              => $data['bio'] ?? null,
-                'experience_years' => $data['experience_years'],
-                'is_active'        => $data['is_active'] ?? false,
+                'bio'              => $data->bio,
+                'experience_years' => $data->experience_years,
+                'is_active'        => $data->is_active,
             ]);
 
             return $barber->fresh('user');

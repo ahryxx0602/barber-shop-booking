@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Barber;
 
+use App\DTOs\UpdateScheduleData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Barber\UpdateScheduleRequest;
 use App\Services\ScheduleService;
@@ -29,7 +30,10 @@ class ScheduleController extends Controller
     {
         $barber = auth()->user()->barber;
 
-        $this->scheduleService->updateSchedule($barber, $request->validated()['schedules']);
+        $this->scheduleService->updateSchedule(
+            $barber,
+            UpdateScheduleData::fromArray($request->validated()['schedules'])
+        );
 
         return redirect()
             ->route('barber.schedule.edit')

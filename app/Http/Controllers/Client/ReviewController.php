@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\DTOs\StoreReviewData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreReviewRequest;
 use App\Services\ReviewService;
@@ -15,7 +16,7 @@ class ReviewController extends Controller
 
     public function store(StoreReviewRequest $request): RedirectResponse
     {
-        $this->reviewService->store($request->validated(), $request->user());
+        $this->reviewService->store(StoreReviewData::fromRequest($request), $request->user());
 
         return back()->with('success', 'Cảm ơn bạn đã đánh giá!');
     }

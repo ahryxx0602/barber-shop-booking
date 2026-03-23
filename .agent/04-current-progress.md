@@ -33,6 +33,7 @@ Cập nhật lần cuối  : 23/03/2026
 | 7+ | Auth Pages & Error Pages Vintage Redesign | ✅ Hoàn thành |
 | 8 | Báo cáo doanh thu (Admin) | ✅ Hoàn thành |
 | 8+ | Quản lý tài khoản (Admin) | ✅ Hoàn thành |
+| 8++ | DTO Refactor + Fix Barber Bookings | ✅ Hoàn thành |
 | 9 | Kiểm thử & Hoàn thiện | ⬜ Chưa bắt đầu |
 
 ---
@@ -201,6 +202,7 @@ Cập nhật lần cuối  : 23/03/2026
 - **23/03/2026**: Bước 8.2 hoàn thành + mở rộng — (1) Biểu đồ doanh thu 30 ngày gần nhất dùng Chart.js CDN (line chart, gradient fill, tooltip VNĐ, trục Y rút gọn k/tr); (2) Mở rộng thêm bộ lọc thời gian: 3 tabs (30 ngày / Theo tháng / Theo năm) + dropdowns tháng/năm; (3) AJAX fetch API cập nhật chart không reload trang; (4) Chế độ "Theo năm" dùng bar chart 12 tháng; (5) Thêm `ReportService::getDailyRevenue(?month, ?year)`, `getMonthlyRevenue(year)`, `getAvailableYears()`; (6) Thêm route API `admin/reports/chart-data` + method `ReportController::chartData()`.
 - **23/03/2026**: Bước 8.3 hoàn thành — Thêm 2 bảng xếp hạng: (1) Top thợ cắt theo doanh thu tháng (left join bookings, SUM total_price) với avatar, rank badge vàng/bạc/đồng, số booking + rating; (2) Top dịch vụ theo số lần đặt tháng (join booking_services + bookings) với hình ảnh, giá, doanh thu. Cả 2 dùng grid 2 cột trên desktop. Giai đoạn 8 hoàn thành 100%.
 - **23/03/2026**: Giai đoạn 8+ hoàn thành — (1) Migration thêm cột `is_active` boolean (default true) vào bảng `users`; (2) Cập nhật `User` model (fillable + cast boolean); (3) Tạo `Admin\UserController` (index/show/edit/update/toggleActive) — index có lọc role + tìm kiếm tên/email/SĐT + stats cards đếm theo role; show hiển thị chi tiết user + lịch sử 10 booking gần nhất (customer); (4) Tạo `UpdateUserRequest` với validate email unique ignore current + role enum; (5) 3 views admin/users: index (bảng + filter bar + pagination), show (card thông tin + bảng booking), edit (form name/email/phone/role + toggle active); (6) Thêm route resource + PATCH toggleActive; (7) Thêm mục "Người dùng" vào sidebar admin (icon Users, giữa Booking và Báo cáo).
+- **23/03/2026**: Giai đoạn 8++ hoàn thành — DTO Refactor + Fix Barber Bookings: (1) Tạo 6 DTO classes trong `app/DTOs/` (`CreateBookingData`, `CreateBarberData`, `UpdateBarberData`, `StoreReviewData`, `ScheduleItemData`, `UpdateScheduleData`) — dùng PHP 8.2 readonly class + named arguments; (2) Refactor 4 Services (`BookingService`, `BarberService`, `ReviewService`, `ScheduleService`) — thay `array $data` bằng typed DTO; (3) Refactor 5 Controllers dùng `DTO::fromRequest()` / `DTO::fromArray()`; (4) Fix giao diện `barber/bookings/index.blade.php` — chuyển từ card-based sang compact table style giống admin (grouped by day, inline action icon buttons); (5) Fix lỗi filter `booking_date` (Carbon vs string) trong `Barber\BookingController` — dùng `filter()` với `format('Y-m-d')` giống admin; (6) Cập nhật `03-Conventions.md` thêm quy ước DTO.
 
 ---
 

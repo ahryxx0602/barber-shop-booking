@@ -25,6 +25,14 @@
 - Mỗi Enum có method `label()` trả về tên tiếng Việt
 - Dùng trong Model casts, Controller, Policy, Service, Blade views
 
+### DTOs (Data Transfer Objects)
+- PascalCase, mô tả hành động + `Data`: `CreateBookingData`, `StoreReviewData`, `UpdateBarberData`
+- Namespace: `App\DTOs\`
+- Dùng PHP 8.2 `readonly class` + named arguments
+- Mỗi DTO có `static fromRequest()` hoặc `static fromArray()` factory method
+- Mục đích: thay thế `array $data` trong Service methods → type-safe, IDE autocomplete
+- DTO con nằm cùng namespace: `ScheduleItemData` (dùng trong `UpdateScheduleData`)
+
 ### Requests (Form Validation)
 - `Store` + tên Model + `Request`: `StoreBookingRequest`
 - `Update` + tên Model + `Request`: `UpdateBookingRequest`

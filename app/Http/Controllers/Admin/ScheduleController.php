@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\DTOs\UpdateScheduleData;
 use App\Http\Controllers\Controller;
 use App\Models\Barber;
 use App\Services\ScheduleService;
@@ -43,7 +44,10 @@ class ScheduleController extends Controller
             'schedules.*.end_time'    => ['required_if:schedules.*.is_working,1', 'nullable', 'date_format:H:i', 'after:schedules.*.start_time'],
         ]);
 
-        $this->scheduleService->updateSchedule($barber, $request->input('schedules'));
+        $this->scheduleService->updateSchedule(
+            $barber,
+            UpdateScheduleData::fromArray($request->input('schedules'))
+        );
 
         return redirect()
             ->route('admin.schedules.index')

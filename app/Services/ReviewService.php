@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\DTOs\StoreReviewData;
 use App\Enums\BookingStatus;
 use App\Models\Barber;
 use App\Models\Booking;
@@ -15,10 +16,10 @@ class ReviewService
      * Tạo review cho booking đã hoàn thành.
      * Cập nhật rating trung bình của barber.
      */
-    public function store(array $data, User $customer): Review
+    public function store(StoreReviewData $data, User $customer): Review
     {
         return DB::transaction(function () use ($data, $customer) {
-            $booking = Booking::findOrFail($data['booking_id']);
+            $booking = Booking::findOrFail($data->booking_id);
 
             abort_if($booking->customer_id !== $customer->id, 403);
             abort_if($booking->status !== BookingStatus::Completed, 422, 'Chỉ có thể đánh giá booking đã hoàn thành.');
@@ -28,8 +29,8 @@ class ReviewService
                 'booking_id' => $booking->id,
                 'customer_id' => $customer->id,
                 'barber_id' => $booking->barber_id,
-                'rating' => $data['rating'],
-                'comment' => $data['comment'] ?? null,
+                'rating' => $data->rating,
+                'comment' => $data->comment,
             ]);
 
             $this->updateBarberRating($booking->barber_id);

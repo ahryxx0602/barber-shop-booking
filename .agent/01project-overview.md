@@ -58,6 +58,22 @@ app/Enums/
 Mỗi Enum có methods: `label()` (tên tiếng Việt), `color()` (cho UI).
 `BookingStatus` có thêm `canTransitionTo()` để validate state machine.
 
+#### DTO Pattern (Data Transfer Objects)
+Dùng PHP 8.2 `readonly class` để truyền dữ liệu typed giữa Controller → Service:
+
+```
+app/DTOs/
+├── CreateBookingData.php    ← data tạo booking (barber_id, time_slot_id, service_ids, note, guest info)
+├── CreateBarberData.php     ← data tạo thợ (name, email, password, phone, bio...)
+├── UpdateBarberData.php     ← data cập nhật thợ (password optional)
+├── StoreReviewData.php      ← data tạo review (booking_id, rating, comment)
+├── ScheduleItemData.php     ← 1 ngày schedule (day_of_week, is_working, start/end time)
+└── UpdateScheduleData.php   ← mảng ScheduleItemData[] cho 7 ngày
+```
+
+Mỗi DTO có factory method `static fromRequest()` hoặc `static fromArray()`.
+Thay thế `array $data` trong Service methods → type-safe, IDE autocomplete.
+
 #### Observer / Event-Listener Pattern
 Dùng Laravel Events để gửi notification khi trạng thái booking thay đổi:
 
@@ -88,6 +104,13 @@ app/Policies/
 ```
 barbershop/
 ├── app/
+│   ├── DTOs/
+│   │   ├── CreateBookingData.php
+│   │   ├── CreateBarberData.php
+│   │   ├── UpdateBarberData.php
+│   │   ├── StoreReviewData.php
+│   │   ├── ScheduleItemData.php
+│   │   └── UpdateScheduleData.php
 │   ├── Enums/
 │   │   ├── BookingStatus.php
 │   │   ├── TimeSlotStatus.php
