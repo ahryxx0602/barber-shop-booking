@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\DTOs\CreateBookingData;
 use App\Enums\BookingStatus;
+use App\Enums\RecurringFrequency;
 use App\Enums\TimeSlotStatus;
 use App\Enums\UserRole;
 use App\Events\BookingCancelled;
@@ -89,6 +90,67 @@ class BookingService
 
             return $booking;
         });
+    }
+
+    /**
+     * Đặt lịch lặp lại (recurring) theo tần suất.
+     * Tạo booking gốc + tối đa 3 booking tiếp theo ở các tuần/tháng tiếp theo.
+     * Bỏ qua slot không khả dụng thay vì throw.
+     *
+     * @return array<Booking> danh sách booking đã tạo
+     */
+    public function createRecurring(CreateBookingData $data, User $customer): array
+    {
+        $frequency = RecurringFrequency::tryFrom($data->recurring_frequency) ?? RecurringFrequency::None;
+
+        // Luôn tạo booking gốc
+        $firstBooking = $this->create($data, $customer);
+        $bookings = [$firstBooking];
+
+        if ($frequency === RecurringFrequency::None) {
+            return $bookings;
+        }
+
+        $baseSlot = TimeSlot::find($data->time_slot_id);
+        $interval = $frequency->daysInterval();
+
+        // Tạo tối đa 3 booking lặp tiếp theo
+        for ($i = 1; $i <= 3; $i++) {
+            $nextDate = Carbon::parse($baseSlot->slot_date)->addDays($interval * $i);
+
+            // Tìm slot cùng giờ, cùng barber, ngày tiếp theo
+            $nextSlot = TimeSlot::where('barber_id', $data->barber_id)
+                ->where('slot_date', $nextDate->format('Y-m-d'))
+                ->where('start_time', $baseSlot->start_time)
+                ->where('status', TimeSlotStatus::Available)
+                ->first();
+
+            if (!$nextSlot) {
+                Log::channel('booking')->info('Recurring booking skipped', [
+                    'date' => $nextDate->format('Y-m-d'),
+                    'barber_id' => $data->barber_id,
+                    'reason' => 'Slot not available',
+                ]);
+                continue; // Bỏ qua nếu slot không khả dụng
+            }
+
+            try {
+                $recurData = new CreateBookingData(
+                    barber_id: $data->barber_id,
+                    time_slot_id: $nextSlot->id,
+                    service_ids: $data->service_ids,
+                    note: $data->note ? $data->note . ' (lặp lại)' : 'Lịch lặp lại',
+                );
+                $bookings[] = $this->create($recurData, $customer);
+            } catch (\Exception $e) {
+                Log::channel('booking')->warning('Recurring booking failed', [
+                    'date' => $nextDate->format('Y-m-d'),
+                    'error' => $e->getMessage(),
+                ]);
+            }
+        }
+
+        return $bookings;
     }
 
     protected function findOrCreateGuest(CreateBookingData $data): User
