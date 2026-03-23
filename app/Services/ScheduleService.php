@@ -93,21 +93,25 @@ class ScheduleService
     public function updateSchedule(Barber $barber, UpdateScheduleData $data): void
     {
         DB::transaction(function () use ($barber, $data) {
-            foreach ($data->schedules as $item) {
-                $isDayOff = !$item->is_working;
+        $upsertData = [];
+        foreach ($data->schedules as $item) {
+            $isDayOff = !$item->is_working;
+            $upsertData[] = [
+                'barber_id'   => $barber->id,
+                'day_of_week' => $item->day_of_week,
+                'start_time'  => $isDayOff ? '00:00:00' : $item->start_time . ':00',
+                'end_time'    => $isDayOff ? '00:00:00' : $item->end_time . ':00',
+                'is_day_off'  => $isDayOff,
+            ];
+        }
 
-                WorkingSchedule::updateOrCreate(
-                    [
-                        'barber_id'   => $barber->id,
-                        'day_of_week' => $item->day_of_week,
-                    ],
-                    [
-                        'start_time' => $isDayOff ? '00:00:00' : $item->start_time . ':00',
-                        'end_time'   => $isDayOff ? '00:00:00' : $item->end_time . ':00',
-                        'is_day_off' => $isDayOff,
-                    ]
-                );
-            }
+        // Tối ưu N+1 Query (Issue #3): Dùng upsert thay vì updateOrCreate trong vòng lặp 
+        // để gom tất cả thay đổi thành 1 câu query duy nhất (giảm từ 14 queries xuống 1 query)
+        WorkingSchedule::upsert(
+            $upsertData,
+            ['barber_id', 'day_of_week'],           // unique keys để xác định record trùng
+            ['start_time', 'end_time', 'is_day_off'] // danh sách cột sẽ update nếu trùng
+        );
         });
 
         $this->timeSlotService->clearAndRegenerate($barber->id);

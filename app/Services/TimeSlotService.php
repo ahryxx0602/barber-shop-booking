@@ -48,9 +48,47 @@ class TimeSlotService
      */
     public function generateForBarberRange(int $barberId, int $days = 7): void
     {
+        // Tối ưu N+1 Query (Issue #5): Pre-load tất cả schedules của barber 1 lần duy nhất
+        // Thay vì mỗi ngày trong vòng lặp lại query DB 1 lần (giảm 7 SELECT queries xuống 1)
+        $schedules = WorkingSchedule::where('barber_id', $barberId)
+            ->where('is_day_off', false)
+            ->get()
+            ->keyBy('day_of_week');
+
         for ($i = 0; $i < $days; $i++) {
             $date = now()->addDays($i)->format('Y-m-d');
-            $this->generateForBarber($barberId, $date);
+            $this->generateForBarberWithSchedule($barberId, $date, $schedules);
+        }
+    }
+
+    /**
+     * Generate slots cho 1 barber trong 1 ngày, dùng schedule đã pre-load.
+     */
+    public function generateForBarberWithSchedule(int $barberId, string $date, $schedules): void
+    {
+        $dayOfWeek = Carbon::parse($date)->dayOfWeek;
+        $schedule = $schedules->get($dayOfWeek);
+
+        if (!$schedule) {
+            return; // ngày nghỉ, hoặc không có schedule
+        }
+
+        $current = Carbon::parse($date . ' ' . $schedule->start_time);
+        $end = Carbon::parse($date . ' ' . $schedule->end_time);
+
+        // Chỗ này firstOrCreate có thể gom thành insert() nếu muốn tối ưu cực độ, 
+        // nhưng với logic nghiệp vụ tạo slot theo ngày thì firstOrCreate vẫn an toàn hơn để tránh duplicate
+        $slotsToInsert = [];
+        while ($current->copy()->addMinutes(30)->lte($end)) {
+            TimeSlot::firstOrCreate([
+                'barber_id' => $barberId,
+                'slot_date' => $date,
+                'start_time' => $current->format('H:i:s'),
+            ], [
+                'end_time' => $current->copy()->addMinutes(30)->format('H:i:s'),
+                'status' => TimeSlotStatus::Available,
+            ]);
+            $current->addMinutes(30);
         }
     }
 

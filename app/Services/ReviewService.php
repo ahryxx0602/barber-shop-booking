@@ -19,7 +19,8 @@ class ReviewService
     public function store(StoreReviewData $data, User $customer): Review
     {
         return DB::transaction(function () use ($data, $customer) {
-            $booking = Booking::findOrFail($data->booking_id);
+            // Tối ưu N+1 Query (Issue #1): Eager load 'review' để tránh lazy load ở dòng kiểm tra null bên dưới
+            $booking = Booking::with('review')->findOrFail($data->booking_id);
 
             abort_if($booking->customer_id !== $customer->id, 403);
             abort_if($booking->status !== BookingStatus::Completed, 422, 'Chỉ có thể đánh giá booking đã hoàn thành.');

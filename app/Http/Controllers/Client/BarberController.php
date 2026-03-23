@@ -11,7 +11,9 @@ class BarberController extends Controller
 {
     public function index(Request $request): View
     {
+        // Tối ưu N+1 Query (Issue #6): Thêm withCount('reviews') để tránh lazy load khi hiển thị số lượng đánh giá
         $barbers = Barber::with('user')
+            ->withCount('reviews')
             ->where('is_active', true)
             ->when($request->search, function ($query, $search) {
                 $query->whereHas('user', function ($q) use ($search) {

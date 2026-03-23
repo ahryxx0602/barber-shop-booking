@@ -47,6 +47,9 @@ class BarberService
     public function update(Barber $barber, UpdateBarberData $data, ?UploadedFile $avatar = null): Barber
     {
         $result = DB::transaction(function () use ($barber, $data, $avatar) {
+            // Tối ưu N+1 Query (Issue #2): Eager load user để khi truy cập $barber->user ở dưới không bị query lại
+            $barber->loadMissing('user');
+            
             $userData = [
                 'name'  => $data->name,
                 'email' => $data->email,
@@ -81,6 +84,9 @@ class BarberService
     public function delete(Barber $barber): void
     {
         DB::transaction(function () use ($barber) {
+            // Tối ưu N+1 Query (Issue #2): Eager load user để tránh N+1 khi truy cập $barber->user
+            $barber->loadMissing('user');
+            
             $this->deleteAvatar($barber->user);
             $barber->user->delete();
         });

@@ -18,14 +18,26 @@ class DashboardController extends Controller
 
     public function index(): View
     {
-        // Stats cards — tổng quan nhanh
-        $totalUsers     = User::count();
-        $totalBarbers   = User::where('role', UserRole::Barber)->count();
-        $totalCustomers = User::where('role', UserRole::Customer)->count();
+        // Tối ưu N+1 Query (Issue #7): Gom nhiều truy vấn COUNT() riêng lẻ thành 2 câu query dùng selectRaw()
+        // 1. Thống kê User
+        $userStats = User::selectRaw("
+            COUNT(*) as total,
+            SUM(CASE WHEN role = ? THEN 1 ELSE 0 END) as barbers,
+            SUM(CASE WHEN role = ? THEN 1 ELSE 0 END) as customers
+        ", [UserRole::Barber->value, UserRole::Customer->value])->first();
 
-        // Booking stats
-        $todayBookings    = Booking::whereDate('booking_date', today())->count();
-        $pendingBookings  = Booking::where('status', BookingStatus::Pending)->count();
+        $totalUsers     = $userStats->total;
+        $totalBarbers   = $userStats->barbers;
+        $totalCustomers = $userStats->customers;
+
+        // 2. Thống kê Booking 
+        $bookingStats = Booking::selectRaw("
+            SUM(CASE WHEN DATE(booking_date) = ? THEN 1 ELSE 0 END) as today,
+            SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending
+        ", [today()->toDateString(), BookingStatus::Pending->value])->first();
+
+        $todayBookings   = (int) $bookingStats->today;
+        $pendingBookings = (int) $bookingStats->pending;
 
         // Doanh thu tháng
         $overview = $this->reportService->getMonthlyOverview();

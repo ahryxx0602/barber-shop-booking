@@ -36,6 +36,9 @@ class ScheduleController extends Controller
 
     public function update(Request $request, Barber $barber): RedirectResponse
     {
+        // Tối ưu N+1 Query (Issue #4): Eager load 'user' để dùng cho flash message bên dưới
+        $barber->load('user');
+
         $request->validate([
             'schedules'               => ['required', 'array', 'size:7'],
             'schedules.*.day_of_week' => ['required', 'integer', 'between:0,6'],
