@@ -25,5 +25,6 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
 
         // Báo cáo
+        Route::get('reports/chart-data', [ReportController::class, 'chartData'])->name('reports.chartData');
         Route::get('reports', [ReportController::class, 'index'])->name('reports.index');
     });

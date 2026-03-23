@@ -823,18 +823,28 @@ Thống kê:
 - Doanh thu dự kiến (các booking confirmed + completed)
 - So sánh với tháng trước
 
-### Bước 8.2 — Biểu đồ doanh thu theo ngày
+### Bước 8.2 — Biểu đồ doanh thu theo ngày (+ lọc theo tháng/năm)
 
-Dùng **Chart.js** (CDN) để vẽ biểu đồ đường, dữ liệu lấy từ Controller:
+Dùng **Chart.js** (CDN) để vẽ biểu đồ doanh thu. Có 3 chế độ xem, chuyển đổi bằng tabs:
 
-```php
-$data = Booking::where('status', 'completed')
-    ->whereBetween('booking_date', [$start, $end])
-    ->selectRaw('booking_date, SUM(total_price) as revenue')
-    ->groupBy('booking_date')
-    ->orderBy('booking_date')
-    ->get();
-```
+| Tab | Loại chart | Data |
+|---|---|---|
+| 30 ngày | Line chart (gradient fill) | Doanh thu từng ngày trong 30 ngày gần nhất |
+| Theo tháng | Line chart | Doanh thu từng ngày trong tháng được chọn |
+| Theo năm | Bar chart | Doanh thu từng tháng trong năm được chọn |
+
+**Backend:**
+- `ReportService::getDailyRevenue(?month, ?year)` — query doanh thu group by ngày, fill ngày trống bằng 0
+- `ReportService::getMonthlyRevenue(year)` — query doanh thu group by tháng (12 cột T1–T12)
+- `ReportService::getAvailableYears()` — lấy danh sách năm có booking
+- `ReportController::chartData(Request)` — API JSON trả data chart theo `mode=recent|monthly|yearly`
+- Route: `GET admin/reports/chart-data` (name: `admin.reports.chartData`)
+
+**Frontend (view `index.blade.php`):**
+- Tabs UI (30 ngày / Theo tháng / Theo năm) + dropdowns tháng/năm (ẩn/hiện theo tab)
+- JS: `renderChart(labels, data, type)` render hoặc destroy+tạo mới chart
+- AJAX `fetch()` tới API `chartData` khi đổi tab hoặc chọn tháng/năm
+- Chart ban đầu render từ dữ liệu Blade (không cần AJAX lần đầu)
 
 ### Bước 8.3 — Bảng top thợ & top dịch vụ
 

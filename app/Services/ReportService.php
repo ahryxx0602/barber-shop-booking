@@ -69,6 +69,99 @@ class ReportService
     }
 
     /**
+     * Lấy doanh thu theo ngày.
+     * - Không truyền $month/$year → 30 ngày gần nhất.
+     * - Truyền $month + $year → các ngày trong tháng đó.
+     */
+    public function getDailyRevenue(?int $month = null, ?int $year = null): array
+    {
+        if ($month && $year) {
+            $startDate = Carbon::create($year, $month, 1)->startOfDay();
+            $endDate = $startDate->copy()->endOfMonth();
+        } else {
+            $startDate = now()->subDays(29)->startOfDay();
+            $endDate = now()->endOfDay();
+        }
+
+        $revenueStatuses = [
+            BookingStatus::Confirmed,
+            BookingStatus::InProgress,
+            BookingStatus::Completed,
+        ];
+
+        // Query doanh thu group by ngày
+        $revenues = Booking::whereIn('status', $revenueStatuses)
+            ->whereBetween('booking_date', [$startDate, $endDate])
+            ->selectRaw('DATE(booking_date) as date, SUM(total_price) as total')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('total', 'date');
+
+        // Fill ngày trống bằng 0
+        $labels = [];
+        $data = [];
+        $current = $startDate->copy();
+
+        while ($current <= $endDate) {
+            $dateKey = $current->format('Y-m-d');
+            $labels[] = $current->format('d/m');
+            $data[] = (float) ($revenues[$dateKey] ?? 0);
+            $current->addDay();
+        }
+
+        return compact('labels', 'data');
+    }
+
+    /**
+     * Lấy doanh thu theo từng tháng trong năm.
+     * Trả về ['labels' => ['T1', 'T2', ...], 'data' => [...]]
+     */
+    public function getMonthlyRevenue(int $year): array
+    {
+        $revenueStatuses = [
+            BookingStatus::Confirmed,
+            BookingStatus::InProgress,
+            BookingStatus::Completed,
+        ];
+
+        $revenues = Booking::whereIn('status', $revenueStatuses)
+            ->whereYear('booking_date', $year)
+            ->selectRaw('MONTH(booking_date) as month, SUM(total_price) as total')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->pluck('total', 'month');
+
+        $labels = [];
+        $data = [];
+
+        for ($m = 1; $m <= 12; $m++) {
+            $labels[] = 'T' . $m;
+            $data[] = (float) ($revenues[$m] ?? 0);
+        }
+
+        return compact('labels', 'data');
+    }
+
+    /**
+     * Lấy danh sách các năm có booking để hiển thị dropdown.
+     */
+    public function getAvailableYears(): array
+    {
+        $years = Booking::selectRaw('DISTINCT YEAR(booking_date) as year')
+            ->orderBy('year', 'desc')
+            ->pluck('year')
+            ->toArray();
+
+        // Đảm bảo luôn có năm hiện tại
+        $currentYear = (int) now()->format('Y');
+        if (!in_array($currentYear, $years)) {
+            array_unshift($years, $currentYear);
+        }
+
+        return $years;
+    }
+
+    /**
      * Tính % thay đổi so với tháng trước.
      */
     private function calculateChange(float $current, float $previous): float

@@ -9,7 +9,7 @@
 
 ```
 Giai đoạn đang làm : 8 — Báo cáo doanh thu (Admin)
-Bước đang làm      : 8.2 — Biểu đồ doanh thu theo ngày
+Bước đang làm      : 8.3 — Bảng top thợ, top dịch vụ
 Cập nhật lần cuối  : 23/03/2026
 ```
 
@@ -155,7 +155,7 @@ Cập nhật lần cuối  : 23/03/2026
 
 ### Giai đoạn 8 — Báo cáo (Admin)
 - [x] 8.1 Trang báo cáo tổng quan — ReportService + Admin\ReportController + view admin/reports/index + sidebar
-- [ ] 8.2 Biểu đồ doanh thu theo ngày (Chart.js)
+- [x] 8.2 Biểu đồ doanh thu theo ngày (Chart.js) — line chart 30 ngày + bộ lọc theo tháng/năm (AJAX) + bar chart năm
 - [ ] 8.3 Bảng top thợ, top dịch vụ
 
 ### Giai đoạn 9 — Kiểm thử & Hoàn thiện
@@ -180,6 +180,8 @@ Cập nhật lần cuối  : 23/03/2026
 - **22/03/2026**: Refactor lớn — thêm PHP Enums (`BookingStatus`, `TimeSlotStatus`, `UserRole`) thay thế toàn bộ string literals. Thêm Events/Listeners cho booking lifecycle (Confirmed, Cancelled, Completed) → tự động ghi notification vào DB. Xóa file thừa từ module Customer cũ (`routes/customer.php`, `Customer/DashboardController`, `views/customer/`). Sửa broken route `customer.dashboard` → `client.profile.show`.
 - **22/03/2026**: Giai đoạn 7 hoàn thành — (1) ReviewService + StoreReviewRequest + ReviewController: client viết review cho booking completed, tự cập nhật barber rating trung bình; (2) Trang thợ có rating summary bar (biểu đồ phân bố sao) + danh sách review có toggle "xem tất cả"; (3) Notification bell trên header Barber & Admin — dropdown hiển thị 10 thông báo chưa đọc + nút "đánh dấu tất cả đã đọc"; (4) Sửa Listeners thiếu trường `type`/`title` khi tạo notification.
 - **23/03/2026**: Giai đoạn 7+ hoàn thành — (1) Redesign toàn bộ 6 trang auth (login, register, forgot-password, reset-password, verify-email, confirm-password) sang vintage barbershop style, dùng `layouts.client` thay vì `layouts.guest`; (2) Xóa chức năng tự xóa tài khoản (destroy) khỏi ProfileController và routes; (3) Thêm upload avatar cho client profile (`Client\ProfileController`) và Breeze profile (`ProfileController`); (4) Hiển thị avatar user trong navigation client, admin header, barber header; (5) Tạo 6 trang lỗi tuỳ chỉnh (403, 404, 419, 429, 500, 503) với vintage standalone design — mỗi trang có icon riêng, animation CSS, nội dung tiếng Việt phù hợp.
+- **23/03/2026**: Bước 8.1 hoàn thành — Tạo `ReportService` (getMonthlyOverview), `Admin\ReportController`, view `admin/reports/index.blade.php` với 3 stat cards (tổng booking, doanh thu, khách mới + % so sánh tháng trước), thêm mục "Báo cáo" vào sidebar admin.
+- **23/03/2026**: Bước 8.2 hoàn thành + mở rộng — (1) Biểu đồ doanh thu 30 ngày gần nhất dùng Chart.js CDN (line chart, gradient fill, tooltip VNĐ, trục Y rút gọn k/tr); (2) Mở rộng thêm bộ lọc thời gian: 3 tabs (30 ngày / Theo tháng / Theo năm) + dropdowns tháng/năm; (3) AJAX fetch API cập nhật chart không reload trang; (4) Chế độ "Theo năm" dùng bar chart 12 tháng; (5) Thêm `ReportService::getDailyRevenue(?month, ?year)`, `getMonthlyRevenue(year)`, `getAvailableYears()`; (6) Thêm route API `admin/reports/chart-data` + method `ReportController::chartData()`.
 
 ---
 
