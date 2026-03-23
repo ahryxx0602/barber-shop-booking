@@ -82,10 +82,14 @@
       <div class="relative" x-data="{ dropdownOpen: false }" @click.outside="dropdownOpen = false">
         <a class="flex items-center gap-2 text-gray-700 dark:text-gray-400" href="#"
           @click.prevent="dropdownOpen = !dropdownOpen">
-          <span
-            class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-brand-700 font-semibold text-sm dark:bg-brand-900 dark:text-brand-300">
-            {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
-          </span>
+          @if(auth()->user()->avatar)
+            <img src="{{ Storage::url(auth()->user()->avatar) }}" class="h-9 w-9 rounded-full object-cover" alt="" />
+          @else
+            <span
+              class="flex h-9 w-9 items-center justify-center rounded-full bg-brand-100 text-brand-700 font-semibold text-sm dark:bg-brand-900 dark:text-brand-300">
+              {{ strtoupper(substr(auth()->user()->name, 0, 1)) }}
+            </span>
+          @endif
           <span class="hidden text-sm font-medium lg:block">{{ auth()->user()->name }}</span>
           <svg :class="dropdownOpen && 'rotate-180'" class="stroke-gray-500 dark:stroke-gray-400 transition-transform"
             width="18" height="20" viewBox="0 0 18 20" fill="none">

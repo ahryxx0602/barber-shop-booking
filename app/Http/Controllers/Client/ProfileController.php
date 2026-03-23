@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\View\View;
 
 class ProfileController extends Controller
@@ -39,13 +40,22 @@ class ProfileController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $request->user()->id],
             'phone' => ['nullable', 'string', 'max:20'],
+            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
         ]);
 
         $user = $request->user();
-        $user->fill($validated);
+        $user->fill(collect($validated)->except('avatar')->toArray());
 
         if ($user->isDirty('email')) {
             $user->email_verified_at = null;
+        }
+
+        // Handle avatar upload
+        if ($request->hasFile('avatar')) {
+            if ($user->avatar) {
+                Storage::disk('public')->delete($user->avatar);
+            }
+            $user->avatar = $request->file('avatar')->store('avatars', 'public');
         }
 
         $user->save();
@@ -53,3 +63,4 @@ class ProfileController extends Controller
         return redirect()->route('client.profile.show')->with('success', 'Cập nhật thông tin thành công!');
     }
 }
+

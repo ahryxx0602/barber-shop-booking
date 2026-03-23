@@ -12,9 +12,46 @@
         @csrf
     </form>
 
-    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-5">
+    <form method="post" action="{{ route('profile.update') }}" class="mt-6 space-y-5" enctype="multipart/form-data">
         @csrf
         @method('patch')
+
+        {{-- Avatar Upload --}}
+        <div x-data="{ preview: null }">
+            <label class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
+                Ảnh đại diện
+            </label>
+            <div class="flex items-center gap-4">
+                {{-- Current / Preview Avatar --}}
+                <div class="w-16 h-16 rounded-full overflow-hidden border-2 border-gray-200 dark:border-gray-700 flex-shrink-0">
+                    <template x-if="preview">
+                        <img :src="preview" class="w-full h-full object-cover" />
+                    </template>
+                    <template x-if="!preview">
+                        @if($user->avatar)
+                            <img src="{{ Storage::url($user->avatar) }}" class="w-full h-full object-cover" />
+                        @else
+                            <div class="w-full h-full flex items-center justify-center bg-brand-100 dark:bg-brand-900">
+                                <span class="text-xl font-bold text-brand-700 dark:text-brand-300">{{ strtoupper(substr($user->name, 0, 1)) }}</span>
+                            </div>
+                        @endif
+                    </template>
+                </div>
+
+                <div>
+                    <label for="avatar" class="cursor-pointer inline-flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 border border-gray-300 rounded-lg hover:bg-gray-50 dark:text-gray-400 dark:border-gray-700 dark:hover:bg-gray-800 transition">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                        Chọn ảnh
+                    </label>
+                    <input type="file" name="avatar" id="avatar" accept="image/*" class="hidden"
+                        @change="const file = $event.target.files[0]; if (file) { const r = new FileReader(); r.onload = e => preview = e.target.result; r.readAsDataURL(file); }" />
+                    <p class="mt-1 text-xs text-gray-400">JPG, PNG, WebP. Tối đa 2MB.</p>
+                </div>
+            </div>
+            @error('avatar')
+                <p class="mt-1 text-xs text-error-500">{{ $message }}</p>
+            @enderror
+        </div>
 
         <div>
             <label for="name" class="mb-1.5 block text-sm font-medium text-gray-700 dark:text-gray-400">
