@@ -1679,6 +1679,10 @@ public function confirm(Booking $booking)
 
 ### Sơ đồ quan hệ (ER Diagram)
 
+> Tách thành 3 sơ đồ theo nhóm để dễ đọc hơn.
+
+#### 1) Nhóm User & Barber
+
 ```mermaid
 erDiagram
     users {
@@ -1695,11 +1699,79 @@ erDiagram
 
     barbers {
         bigint id PK
-        bigint user_id FK "→ users (cascade)"
+        bigint user_id FK "users - cascade"
         text bio
         tinyint experience_years
         decimal rating "0.00 - 5.00"
         boolean is_active
+    }
+
+    notifications {
+        bigint id PK
+        bigint user_id FK "users - cascade"
+        varchar type
+        varchar title
+        text message
+        boolean is_read
+    }
+
+    users ||--o| barbers : "1 user co the la 1 barber"
+    users ||--o{ notifications : "1 user nhan nhieu thong bao"
+```
+
+#### 2) Nhóm Lịch làm việc & Khung giờ
+
+```mermaid
+erDiagram
+    barbers {
+        bigint id PK
+        bigint user_id FK
+        text bio
+        tinyint experience_years
+        decimal rating "0.00 - 5.00"
+        boolean is_active
+    }
+
+    working_schedules {
+        bigint id PK
+        bigint barber_id FK "barbers - cascade"
+        tinyint day_of_week "0-CN 1-T2 ... 6-T7"
+        time start_time
+        time end_time
+        boolean is_day_off
+    }
+
+    time_slots {
+        bigint id PK
+        bigint barber_id FK "barbers - cascade"
+        date slot_date
+        time start_time
+        time end_time
+        enum status "available | booked | blocked"
+    }
+
+    barbers ||--o{ working_schedules : "1 barber co 7 ngay lich"
+    barbers ||--o{ time_slots : "1 barber co nhieu slot"
+```
+
+#### 3) Nhóm Đặt lịch & Thanh toán
+
+```mermaid
+erDiagram
+    bookings {
+        bigint id PK
+        varchar booking_code UK
+        bigint customer_id FK "users - cascade"
+        bigint barber_id FK "barbers - cascade"
+        bigint time_slot_id FK "time_slots - restrict"
+        date booking_date
+        time start_time
+        time end_time
+        decimal total_price
+        enum status "FSM: pending - confirmed - ..."
+        text note
+        timestamp cancelled_at
+        text cancel_reason
     }
 
     services {
@@ -1712,51 +1784,17 @@ erDiagram
         boolean is_active
     }
 
-    working_schedules {
-        bigint id PK
-        bigint barber_id FK "→ barbers (cascade)"
-        tinyint day_of_week "0=CN 1=T2...6=T7"
-        time start_time
-        time end_time
-        boolean is_day_off
-    }
-
-    time_slots {
-        bigint id PK
-        bigint barber_id FK "→ barbers (cascade)"
-        date slot_date
-        time start_time
-        time end_time
-        enum status "available | booked | blocked"
-    }
-
-    bookings {
-        bigint id PK
-        varchar booking_code UK
-        bigint customer_id FK "→ users (cascade)"
-        bigint barber_id FK "→ barbers (cascade)"
-        bigint time_slot_id FK "→ time_slots (restrict)"
-        date booking_date
-        time start_time
-        time end_time
-        decimal total_price
-        enum status "FSM: pending→confirmed→..."
-        text note
-        timestamp cancelled_at
-        text cancel_reason
-    }
-
     booking_services {
         bigint id PK
-        bigint booking_id FK "→ bookings (cascade)"
-        bigint service_id FK "→ services (restrict)"
+        bigint booking_id FK "bookings - cascade"
+        bigint service_id FK "services - restrict"
         decimal price_snapshot "Gia tai thoi diem dat"
         int duration_snapshot "Thoi gian tai thoi diem dat"
     }
 
     payments {
         bigint id PK
-        bigint booking_id FK "unique - bookings cascade"
+        bigint booking_id FK "bookings - cascade unique"
         decimal amount
         enum method "cash | vnpay | momo"
         enum status "pending | paid | failed | refunded"
@@ -1766,37 +1804,15 @@ erDiagram
 
     reviews {
         bigint id PK
-        bigint booking_id FK "unique - bookings cascade"
-        bigint customer_id FK "→ users (cascade)"
-        bigint barber_id FK "→ barbers (cascade)"
+        bigint booking_id FK "bookings - cascade unique"
+        bigint customer_id FK "users - cascade"
+        bigint barber_id FK "barbers - cascade"
         tinyint rating "1-5 sao"
         text comment
     }
 
-    notifications {
-        bigint id PK
-        bigint user_id FK "→ users (cascade)"
-        varchar type
-        varchar title
-        text message
-        boolean is_read
-    }
-
-    users ||--o| barbers : "1 user co the la 1 barber"
-    users ||--o{ bookings : "1 user dat nhieu booking"
-    users ||--o{ notifications : "1 user nhan nhieu thong bao"
-    users ||--o{ reviews : "1 user viet nhieu review"
-
-    barbers ||--o{ working_schedules : "1 barber co 7 ngay lich"
-    barbers ||--o{ time_slots : "1 barber co nhieu slot"
-    barbers ||--o{ bookings : "1 barber co nhieu booking"
-    barbers ||--o{ reviews : "1 barber co nhieu review"
-
-    time_slots ||--o| bookings : "1 slot gan 1 booking"
-
     bookings ||--o{ booking_services : "1 booking co nhieu dich vu"
     services ||--o{ booking_services : "1 dich vu thuoc nhieu booking"
-
     bookings ||--o| payments : "1 booking co 1 thanh toan"
     bookings ||--o| reviews : "1 booking co 1 danh gia"
 ```
