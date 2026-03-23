@@ -24,6 +24,17 @@
         </div>
     </div>
 
+    @if(session('success'))
+        <div style="max-width:640px;margin:0 auto 20px;padding:16px;border:1px solid var(--v-copper);background:rgba(176,137,104,0.06);color:var(--v-copper-dk);font-size:14px;font-weight:500;">
+            {{ session('success') }}
+        </div>
+    @endif
+    @if(session('error'))
+        <div style="max-width:640px;margin:0 auto 20px;padding:16px;border:1px solid #dc2626;background:rgba(220,38,38,0.06);color:#dc2626;font-size:14px;font-weight:500;">
+            {{ session('error') }}
+        </div>
+    @endif
+
     {{-- Booking Form --}}
     <form action="{{ route('client.booking.store') }}" method="POST" style="max-width:640px;margin:0 auto;">
         @csrf
@@ -182,8 +193,18 @@
                             ← Chọn ngày phía trên
                         </div>
 
-                        <div x-show="selectedDate && !loadingSlots && slots.length === 0" style="text-align:center;padding:24px 0;color:var(--v-muted);font-size:12px;">
-                            Không có giờ trống cho ngày này
+                        <div x-show="selectedDate && !loadingSlots && slots.length === 0" style="text-align:center;padding:24px 0;">
+                            <p style="color:var(--v-muted);font-size:12px;margin-bottom:12px;">Thợ đã kín lịch trong ngày này.</p>
+                            @auth
+                            <button type="button" @click="$refs.waitlistForm.submit()" class="v-btn-outline v-btn-sm" style="margin:0 auto;">
+                                <span class="material-symbols-outlined" style="font-size:14px;">notifications_active</span>
+                                Đăng ký nhận thông báo
+                            </button>
+                            @else
+                            <a href="{{ route('login') }}?redirect={{ urlencode(route('client.booking.create')) }}" class="v-btn-outline v-btn-sm" style="margin:0 auto;text-decoration:none;display:inline-flex;">
+                                Đăng nhập để vào danh sách chờ
+                            </a>
+                            @endauth
                         </div>
 
                         <div x-show="!loadingSlots && slots.length > 0" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:180px;overflow-y:auto;padding-right:4px;">
@@ -259,21 +280,46 @@
             </div>
             @endguest
 
-            {{-- ═══ STEP 5: Note (optional, always visible inline) ═══ --}}
+            {{-- ═══ STEP 5: Tùy chọn bổ sung ═══ --}}
             <div :style="!selectedSlot ? 'opacity:0.4;pointer-events:none' : ''">
                 <button type="button" @click="if(selectedSlot) currentStep = currentStep === 5 ? 0 : 5"
                     style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:none;border:none;cursor:pointer;">
                     <div style="display:flex;align-items:center;gap:10px;">
                         <span class="v-step-badge" style="width:24px;height:24px;font-size:10px;">@auth 4 @else 5 @endauth</span>
-                        <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--v-ink);">Ghi chú</span>
-                        <span style="font-size:11px;color:var(--v-muted);font-style:italic;">tuỳ chọn</span>
+                        <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--v-ink);">Tuỳ chọn bổ sung</span>
+                        <span style="font-size:11px;color:var(--v-muted);font-style:italic;">không bắt buộc</span>
                     </div>
                     <span class="material-symbols-outlined" style="font-size:18px;color:var(--v-muted);transition:transform 0.2s;" :style="currentStep === 5 ? 'transform:rotate(180deg)' : ''">expand_more</span>
                 </button>
                 <div x-show="currentStep === 5" x-transition.duration.200ms>
-                    <div style="padding:0 20px 16px;">
-                        <textarea name="note" rows="2" placeholder="Yêu cầu đặc biệt, kiểu tóc mong muốn..."
-                            class="v-textarea" style="font-size:13px;">{{ old('note') }}</textarea>
+                    <div style="padding:0 20px 16px;display:flex;flex-direction:column;gap:16px;">
+                        {{-- Ghi chú --}}
+                        <div>
+                            <label style="display:block;font-size:11px;font-weight:600;color:var(--v-muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Ghi chú</label>
+                            <textarea name="note" rows="2" placeholder="Yêu cầu đặc biệt, kiểu tóc mong muốn..."
+                                class="v-textarea" style="font-size:13px;">{{ old('note') }}</textarea>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            {{-- Mã giảm giá --}}
+                            <div>
+                                <label style="display:block;font-size:11px;font-weight:600;color:var(--v-muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Mã giảm giá</label>
+                                <input type="text" name="coupon_code" placeholder="Nhập mã (nếu có)" class="v-input" style="padding:10px 14px;font-size:13px;font-family:monospace;text-transform:uppercase;" value="{{ old('coupon_code') }}">
+                            </div>
+
+                            {{-- Đặt lịch lặp lại --}}
+                            @auth
+                            <div>
+                                <label style="display:block;font-size:11px;font-weight:600;color:var(--v-muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Lặp lại lịch</label>
+                                <select name="recurring_frequency" class="v-input" style="padding:10px 14px;font-size:13px;background-color:#fff;">
+                                    <option value="none">Không lặp lại</option>
+                                    <option value="weekly">Hàng tuần</option>
+                                    <option value="biweekly">Mỗi 2 tuần</option>
+                                    <option value="monthly">Hàng tháng</option>
+                                </select>
+                            </div>
+                            @endauth
+                        </div>
                     </div>
                 </div>
             </div>
@@ -302,6 +348,14 @@
         </div>
     </form>
 </section>
+
+@auth
+<form x-ref="waitlistForm" method="POST" action="{{ route('client.waitlist.store') }}" style="display:none;">
+    @csrf
+    <input type="hidden" name="barber_id" :value="selectedBarber">
+    <input type="hidden" name="desired_date" :value="selectedDate">
+</form>
+@endauth
 
 @push('styles')
 <style>
