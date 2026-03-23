@@ -2,6 +2,8 @@
 
 namespace App\Models;
 
+use App\Enums\PaymentMethod;
+use App\Enums\PaymentStatus;
 use Illuminate\Database\Eloquent\Model;
 
 class Payment extends Model
@@ -14,6 +16,19 @@ class Payment extends Model
         'transaction_id',
         'paid_at',
     ];
+
+    /**
+     * Cast method & status sang Enum, paid_at sang datetime.
+     */
+    protected function casts(): array
+    {
+        return [
+            'method'  => PaymentMethod::class,
+            'status'  => PaymentStatus::class,
+            'paid_at' => 'datetime',
+            'amount'  => 'decimal:2',
+        ];
+    }
 
     public function booking()
     {

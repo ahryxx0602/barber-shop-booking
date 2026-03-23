@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\Client\BarberController as ClientBarberController;
 use App\Http\Controllers\Client\BookingController as ClientBookingController;
+use App\Http\Controllers\Client\PaymentController as ClientPaymentController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
 use App\Http\Controllers\Client\ReviewController as ClientReviewController;
 use App\Http\Controllers\ProfileController;
@@ -22,6 +23,14 @@ Route::name('client.')->group(function () {
     Route::get('/booking/create', [ClientBookingController::class, 'create'])->name('booking.create');
     Route::post('/booking', [ClientBookingController::class, 'store'])->name('booking.store');
     Route::get('/booking/{booking}/confirmation', [ClientBookingController::class, 'confirmation'])->name('booking.confirmation');
+
+    // Payment — callback routes từ cổng thanh toán (phải đặt TRƯỚC wildcard {booking})
+    Route::get('/payment/vnpay/return', [ClientPaymentController::class, 'vnpayReturn'])->name('payment.vnpay.return');
+    Route::get('/payment/momo/return', [ClientPaymentController::class, 'momoReturn'])->name('payment.momo.return');
+
+    // Payment — chọn phương thức & thanh toán online (VNPay / Momo Sandbox)
+    Route::get('/payment/{booking}', [ClientPaymentController::class, 'show'])->name('payment.show');
+    Route::post('/payment/{booking}', [ClientPaymentController::class, 'process'])->name('payment.process');
 
     // Profile & booking management requires authentication
     Route::middleware(['auth'])->group(function () {

@@ -1,4 +1,5 @@
 @extends('layouts.client')
+@use('App\Enums\PaymentStatus')
 
 @section('title', 'Xác nhận đặt lịch')
 
@@ -52,19 +53,36 @@
                     </div>
                     <div style="display:flex;justify-content:space-between;align-items:center;padding:12px 0;">
                         <p class="v-label">Tổng cộng</p>
-                        <p style="font-family:var(--font-serif);font-weight:700;font-size:20px;color:var(--v-copper);text-align:right;">{{ number_format($booking->total_price, 0, ',', '.') }}d</p>
+                        <p style="font-family:var(--font-serif);font-weight:700;font-size:20px;color:var(--v-copper);text-align:right;">{{ number_format($booking->total_price, 0, ',', '.') }}đ</p>
                     </div>
                 </div>
             </div>
 
-            {{-- Status --}}
-            <div style="width:100%;border:1px solid var(--v-copper);background:rgba(176,137,104,0.06);padding:16px;margin-bottom:32px;text-align:center;">
-                <p style="font-size:13px;color:var(--v-ink);display:flex;align-items:center;justify-content:center;gap:6px;">
-                    <span class="material-symbols-outlined" style="font-size:16px;color:var(--v-copper);">schedule</span>
-                    Trạng thái: <span style="font-weight:700;">Đang chờ xác nhận</span>
-                </p>
-                <p style="font-size:11px;color:var(--v-muted);margin-top:4px;">Thợ cắt sẽ xác nhận lịch hẹn của bạn trong thời gian sớm nhất.</p>
-            </div>
+            {{-- Payment Status --}}
+            @if($booking->payment && $booking->payment->status === PaymentStatus::Paid)
+                <div style="width:100%;border:1px solid #16a34a;background:rgba(22,163,74,0.06);padding:16px;margin-bottom:32px;text-align:center;">
+                    <p style="font-size:13px;color:var(--v-ink);display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <span class="material-symbols-outlined fill" style="font-size:16px;color:#16a34a;">verified</span>
+                        Thanh toán: <span style="font-weight:700;color:#16a34a;">Đã thanh toán ({{ $booking->payment->method->label() }})</span>
+                    </p>
+                    <p style="font-size:11px;color:var(--v-muted);margin-top:4px;">Mã GD: {{ $booking->payment->transaction_id }}</p>
+                </div>
+            @elseif($booking->payment && $booking->payment->method->value === 'cash')
+                <div style="width:100%;border:1px solid var(--v-copper);background:rgba(176,137,104,0.06);padding:16px;margin-bottom:32px;text-align:center;">
+                    <p style="font-size:13px;color:var(--v-ink);display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:16px;color:var(--v-copper);">payments</span>
+                        Phương thức: <span style="font-weight:700;">Thanh toán tiền mặt tại quán</span>
+                    </p>
+                </div>
+            @else
+                <div style="width:100%;border:1px solid var(--v-copper);background:rgba(176,137,104,0.06);padding:16px;margin-bottom:32px;text-align:center;">
+                    <p style="font-size:13px;color:var(--v-ink);display:flex;align-items:center;justify-content:center;gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:16px;color:var(--v-copper);">schedule</span>
+                        Trạng thái: <span style="font-weight:700;">Đang chờ xác nhận</span>
+                    </p>
+                    <p style="font-size:11px;color:var(--v-muted);margin-top:4px;">Thợ cắt sẽ xác nhận lịch hẹn của bạn trong thời gian sớm nhất.</p>
+                </div>
+            @endif
 
             {{-- Actions --}}
             <div style="display:flex;flex-direction:column;gap:12px;width:100;" class="sm:flex-row">

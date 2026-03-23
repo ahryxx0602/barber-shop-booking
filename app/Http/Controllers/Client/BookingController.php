@@ -63,8 +63,9 @@ class BookingController extends Controller
                 $request->user()
             );
 
-            return redirect()->route('client.booking.confirmation', $booking)
-                ->with('success', 'Đặt lịch thành công!');
+            // Redirect sang trang chọn phương thức thanh toán thay vì vào thẳng confirmation
+            return redirect()->route('client.payment.show', $booking)
+                ->with('success', 'Đặt lịch thành công! Vui lòng chọn phương thức thanh toán.');
         } catch (\App\Exceptions\SlotNotAvailableException $e) {
             return back()->withErrors(['time_slot_id' => $e->getMessage()])->withInput();
         }

@@ -35,4 +35,31 @@ return [
         ],
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | VNPay Sandbox — Cổng thanh toán test
+    |--------------------------------------------------------------------------
+    | Đăng ký tài khoản merchant test tại: https://sandbox.vnpayment.vn
+    | Thẻ test (NCB): 9704198526191432198, tên NGUYEN VAN A, ngày 07/15
+    */
+    'vnpay' => [
+        'url'         => env('VNP_URL', 'https://sandbox.vnpayment.vn/paymentv2/vpcpay.html'),
+        'tmn_code'    => env('VNP_TMN_CODE', 'W9WBI93N'),
+        'hash_secret' => env('VNP_HASH_SECRET', 'I2LOZSYVLFOAV5WR5FKREFQ6VIZHRY7B'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Momo Sandbox — Cổng thanh toán test
+    |--------------------------------------------------------------------------
+    | Đăng ký tài khoản dev tại: https://business.momo.vn
+    | Dùng app Momo Test để quét QR thanh toán giả lập.
+    */
+    'momo' => [
+        'partner_code' => env('MOMO_PARTNER_CODE', 'MOMO'),
+        'access_key'   => env('MOMO_ACCESS_KEY', 'F8BBA842ECF85'),
+        'secret_key'   => env('MOMO_SECRET_KEY', 'K951B6PE1waDMi640xX08PD3vg6EkVlz'),
+        'endpoint'     => env('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
+    ],
+
 ];
