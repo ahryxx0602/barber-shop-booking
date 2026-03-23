@@ -52,6 +52,12 @@ class User extends Authenticatable
         return $this->hasMany(LoyaltyPoint::class);
     }
 
+    // users ──────────── favorite_barbers (n-n) barber yêu thích
+    public function favoriteBarbers()
+    {
+        return $this->belongsToMany(Barber::class, 'favorite_barbers')->withTimestamps();
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

@@ -3,6 +3,7 @@
 use App\Enums\UserRole;
 use App\Http\Controllers\Client\BarberController as ClientBarberController;
 use App\Http\Controllers\Client\BookingController as ClientBookingController;
+use App\Http\Controllers\Client\FavoriteBarberController as ClientFavoriteBarberController;
 use App\Http\Controllers\Client\PaymentController as ClientPaymentController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
 use App\Http\Controllers\Client\ReviewController as ClientReviewController;
@@ -41,6 +42,7 @@ Route::name('client.')->group(function () {
         Route::get('/profile/loyalty', [ClientProfileController::class, 'loyalty'])->name('profile.loyalty');
         Route::patch('/booking/{booking}/cancel', [ClientBookingController::class, 'cancel'])->name('booking.cancel');
         Route::post('/reviews', [ClientReviewController::class, 'store'])->name('reviews.store');
+        Route::post('/barbers/{barber}/favorite', [ClientFavoriteBarberController::class, 'toggle'])->name('barbers.favorite');
     });
 });
 
