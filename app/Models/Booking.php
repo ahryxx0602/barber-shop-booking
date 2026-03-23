@@ -16,6 +16,8 @@ class Booking extends Model
         'start_time',
         'end_time',
         'total_price',
+        'discount_amount',
+        'coupon_code',
         'status',
         'note',
         'cancelled_at',
@@ -29,6 +31,7 @@ class Booking extends Model
             'booking_date' => 'date',
             'cancelled_at' => 'datetime',
             'total_price' => 'decimal:2',
+            'discount_amount' => 'decimal:2',
         ];
     }
 

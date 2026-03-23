@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BarberController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
@@ -29,6 +30,9 @@ Route::middleware(['auth', 'role:admin'])
         // Người dùng
         Route::resource('users', UserController::class)->only(['index', 'show', 'edit', 'update']);
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggleActive');
+
+        // Mã giảm giá
+        Route::resource('coupons', CouponController::class)->except(['show']);
 
         // Báo cáo
         Route::get('reports/chart-data', [ReportController::class, 'chartData'])->name('reports.chartData');

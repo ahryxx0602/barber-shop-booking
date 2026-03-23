@@ -21,6 +21,10 @@ use Illuminate\Support\Str;
 
 class BookingService
 {
+    public function __construct(
+        protected CouponService $couponService,
+    ) {}
+
     public function create(CreateBookingData $data, ?User $customer = null): Booking
     {
         return DB::transaction(function () use ($data, $customer) {
@@ -41,6 +45,16 @@ class BookingService
             $totalDuration = $services->sum('duration_minutes');
             $endTime = Carbon::parse($slot->start_time)->addMinutes($totalDuration)->format('H:i:s');
 
+            // Xử lý coupon nếu có
+            $discountAmount = 0;
+            $couponCode = null;
+            if ($data->coupon_code) {
+                $coupon = $this->couponService->validate($data->coupon_code, $totalPrice);
+                $discountAmount = $this->couponService->calculateDiscount($coupon, $totalPrice);
+                $couponCode = $coupon->code;
+                $this->couponService->markUsed($coupon);
+            }
+
             $booking = Booking::create([
                 'booking_code' => $this->generateCode(),
                 'customer_id' => $customer->id,
@@ -49,7 +63,9 @@ class BookingService
                 'booking_date' => $slot->slot_date,
                 'start_time' => $slot->start_time,
                 'end_time' => $endTime,
-                'total_price' => $totalPrice,
+                'total_price' => $totalPrice - $discountAmount,
+                'discount_amount' => $discountAmount,
+                'coupon_code' => $couponCode,
                 'note' => $data->note,
                 'status' => BookingStatus::Pending,
             ]);
@@ -67,7 +83,8 @@ class BookingService
                 'booking_code' => $booking->booking_code,
                 'customer_id' => $customer->id,
                 'barber_id' => $data->barber_id,
-                'total_price' => $totalPrice,
+                'total_price' => $totalPrice - $discountAmount,
+                'discount' => $discountAmount,
             ]);
 
             return $booking;
