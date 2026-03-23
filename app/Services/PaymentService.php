@@ -7,6 +7,8 @@ use App\Enums\PaymentStatus;
 use App\Models\Booking;
 use App\Models\Payment;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class PaymentService
@@ -124,6 +126,14 @@ class PaymentService
             return ['success' => false, 'message' => 'Không tìm thấy giao dịch.', 'booking' => null];
         }
 
+        // Idempotency: nếu payment đã xử lý rồi thì trả về kết quả cũ, không xử lý lại
+        if ($payment->status === PaymentStatus::Paid) {
+            return ['success' => true, 'message' => 'Giao dịch đã được xử lý thành công trước đó.', 'booking' => $payment->booking];
+        }
+        if ($payment->status === PaymentStatus::Failed) {
+            return ['success' => false, 'message' => 'Giao dịch đã bị từ chối trước đó.', 'booking' => $payment->booking];
+        }
+
         $responseCode = $inputData['vnp_ResponseCode'] ?? '99';
 
         if ($responseCode === '00') {
@@ -133,8 +143,18 @@ class PaymentService
                 'transaction_id' => $inputData['vnp_TransactionNo'] ?? null,
                 'paid_at'        => now(),
             ]);
+
+            Log::channel('booking')->info('VNPay payment success', [
+                'payment_id' => $payment->id,
+                'booking_id' => $payment->booking_id,
+                'amount'     => $payment->amount,
+            ]);
+
             return ['success' => true, 'message' => 'Thanh toán VNPay thành công!', 'booking' => $payment->booking];
         }
+
+        // Giao dịch thất bại — cập nhật status
+        $payment->update(['status' => PaymentStatus::Failed]);
 
         return ['success' => false, 'message' => 'Thanh toán VNPay thất bại (mã lỗi: ' . $responseCode . ').', 'booking' => $payment->booking];
     }
@@ -187,23 +207,16 @@ class PaymentService
             'signature'   => $signature,
         ];
 
-        // Gọi API Momo
-        $ch = curl_init($endpoint);
-        curl_setopt_array($ch, [
-            CURLOPT_RETURNTRANSFER => true,
-            CURLOPT_POST           => true,
-            CURLOPT_HTTPHEADER     => ['Content-Type: application/json'],
-            CURLOPT_POSTFIELDS     => json_encode($body),
-            CURLOPT_TIMEOUT        => 10,
-        ]);
+        // Gọi API Momo qua Http facade (thay vì raw cURL — dễ test, có retry/timeout built-in)
+        try {
+            $response = Http::timeout(10)->post($endpoint, $body);
+            $result = $response->json();
 
-        $response = curl_exec($ch);
-        curl_close($ch);
-
-        $result = json_decode($response, true);
-
-        // Trả về URL thanh toán Momo (payUrl)
-        return $result['payUrl'] ?? null;
+            return $result['payUrl'] ?? null;
+        } catch (\Exception $e) {
+            Log::error('MoMo API error', ['message' => $e->getMessage()]);
+            return null;
+        }
     }
 
     /**
@@ -215,6 +228,32 @@ class PaymentService
         $secretKey = config('services.momo.secret_key');
         $accessKey = config('services.momo.access_key');
 
+        // Verify chữ ký MoMo — chống Webhook forging
+        $receivedSignature = $inputData['signature'] ?? '';
+        $rawSignature = "accessKey={$accessKey}"
+            . "&amount=" . ($inputData['amount'] ?? '')
+            . "&extraData=" . ($inputData['extraData'] ?? '')
+            . "&message=" . ($inputData['message'] ?? '')
+            . "&orderId=" . ($inputData['orderId'] ?? '')
+            . "&orderInfo=" . ($inputData['orderInfo'] ?? '')
+            . "&orderType=" . ($inputData['orderType'] ?? '')
+            . "&partnerCode=" . ($inputData['partnerCode'] ?? '')
+            . "&payType=" . ($inputData['payType'] ?? '')
+            . "&requestId=" . ($inputData['requestId'] ?? '')
+            . "&responseTime=" . ($inputData['responseTime'] ?? '')
+            . "&resultCode=" . ($inputData['resultCode'] ?? '')
+            . "&transId=" . ($inputData['transId'] ?? '');
+
+        $expectedSignature = hash_hmac('sha256', $rawSignature, $secretKey);
+
+        if (!hash_equals($expectedSignature, $receivedSignature)) {
+            Log::warning('MoMo callback signature mismatch', [
+                'received' => $receivedSignature,
+                'data'     => $inputData,
+            ]);
+            return ['success' => false, 'message' => 'Chữ ký MoMo không hợp lệ.', 'booking' => null];
+        }
+
         // Lấy extraData để tìm paymentId
         $extraData  = $inputData['extraData'] ?? '';
         $decoded    = json_decode(base64_decode($extraData), true);
@@ -223,6 +262,14 @@ class PaymentService
         $payment = Payment::find($paymentId);
         if (!$payment) {
             return ['success' => false, 'message' => 'Không tìm thấy giao dịch.', 'booking' => null];
+        }
+
+        // Idempotency: nếu payment đã xử lý rồi thì trả về kết quả cũ
+        if ($payment->status === PaymentStatus::Paid) {
+            return ['success' => true, 'message' => 'Giao dịch đã được xử lý thành công trước đó.', 'booking' => $payment->booking];
+        }
+        if ($payment->status === PaymentStatus::Failed) {
+            return ['success' => false, 'message' => 'Giao dịch đã bị từ chối trước đó.', 'booking' => $payment->booking];
         }
 
         $resultCode = (int) ($inputData['resultCode'] ?? -1);
@@ -234,8 +281,18 @@ class PaymentService
                 'transaction_id' => $inputData['transId'] ?? $inputData['orderId'] ?? null,
                 'paid_at'        => now(),
             ]);
+
+            Log::channel('booking')->info('MoMo payment success', [
+                'payment_id' => $payment->id,
+                'booking_id' => $payment->booking_id,
+                'amount'     => $payment->amount,
+            ]);
+
             return ['success' => true, 'message' => 'Thanh toán MoMo thành công!', 'booking' => $payment->booking];
         }
+
+        // Giao dịch thất bại — cập nhật status
+        $payment->update(['status' => PaymentStatus::Failed]);
 
         return ['success' => false, 'message' => 'Thanh toán MoMo thất bại (mã lỗi: ' . $resultCode . ').', 'booking' => $payment->booking];
     }

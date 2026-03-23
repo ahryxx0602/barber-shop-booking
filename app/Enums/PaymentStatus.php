@@ -6,6 +6,7 @@ enum PaymentStatus: string
 {
     case Pending  = 'pending';
     case Paid     = 'paid';
+    case Failed   = 'failed';
     case Refunded = 'refunded';
 
     /**
@@ -16,6 +17,7 @@ enum PaymentStatus: string
         return match ($this) {
             self::Pending  => 'Chờ thanh toán',
             self::Paid     => 'Đã thanh toán',
+            self::Failed   => 'Thất bại',
             self::Refunded => 'Đã hoàn tiền',
         };
     }
@@ -28,7 +30,8 @@ enum PaymentStatus: string
         return match ($this) {
             self::Pending  => 'yellow',
             self::Paid     => 'green',
-            self::Refunded => 'red',
+            self::Failed   => 'red',
+            self::Refunded => 'gray',
         };
     }
 }

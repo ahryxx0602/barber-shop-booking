@@ -123,6 +123,29 @@ class PaymentController extends Controller
     }
 
     /**
+     * VNPay IPN — Server-to-server callback.
+     * VNPay gọi POST đến endpoint này để thông báo kết quả giao dịch.
+     * Đảm bảo payment luôn được cập nhật ngay cả khi user đóng browser.
+     */
+    public function vnpayIPN(Request $request)
+    {
+        $result = $this->paymentService->verifyVNPayCallback($request->all());
+
+        // VNPay yêu cầu trả về JSON với RspCode
+        if ($result['success']) {
+            return response()->json([
+                'RspCode' => '00',
+                'Message' => 'Confirm Success',
+            ]);
+        }
+
+        return response()->json([
+            'RspCode' => '99',
+            'Message' => $result['message'],
+        ]);
+    }
+
+    /**
      * Momo redirect về đây sau khi thanh toán xong.
      */
     public function momoReturn(Request $request): View|RedirectResponse

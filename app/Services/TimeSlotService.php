@@ -29,16 +29,21 @@ class TimeSlotService
         $current = Carbon::parse($date . ' ' . $schedule->start_time);
         $end = Carbon::parse($date . ' ' . $schedule->end_time);
 
+        // Batch upsert thay vì firstOrCreate loop (giảm từ ~40 queries xuống 1)
+        $slotsToInsert = [];
         while ($current->copy()->addMinutes(30)->lte($end)) {
-            TimeSlot::firstOrCreate([
-                'barber_id' => $barberId,
-                'slot_date' => $date,
+            $slotsToInsert[] = [
+                'barber_id'  => $barberId,
+                'slot_date'  => $date,
                 'start_time' => $current->format('H:i:s'),
-            ], [
-                'end_time' => $current->copy()->addMinutes(30)->format('H:i:s'),
-                'status' => TimeSlotStatus::Available,
-            ]);
+                'end_time'   => $current->copy()->addMinutes(30)->format('H:i:s'),
+                'status'     => TimeSlotStatus::Available->value,
+            ];
             $current->addMinutes(30);
+        }
+
+        if (!empty($slotsToInsert)) {
+            TimeSlot::upsert($slotsToInsert, ['barber_id', 'slot_date', 'start_time'], ['end_time']);
         }
     }
 
@@ -76,19 +81,21 @@ class TimeSlotService
         $current = Carbon::parse($date . ' ' . $schedule->start_time);
         $end = Carbon::parse($date . ' ' . $schedule->end_time);
 
-        // Chỗ này firstOrCreate có thể gom thành insert() nếu muốn tối ưu cực độ, 
-        // nhưng với logic nghiệp vụ tạo slot theo ngày thì firstOrCreate vẫn an toàn hơn để tránh duplicate
+        // Batch upsert — giảm từ ~40 queries xuống 1 cho mỗi ngày
         $slotsToInsert = [];
         while ($current->copy()->addMinutes(30)->lte($end)) {
-            TimeSlot::firstOrCreate([
-                'barber_id' => $barberId,
-                'slot_date' => $date,
+            $slotsToInsert[] = [
+                'barber_id'  => $barberId,
+                'slot_date'  => $date,
                 'start_time' => $current->format('H:i:s'),
-            ], [
-                'end_time' => $current->copy()->addMinutes(30)->format('H:i:s'),
-                'status' => TimeSlotStatus::Available,
-            ]);
+                'end_time'   => $current->copy()->addMinutes(30)->format('H:i:s'),
+                'status'     => TimeSlotStatus::Available->value,
+            ];
             $current->addMinutes(30);
+        }
+
+        if (!empty($slotsToInsert)) {
+            TimeSlot::upsert($slotsToInsert, ['barber_id', 'slot_date', 'start_time'], ['end_time']);
         }
     }
 

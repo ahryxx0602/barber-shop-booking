@@ -87,6 +87,10 @@ class BookingService
 
     public function confirm(Booking $booking): Booking
     {
+        if (!$booking->status->canTransitionTo(BookingStatus::Confirmed)) {
+            throw new \InvalidArgumentException('Không thể xác nhận booking ở trạng thái: ' . $booking->status->label());
+        }
+
         $booking->update(['status' => BookingStatus::Confirmed]);
 
         Log::channel('booking')->info('Booking confirmed', [
@@ -100,6 +104,10 @@ class BookingService
 
     public function reject(Booking $booking, ?string $reason = null): Booking
     {
+        if (!$booking->status->canTransitionTo(BookingStatus::Cancelled)) {
+            throw new \InvalidArgumentException('Không thể từ chối booking ở trạng thái: ' . $booking->status->label());
+        }
+
         return DB::transaction(function () use ($booking, $reason) {
             $booking->update([
                 'status' => BookingStatus::Cancelled,
@@ -122,13 +130,25 @@ class BookingService
 
     public function start(Booking $booking): Booking
     {
+        if (!$booking->status->canTransitionTo(BookingStatus::InProgress)) {
+            throw new \InvalidArgumentException('Không thể bắt đầu phục vụ booking ở trạng thái: ' . $booking->status->label());
+        }
+
         $booking->update(['status' => BookingStatus::InProgress]);
+
+        Log::channel('booking')->info('Booking started', [
+            'booking_code' => $booking->booking_code,
+        ]);
 
         return $booking;
     }
 
     public function complete(Booking $booking): Booking
     {
+        if (!$booking->status->canTransitionTo(BookingStatus::Completed)) {
+            throw new \InvalidArgumentException('Không thể hoàn thành booking ở trạng thái: ' . $booking->status->label());
+        }
+
         $booking->update(['status' => BookingStatus::Completed]);
 
         Log::channel('booking')->info('Booking completed', [
@@ -142,6 +162,10 @@ class BookingService
 
     public function cancel(Booking $booking, ?string $reason = null): Booking
     {
+        if (!$booking->status->canTransitionTo(BookingStatus::Cancelled)) {
+            throw new \InvalidArgumentException('Không thể huỷ booking ở trạng thái: ' . $booking->status->label());
+        }
+
         return DB::transaction(function () use ($booking, $reason) {
             $booking->update([
                 'status' => BookingStatus::Cancelled,

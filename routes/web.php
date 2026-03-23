@@ -21,16 +21,17 @@ Route::name('client.')->group(function () {
 
     // Booking - accessible to both guests and authenticated users
     Route::get('/booking/create', [ClientBookingController::class, 'create'])->name('booking.create');
-    Route::post('/booking', [ClientBookingController::class, 'store'])->name('booking.store');
+    Route::post('/booking', [ClientBookingController::class, 'store'])->middleware('throttle:5,1')->name('booking.store');
     Route::get('/booking/{booking}/confirmation', [ClientBookingController::class, 'confirmation'])->name('booking.confirmation');
 
     // Payment — callback routes từ cổng thanh toán (phải đặt TRƯỚC wildcard {booking})
     Route::get('/payment/vnpay/return', [ClientPaymentController::class, 'vnpayReturn'])->name('payment.vnpay.return');
+    Route::post('/payment/vnpay/ipn', [ClientPaymentController::class, 'vnpayIPN'])->withoutMiddleware(['csrf'])->name('payment.vnpay.ipn');
     Route::get('/payment/momo/return', [ClientPaymentController::class, 'momoReturn'])->name('payment.momo.return');
 
     // Payment — chọn phương thức & thanh toán online (VNPay / Momo Sandbox)
     Route::get('/payment/{booking}', [ClientPaymentController::class, 'show'])->name('payment.show');
-    Route::post('/payment/{booking}', [ClientPaymentController::class, 'process'])->name('payment.process');
+    Route::post('/payment/{booking}', [ClientPaymentController::class, 'process'])->middleware('throttle:5,1')->name('payment.process');
 
     // Profile & booking management requires authentication
     Route::middleware(['auth'])->group(function () {
