@@ -15,6 +15,7 @@ class Service extends Model
         'is_active',
     ];
 
+    // services ──────────── bookings (n-m) qua pivot booking_services
     public function bookings()
     {
         return $this->belongsToMany(Booking::class, 'booking_services')

@@ -32,32 +32,38 @@ class Booking extends Model
         ];
     }
 
+    // bookings ──────────── users (n-1) khách hàng
     public function customer()
     {
         return $this->belongsTo(User::class, 'customer_id');
     }
 
+    // bookings ──────────── barbers (n-1) thợ cắt
     public function barber()
     {
         return $this->belongsTo(Barber::class);
     }
 
+    // bookings ──────────── time_slots (n-1) khung giờ
     public function timeSlot()
     {
         return $this->belongsTo(TimeSlot::class);
     }
 
+    // bookings ──────────── services (n-m) qua pivot booking_services
     public function services()
     {
         return $this->belongsToMany(Service::class, 'booking_services')
                     ->withPivot('price_snapshot', 'duration_snapshot');
     }
 
+    // bookings ──────────── payments (1-1) thanh toán
     public function payment()
     {
         return $this->hasOne(Payment::class);
     }
 
+    // bookings ──────────── reviews (1-1) đánh giá
     public function review()
     {
         return $this->hasOne(Review::class);

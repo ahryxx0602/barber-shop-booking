@@ -16,6 +16,7 @@ class WorkingSchedule extends Model
         'is_day_off',
     ];
 
+    // working_schedules ──────────── barbers (n-1)
     public function barber()
     {
         return $this->belongsTo(Barber::class);

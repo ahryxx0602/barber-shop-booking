@@ -32,7 +32,7 @@ class Barber extends Model
         return $this->hasMany(TimeSlot::class);
     }
 
-    // barbers ─────────── services (1-n)
+    // barbers ─────────── bookings (1-n)
     public function bookings()
     {
         return $this->hasMany(Booking::class);

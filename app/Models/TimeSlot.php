@@ -23,11 +23,13 @@ class TimeSlot extends Model
         ];
     }
 
+    // time_slots ──────────── barbers (n-1)
     public function barber()
     {
         return $this->belongsTo(Barber::class);
     }
 
+    // time_slots ──────────── bookings (1-1)
     public function booking()
     {
         return $this->hasOne(Booking::class);

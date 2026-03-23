@@ -18,7 +18,8 @@ class BookingController extends Controller
 
     public function __construct(
         protected BookingService $bookingService,
-    ) {}
+    ) {
+    }
 
     public function index(Request $request): View
     {
@@ -42,7 +43,7 @@ class BookingController extends Controller
             $dateStr = $d->toDateString();
             $days[$dateStr] = [
                 'label' => $d->locale('vi')->isoFormat('ddd, DD/MM'),
-                'bookings' => $bookings->filter(fn ($b) => $b->booking_date->format('Y-m-d') === $dateStr)->values(),
+                'bookings' => $bookings->filter(fn($b) => $b->booking_date->format('Y-m-d') === $dateStr)->values(),
                 'isToday' => $d->isToday(),
             ];
         }
@@ -64,14 +65,14 @@ class BookingController extends Controller
     {
         $this->authorize('confirm', $booking);
 
-        $this->bookingService->confirm($booking);
+        $this->bookingService->confirm($booking); // Policy check
 
         return back()->with('success', 'Đã xác nhận lịch hẹn.');
     }
 
     public function reject(Request $request, Booking $booking): RedirectResponse
     {
-        $this->authorize('reject', $booking);
+        $this->authorize('reject', $booking); // Policy check
 
         $this->bookingService->reject($booking, $request->input('cancel_reason'));
 
@@ -80,7 +81,7 @@ class BookingController extends Controller
 
     public function start(Booking $booking): RedirectResponse
     {
-        $this->authorize('start', $booking);
+        $this->authorize('start', $booking); // Policy check
 
         $this->bookingService->start($booking);
 
@@ -89,7 +90,7 @@ class BookingController extends Controller
 
     public function complete(Booking $booking): RedirectResponse
     {
-        $this->authorize('complete', $booking);
+        $this->authorize('complete', $booking); // Policy check
 
         $this->bookingService->complete($booking);
 

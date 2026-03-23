@@ -28,16 +28,19 @@ class User extends Authenticatable
         'is_active',
     ];
 
+    // users ──────────── barbers (1-1)
     public function barber()
     {
         return $this->hasOne(Barber::class);
     }
 
+    // users ──────────── bookings (1-n)
     public function bookings()
     {
         return $this->hasMany(Booking::class, 'customer_id');
     }
 
+    // users ──────────── notifications (1-n)
     public function notifications()
     {
         return $this->hasMany(Notification::class);

@@ -1679,97 +1679,137 @@ public function confirm(Booking $booking)
 
 ### Sơ đồ quan hệ (ER Diagram)
 
-```
-┌──────────────────────┐
-│       users           │
-│──────────────────────│          ┌──────────────────────┐
-│ id (PK)              │          │      barbers          │
-│ name                 │          │──────────────────────│
-│ email (unique)       │──1──────1│ id (PK)              │
-│ phone                │          │ user_id (FK → users)  │
-│ avatar               │          │ bio                   │
-│ role (enum)          │          │ experience_years      │
-│ password             │          │ rating                │
-│ is_active            │          │ is_active             │
-└──────────┬───────────┘          └───────┬──────────────┘
-           │                              │
-           │ 1                            │ 1
-           │                              │
-           │ N                            │ N
-┌──────────┴───────────┐     ┌────────────┴─────────────┐
-│    notifications      │     │    working_schedules      │
-│──────────────────────│     │──────────────────────────│
-│ id (PK)              │     │ id (PK)                  │
-│ user_id (FK → users) │     │ barber_id (FK → barbers) │
-│ type                 │     │ day_of_week (0-6)        │
-│ title                │     │ start_time               │
-│ message              │     │ end_time                 │
-│ is_read              │     │ is_day_off               │
-└──────────────────────┘     └──────────────────────────┘
-                                          │
-                                          │ 1 barber → N slots
-                                          │
-                              ┌────────────┴─────────────┐
-                              │       time_slots          │
-                              │──────────────────────────│
-                              │ id (PK)                  │
-                              │ barber_id (FK → barbers) │
-                              │ slot_date                │
-                              │ start_time               │
-                              │ end_time                 │
-                              │ status (enum)            │
-                              └────────────┬─────────────┘
-                                           │
-                                           │ 1 slot → 1 booking
-                                           │
-┌──────────────────┐          ┌─────────────┴────────────┐
-│    services       │          │       bookings            │
-│──────────────────│          │──────────────────────────│
-│ id (PK)          │          │ id (PK)                  │
-│ name             │          │ booking_code (unique)    │
-│ description      │          │ customer_id (FK → users) │
-│ price            │          │ barber_id (FK → barbers) │
-│ duration_minutes │          │ time_slot_id (FK)        │
-│ image            │          │ booking_date             │
-│ is_active        │          │ start_time / end_time    │
-└────────┬─────────┘          │ total_price              │
-         │                    │ status (enum/FSM)        │
-         │ N                  │ note                     │
-         │                    │ cancelled_at             │
-         └──────────┐         │ cancel_reason            │
-                    │         └──┬──────────┬────────────┘
-         N──M qua pivot         │          │
-                    │           │ 1        │ 1
-         ┌──────────┴──────┐    │          │
-         │booking_services │    │          │
-         │(PIVOT TABLE)    │    │          │
-         │─────────────────│    │          │
-         │ id (PK)         │    │          │
-         │ booking_id (FK) │◄───┘          │
-         │ service_id (FK) │               │
-         │ price_snapshot   │    ┌──────────┴───────────┐
-         │ duration_snapshot │    │      payments         │
-         └─────────────────┘    │──────────────────────│
-                                │ id (PK)              │
-                                │ booking_id (FK,uniq) │
-                                │ amount               │
-                                │ method (enum)        │
-                                │ status (enum)        │
-                                │ transaction_id       │
-                                │ paid_at              │
-                                └──────────────────────┘
+```mermaid
+erDiagram
+    users {
+        bigint id PK
+        varchar name
+        varchar email UK
+        varchar phone
+        varchar avatar
+        enum role "customer | barber | admin"
+        varchar password
+        boolean is_active
+        timestamp email_verified_at
+    }
 
-┌──────────────────────────┐
-│        reviews            │
-│──────────────────────────│
-│ id (PK)                  │
-│ booking_id (FK, unique)  │  ← 1 booking chỉ có 1 review
-│ customer_id (FK → users) │
-│ barber_id (FK → barbers) │
-│ rating (1-5)             │
-│ comment                  │
-└──────────────────────────┘
+    barbers {
+        bigint id PK
+        bigint user_id FK "→ users (cascade)"
+        text bio
+        tinyint experience_years
+        decimal rating "0.00 - 5.00"
+        boolean is_active
+    }
+
+    services {
+        bigint id PK
+        varchar name
+        text description
+        decimal price "VND"
+        int duration_minutes
+        varchar image
+        boolean is_active
+    }
+
+    working_schedules {
+        bigint id PK
+        bigint barber_id FK "→ barbers (cascade)"
+        tinyint day_of_week "0=CN 1=T2...6=T7"
+        time start_time
+        time end_time
+        boolean is_day_off
+    }
+
+    time_slots {
+        bigint id PK
+        bigint barber_id FK "→ barbers (cascade)"
+        date slot_date
+        time start_time
+        time end_time
+        enum status "available | booked | blocked"
+    }
+
+    bookings {
+        bigint id PK
+        varchar booking_code UK
+        bigint customer_id FK "→ users (cascade)"
+        bigint barber_id FK "→ barbers (cascade)"
+        bigint time_slot_id FK "→ time_slots (restrict)"
+        date booking_date
+        time start_time
+        time end_time
+        decimal total_price
+        enum status "FSM: pending→confirmed→..."
+        text note
+        timestamp cancelled_at
+        text cancel_reason
+    }
+
+    booking_services {
+        bigint id PK
+        bigint booking_id FK "→ bookings (cascade)"
+        bigint service_id FK "→ services (restrict)"
+        decimal price_snapshot "Gia tai thoi diem dat"
+        int duration_snapshot "Thoi gian tai thoi diem dat"
+    }
+
+    payments {
+        bigint id PK
+        bigint booking_id FK_UK "→ bookings (cascade, unique)"
+        decimal amount
+        enum method "cash | vnpay | momo"
+        enum status "pending | paid | failed | refunded"
+        varchar transaction_id
+        timestamp paid_at
+    }
+
+    reviews {
+        bigint id PK
+        bigint booking_id FK_UK "→ bookings (cascade, unique)"
+        bigint customer_id FK "→ users (cascade)"
+        bigint barber_id FK "→ barbers (cascade)"
+        tinyint rating "1-5 sao"
+        text comment
+    }
+
+    notifications {
+        bigint id PK
+        bigint user_id FK "→ users (cascade)"
+        varchar type
+        varchar title
+        text message
+        boolean is_read
+    }
+
+    users ||--o| barbers : "1 user co the la 1 barber"
+    users ||--o{ bookings : "1 user dat nhieu booking"
+    users ||--o{ notifications : "1 user nhan nhieu thong bao"
+    users ||--o{ reviews : "1 user viet nhieu review"
+
+    barbers ||--o{ working_schedules : "1 barber co 7 ngay lich"
+    barbers ||--o{ time_slots : "1 barber co nhieu slot"
+    barbers ||--o{ bookings : "1 barber co nhieu booking"
+    barbers ||--o{ reviews : "1 barber co nhieu review"
+
+    time_slots ||--o| bookings : "1 slot gan 1 booking"
+
+    bookings ||--o{ booking_services : "1 booking co nhieu dich vu"
+    services ||--o{ booking_services : "1 dich vu thuoc nhieu booking"
+
+    bookings ||--o| payments : "1 booking co 1 thanh toan"
+    bookings ||--o| reviews : "1 booking co 1 danh gia"
 ```
+
+### Đọc sơ đồ thế nào?
+
+| Ký hiệu | Nghĩa | Ví dụ |
+|---------|-------|-------|
+| `\|\|--o\|` | 1 đối 0 hoặc 1 | users ↔ barbers (1 user có thể là barber hoặc không) |
+| `\|\|--o{` | 1 đối nhiều (0..N) | users ↔ bookings (1 user đặt 0 hoặc nhiều booking) |
+| `PK` | Primary Key | Khóa chính |
+| `FK` | Foreign Key | Khóa ngoại (liên kết bảng khác) |
+| `UK` | Unique Key | Giá trị duy nhất |
 
 ### Bảng chi tiết từng table
 

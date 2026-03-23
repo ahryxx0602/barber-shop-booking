@@ -30,6 +30,7 @@ class Payment extends Model
         ];
     }
 
+    // payments ──────────── bookings (1-1)
     public function booking()
     {
         return $this->belongsTo(Booking::class);
