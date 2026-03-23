@@ -1756,7 +1756,7 @@ erDiagram
 
     payments {
         bigint id PK
-        bigint booking_id FK_UK "→ bookings (cascade, unique)"
+        bigint booking_id FK "unique - bookings cascade"
         decimal amount
         enum method "cash | vnpay | momo"
         enum status "pending | paid | failed | refunded"
@@ -1766,7 +1766,7 @@ erDiagram
 
     reviews {
         bigint id PK
-        bigint booking_id FK_UK "→ bookings (cascade, unique)"
+        bigint booking_id FK "unique - bookings cascade"
         bigint customer_id FK "→ users (cascade)"
         bigint barber_id FK "→ barbers (cascade)"
         tinyint rating "1-5 sao"
