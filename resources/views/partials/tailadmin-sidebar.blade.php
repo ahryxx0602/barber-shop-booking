@@ -167,6 +167,23 @@
           </li>
           <!-- /Booking -->
 
+          <!-- Menu: Người dùng -->
+          <li>
+            <a href="{{ route('admin.users.index') }}" @click="selected = 'NguoiDung'" class="menu-item group"
+              :class="selected === 'NguoiDung' ? 'menu-item-active' : 'menu-item-inactive'">
+              <svg :class="selected === 'NguoiDung' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
+                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
+                <circle cx="9" cy="7" r="4" />
+                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
+                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              </svg>
+              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Người dùng</span>
+            </a>
+          </li>
+          <!-- /Người dùng -->
+
           <!-- Menu: Báo cáo -->
           <li>
             <a href="{{ route('admin.reports.index') }}" @click="selected = 'BaoCao'" class="menu-item group"

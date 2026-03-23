@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
+use App\Http\Controllers\Admin\UserController;
 use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'role:admin'])
@@ -23,6 +24,10 @@ Route::middleware(['auth', 'role:admin'])
 
         // Booking
         Route::get('bookings', [AdminBookingController::class, 'index'])->name('bookings.index');
+
+        // Người dùng
+        Route::resource('users', UserController::class)->only(['index', 'show', 'edit', 'update']);
+        Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggleActive');
 
         // Báo cáo
         Route::get('reports/chart-data', [ReportController::class, 'chartData'])->name('reports.chartData');

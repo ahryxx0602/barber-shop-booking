@@ -156,7 +156,7 @@
             </svg>
         </div>
 
-        <div class="relative" style="height: 320px;">
+        <div class="relative" style="height: 220px;">
             <canvas id="revenueChart"></canvas>
         </div>
     </div>
@@ -320,7 +320,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Tạo gradient
     function createGradient() {
-        const gradient = ctx.createLinearGradient(0, 0, 0, 320);
+        const gradient = ctx.createLinearGradient(0, 0, 0, 220);
         gradient.addColorStop(0, isDark ? 'rgba(34, 197, 94, 0.3)' : 'rgba(34, 197, 94, 0.2)');
         gradient.addColorStop(1, isDark ? 'rgba(34, 197, 94, 0)' : 'rgba(34, 197, 94, 0)');
         return gradient;

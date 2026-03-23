@@ -8,8 +8,8 @@
 ## Trạng thái hiện tại
 
 ```
-Giai đoạn đang làm : 8+ — Quản lý tài khoản (Admin)
-Bước đang làm      : 8+.1 — Admin\UserController + routes
+Giai đoạn đang làm : 9 — Kiểm thử & Hoàn thiện
+Bước đang làm      : 9.1 — Kiểm tra thủ công toàn bộ luồng
 Cập nhật lần cuối  : 23/03/2026
 ```
 
@@ -32,7 +32,7 @@ Cập nhật lần cuối  : 23/03/2026
 | 7 | Review & Notification | ✅ Hoàn thành |
 | 7+ | Auth Pages & Error Pages Vintage Redesign | ✅ Hoàn thành |
 | 8 | Báo cáo doanh thu (Admin) | ✅ Hoàn thành |
-| 8+ | Quản lý tài khoản (Admin) | 🔄 Đang làm |
+| 8+ | Quản lý tài khoản (Admin) | ✅ Hoàn thành |
 | 9 | Kiểm thử & Hoàn thiện | ⬜ Chưa bắt đầu |
 
 ---
@@ -160,11 +160,14 @@ Cập nhật lần cuối  : 23/03/2026
 - [x] 8.3 Bảng top thợ (theo doanh thu) & top dịch vụ (theo số lần đặt) — grid 2 cột, rank badges, avatar, format VNĐ
 
 ### Giai đoạn 8+ — Quản lý tài khoản (Admin) (bổ sung)
-- [ ] 8+.1 Tạo `Admin\UserController` (index, show, edit, update, toggleActive) + routes resource
-- [ ] 8+.2 View `admin/users/index.blade.php` — danh sách user phân trang, lọc theo role, tìm kiếm theo tên/email/SĐT
-- [ ] 8+.3 View `admin/users/show.blade.php` — chi tiết user (thông tin + lịch sử booking nếu là customer)
-- [ ] 8+.4 View `admin/users/edit.blade.php` — sửa thông tin cơ bản (tên, email, SĐT, role) + toggle kích hoạt/vô hiệu hoá
-- [ ] 8+.5 Thêm mục "Người dùng" vào sidebar admin (icon Users, giữa "Booking" và "Báo cáo")
+- [x] 8+.1 Tạo `Admin\UserController` (index, show, edit, update, toggleActive) + routes resource
+- [x] 8+.2 View `admin/users/index.blade.php` — danh sách user phân trang, lọc theo role, tìm kiếm theo tên/email/SĐT
+- [x] 8+.3 View `admin/users/show.blade.php` — chi tiết user (thông tin + lịch sử booking nếu là customer)
+- [x] 8+.4 View `admin/users/edit.blade.php` — sửa thông tin cơ bản (tên, email, SĐT, role) + toggle kích hoạt/vô hiệu hoá
+- [x] 8+.5 Thêm mục "Người dùng" vào sidebar admin (icon Users, giữa "Booking" và "Báo cáo")
+- [x] 8+.6 Bảo vệ admin tự khoá — guard backend `toggleActive()` + loại trừ admin hiện tại khỏi danh sách users + ẩn nút toggle trên index/show/edit
+- [x] 8+.7 Trang Dashboard admin — 5 stats cards (doanh thu tháng, booking hôm nay, chờ xác nhận, KH, thợ cắt), biểu đồ doanh thu 7 ngày (Chart.js), top 3 thợ cắt, 5 booking gần nhất, 4 quick links
+- [x] 8+.8 Thu gọn biểu đồ Chart.js — fix canvas tự kéo dài (wrap fixed-height container), giảm chiều cao chart trên Dashboard (200px) và Reports (220px)
 
 ### Giai đoạn 9 — Kiểm thử & Hoàn thiện
 - [ ] 9.1 Kiểm tra thủ công toàn bộ luồng
@@ -191,6 +194,7 @@ Cập nhật lần cuối  : 23/03/2026
 - **23/03/2026**: Bước 8.1 hoàn thành — Tạo `ReportService` (getMonthlyOverview), `Admin\ReportController`, view `admin/reports/index.blade.php` với 3 stat cards (tổng booking, doanh thu, khách mới + % so sánh tháng trước), thêm mục "Báo cáo" vào sidebar admin.
 - **23/03/2026**: Bước 8.2 hoàn thành + mở rộng — (1) Biểu đồ doanh thu 30 ngày gần nhất dùng Chart.js CDN (line chart, gradient fill, tooltip VNĐ, trục Y rút gọn k/tr); (2) Mở rộng thêm bộ lọc thời gian: 3 tabs (30 ngày / Theo tháng / Theo năm) + dropdowns tháng/năm; (3) AJAX fetch API cập nhật chart không reload trang; (4) Chế độ "Theo năm" dùng bar chart 12 tháng; (5) Thêm `ReportService::getDailyRevenue(?month, ?year)`, `getMonthlyRevenue(year)`, `getAvailableYears()`; (6) Thêm route API `admin/reports/chart-data` + method `ReportController::chartData()`.
 - **23/03/2026**: Bước 8.3 hoàn thành — Thêm 2 bảng xếp hạng: (1) Top thợ cắt theo doanh thu tháng (left join bookings, SUM total_price) với avatar, rank badge vàng/bạc/đồng, số booking + rating; (2) Top dịch vụ theo số lần đặt tháng (join booking_services + bookings) với hình ảnh, giá, doanh thu. Cả 2 dùng grid 2 cột trên desktop. Giai đoạn 8 hoàn thành 100%.
+- **23/03/2026**: Giai đoạn 8+ hoàn thành — (1) Migration thêm cột `is_active` boolean (default true) vào bảng `users`; (2) Cập nhật `User` model (fillable + cast boolean); (3) Tạo `Admin\UserController` (index/show/edit/update/toggleActive) — index có lọc role + tìm kiếm tên/email/SĐT + stats cards đếm theo role; show hiển thị chi tiết user + lịch sử 10 booking gần nhất (customer); (4) Tạo `UpdateUserRequest` với validate email unique ignore current + role enum; (5) 3 views admin/users: index (bảng + filter bar + pagination), show (card thông tin + bảng booking), edit (form name/email/phone/role + toggle active); (6) Thêm route resource + PATCH toggleActive; (7) Thêm mục "Người dùng" vào sidebar admin (icon Users, giữa Booking và Báo cáo).
 
 ---
 
