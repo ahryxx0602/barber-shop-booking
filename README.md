@@ -1,59 +1,89 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Classic Cut - Barbershop Booking System
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+Hệ thống đặt lịch cắt tóc trực tuyến (Barbershop) được xây dựng bằng Laravel 11, với thiết kế giao diện Classic/Vintage đặc trưng. Dự án hỗ trợ đa người dùng (Admin, Thợ cắt tóc, Khách hàng) với các luồng nghiệp vụ đầy đủ từ đặt lịch, thanh toán đến báo cáo thống kê.
 
-## About Laravel
+## 🌟 Chức năng nổi bật
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+### Dành cho Khách hàng
+- Giao diện đẹp mắt mang phong cách vintage.
+- Đặt lịch qua 4 bước (Booking Wizard): Chọn dịch vụ -> Chọn thợ -> Chọn giờ -> Điền thông tin.
+- Hệ thống thanh toán tích hợp **VNPay**.
+- Quản lý lịch hẹn cá nhân, huỷ lịch, đánh giá dịch vụ.
+- Hỗ trợ khách vãng lai đặt lịch mà không cần tạo tài khoản trước (hệ thống tự tạo tài khoản guest).
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+### Dành cho Thợ cắt tóc (Barber)
+- Dashboard quản lý công việc riêng biệt.
+- Quản lý lịch làm việc linh hoạt (đăng ký ca làm việc theo tuần/ngày).
+- Tự động sinh `TimeSlot` dựa trên giờ làm việc.
+- Quản lý lịch hẹn, chuyển trạng thái (In Progress, Completed).
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+### Dành cho Quản trị viên (Admin)
+- Dashboard tổng quan: Biểu đồ doanh thu 7 ngày, Top thợ cắt.
+- Quản lý người dùng, thợ cắt (thêm mới, phân quyền).
+- Quản lý dịch vụ (Tạo mới, upload ảnh, giá tiền, thời lượng).
+- Quản lý toàn bộ lịch hẹn hệ thống.
+- Báo cáo chi tiết (Doanh thu, Top Dịch vụ, Top Thợ theo tháng).
 
-## Learning Laravel
+## 🛠 Công nghệ sử dụng
+- **Backend:** Laravel 11.x, PHP 8.2+
+- **Frontend:** Blade Templates, Tailwind CSS (Vanilla setup), Alpine.js
+- **Database:** MySQL
+- **Others:** Chart.js, VNPay SDK
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## 🚀 Hướng dẫn cài đặt
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+1. **Clone repository:**
+   ```bash
+   git clone <repo-url>
+   cd barbershop
+   ```
 
-## Laravel Sponsors
+2. **Cài đặt dependencies:**
+   ```bash
+   composer install
+   npm install
+   ```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+3. **Cấu hình môi trường:**
+   - Copy file `.env.example` thành `.env`
+   - Cập nhật thông tin `DB_DATABASE`, `DB_USERNAME`, `DB_PASSWORD`.
+   - Cập nhật thông tin tích hợp VNPay:
+     ```env
+     VNPAY_TMN_CODE=your_tmn_code
+     VNPAY_HASH_SECRET=your_hash_secret
+     VNPAY_URL=https://sandbox.vnpayment.vn/paymentv2/vpcpay.html
+     VNPAY_RETURN_URL="${APP_URL}/payment/vnpay/return"
+     ```
 
-### Premium Partners
+4. **Tạo key và chạy migration:**
+   ```bash
+   php artisan key:generate
+   php artisan migrate:fresh --seed
+   ```
+   *(Note: File seeder đã có sẵn dữ liệu mẫu cho Admin, Barber, Dịch vụ và một số booking. Tài khoản mặc định xem trong file `DatabaseSeeder.php`)*
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+5. **Tạo symbolic link cho storage:**
+   ```bash
+   php artisan storage:link
+   ```
 
-## Contributing
+6. **Chạy server:**
+   ```bash
+   php artisan serve
+   npm run dev
+   ```
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+## ⏰ Cronjob (Schedule)
+Hệ thống có tự động sinh Time Slots theo lịch làm việc của thợ.
+Cần thiết lập cronjob chạy command sau mỗi ngày (hoặc có thể chạy thủ công để test):
+```bash
+php artisan slots:generate
+```
 
-## Code of Conduct
+## 📸 Giao diện thiết kế (Design System)
+Dự án sử dụng file `index.css` với các CSS Custom Properties để duy trì tính nhất quán về màu sắc và typography theo phong cách cổ điển (Classic/Vintage):
+- Colors: `--v-ink`, `--v-cream`, `--v-copper`, `--v-surface`
+- Fonts: Serif (Playfair Display) và Sans (Inter)
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
-
-## Security Vulnerabilities
-
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
-
-## License
-
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+---
+*Dự án được xây dựng dưới sự hỗ trợ chuyên môn và tối ưu hoá luồng hệ thống toàn diện.*

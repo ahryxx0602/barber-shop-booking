@@ -443,10 +443,10 @@
                 $columnTitles = ['Cắt Tóc', 'Tạo Kiểu', 'Chăm Sóc'];
             @endphp
 
-            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--v-rule);">
+            <div class="grid grid-cols-1 md:grid-cols-3 border border-[var(--v-rule)]" style="gap:0;">
                 @foreach($chunks as $index => $chunk)
                     <div
-                        style="padding:40px 32px; {{ $index < 2 ? 'border-right:1px solid var(--v-rule);' : '' }} position:relative;">
+                        class="px-5 py-8 md:px-8 md:py-10 border-b md:border-b-0 {{ $index < 2 ? 'md:border-r border-[var(--v-rule)]' : '' }}" style="position:relative;">
 
                         {{-- Column header --}}
                         <div
@@ -508,7 +508,7 @@
     <section id="story" class="story-dark v-noise">
         <div style="max-width:1160px; margin:0 auto; padding:80px 32px 96px;">
 
-            <div style="display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center;">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-10 lg:gap-20 items-center">
 
                 {{-- Text side --}}
                 <div style="position:relative; z-index:2;">

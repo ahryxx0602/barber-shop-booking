@@ -43,6 +43,9 @@ class BookingController extends Controller
         $slots = TimeSlot::where('barber_id', $request->barber_id)
             ->where('slot_date', $request->date)
             ->where('status', TimeSlotStatus::Available)
+            ->when($request->date === now()->toDateString(), function ($query) {
+                $query->where('start_time', '>', now()->format('H:i:s'));
+            })
             ->orderBy('start_time')
             ->get()
             ->map(fn ($slot) => [

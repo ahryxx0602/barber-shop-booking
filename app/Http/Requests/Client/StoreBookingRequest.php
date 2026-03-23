@@ -30,6 +30,21 @@ class StoreBookingRequest extends FormRequest
         return $rules;
     }
 
+    public function withValidator($validator)
+    {
+        $validator->after(function ($validator) {
+            if ($this->time_slot_id) {
+                $slot = \App\Models\TimeSlot::find($this->time_slot_id);
+                if ($slot) {
+                    $slotDateTime = \Carbon\Carbon::parse($slot->slot_date . ' ' . $slot->start_time);
+                    if ($slotDateTime->isPast()) {
+                        $validator->errors()->add('time_slot_id', 'Giờ hẹn này đã qua, vui lòng chọn giờ khác.');
+                    }
+                }
+            }
+        });
+    }
+
     public function messages(): array
     {
         return [

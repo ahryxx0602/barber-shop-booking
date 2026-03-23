@@ -47,7 +47,7 @@
                 {{-- Step Content --}}
                 <div x-show="currentStep === 1" x-transition.duration.200ms>
                     <div style="padding:0 20px 20px;">
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
                             @foreach($services as $service)
                             <label style="position:relative;display:flex;flex-direction:column;padding:12px;border:1px solid var(--v-rule);cursor:pointer;transition:all 0.2s;"
                                 :style="selectedServices.includes({{ $service->id }})
@@ -224,8 +224,8 @@
                 <div x-show="currentStep === 4" x-transition.duration.200ms>
                     <div style="padding:0 20px 20px;">
                         <p style="font-size:12px;color:var(--v-muted);margin-bottom:12px;">Bạn chưa đăng nhập. Vui lòng điền thông tin liên hệ.</p>
-                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
-                            <div style="grid-column:span 2;">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+                            <div class="md:col-span-2">
                                 <label for="guest_name" style="display:block;font-size:11px;font-weight:600;color:var(--v-muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Họ và tên <span style="color:var(--v-copper);">*</span></label>
                                 <input type="text" name="guest_name" id="guest_name" value="{{ old('guest_name') }}" required
                                     x-model="guestName" placeholder="Nguyễn Văn A" class="v-input" style="padding:10px 14px;font-size:13px;">

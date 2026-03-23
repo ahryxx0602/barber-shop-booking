@@ -164,6 +164,7 @@
         </div>
 
         @if ($recentBookings->count() > 0)
+            <div class="overflow-x-auto">
             <table class="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
                 <thead class="bg-gray-50 dark:bg-gray-700">
                     <tr>
@@ -220,6 +221,7 @@
                     @endforeach
                 </tbody>
             </table>
+            </div>
         @else
             <div class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                 Chưa có booking nào.

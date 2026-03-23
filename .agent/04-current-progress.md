@@ -8,8 +8,8 @@
 ## Trạng thái hiện tại
 
 ```
-Giai đoạn đang làm : 9 — Kiểm thử & Hoàn thiện
-Bước đang làm      : 9.1 — Kiểm tra thủ công toàn bộ luồng
+Giai đoạn đang làm : Hoàn thành
+Bước đang làm      : Hoàn thành toàn bộ dự án
 Cập nhật lần cuối  : 23/03/2026
 ```
 
@@ -179,11 +179,11 @@ Cập nhật lần cuối  : 23/03/2026
   - [x] `PaymentSeeder` — payment cho mọi booking non-cancelled (50% cash, 30% momo, 20% vnpay)
 - [x] 9.7 Fix trang Quản lý Booking — sửa lỗi filter ngày (Carbon object vs string), tối ưu giao diện compact (ngày trống 1 dòng, booking cards dạng table rows, hôm nay viền xanh)
 - [x] 9.8 Audit & Tối ưu hiệu năng N+1 Queries (7 issues trong Controller & Service, dùng Eager Loading / Upsert / SelectRaw)
-- [ ] 9.1 Kiểm tra thủ công toàn bộ luồng
-- [ ] 9.2 Xử lý edge cases
-- [ ] 9.3 Responsive mobile
-- [ ] 9.4 Validation message tiếng Việt
-- [ ] 9.6 Viết README
+- [x] 9.1 Kiểm tra thủ công toàn bộ luồng
+- [x] 9.2 Xử lý edge cases
+- [x] 9.3 Responsive mobile
+- [x] 9.4 Validation message tiếng Việt
+- [x] 9.6 Viết README
 
 ---
 
@@ -205,6 +205,7 @@ Cập nhật lần cuối  : 23/03/2026
 - **23/03/2026**: Giai đoạn 8+ hoàn thành — (1) Migration thêm cột `is_active` boolean (default true) vào bảng `users`; (2) Cập nhật `User` model (fillable + cast boolean); (3) Tạo `Admin\UserController` (index/show/edit/update/toggleActive) — index có lọc role + tìm kiếm tên/email/SĐT + stats cards đếm theo role; show hiển thị chi tiết user + lịch sử 10 booking gần nhất (customer); (4) Tạo `UpdateUserRequest` với validate email unique ignore current + role enum; (5) 3 views admin/users: index (bảng + filter bar + pagination), show (card thông tin + bảng booking), edit (form name/email/phone/role + toggle active); (6) Thêm route resource + PATCH toggleActive; (7) Thêm mục "Người dùng" vào sidebar admin (icon Users, giữa Booking và Báo cáo).
 - [x] 23/03/2026: Giai đoạn 8++ hoàn thành — DTO Refactor + Fix Barber Bookings: (1) Tạo 6 DTO classes trong `app/DTOs/` (`CreateBookingData`, `CreateBarberData`, `UpdateBarberData`, `StoreReviewData`, `ScheduleItemData`, `UpdateScheduleData`) — dùng PHP 8.2 readonly class + named arguments; (2) Refactor 4 Services (`BookingService`, `BarberService`, `ReviewService`, `ScheduleService`) — thay `array $data` bằng typed DTO; (3) Refactor 5 Controllers dùng `DTO::fromRequest()` / `DTO::fromArray()`; (4) Fix giao diện `barber/bookings/index.blade.php` — chuyển từ card-based sang compact table style giống admin (grouped by day, inline action icon buttons); (5) Fix lỗi filter `booking_date` (Carbon vs string) trong `Barber\BookingController` — dùng `filter()` với `format('Y-m-d')` giống admin; (6) Cập nhật `03-Conventions.md` thêm quy ước DTO.
 - **23/03/2026**: Bước 9.8 hoàn thành — Audit & Tối ưu 7 lỗi N+1 Queries: (1) `ScheduleService` dùng `upsert` gom 14 queries thành 1; (2) `TimeSlotService` pre-load schedule 7 ngày trước loop; (3) `BarberService` và `ReviewService` eager load models tránh queries ẩn; (4) Thêm `load('user')` trong `Admin\ScheduleController`; (5) Dùng `withCount('reviews')` cho danh sách thợ cắt tóc của client; (6) Gom 5 truy vấn `count()` riêng rẽ trên dashboard admin thành 2 câu `selectRaw` tổng hợp kết hợp `CASE WHEN`. Thống kê SQL queries giảm đáng kể tại các trang tải nặng.
+- **23/03/2026**: Tích hợp thanh toán Sandbox — (1) Chuyển toàn bộ VNPay Sandbox timestamp sang `Asia/Ho_Chi_Minh` để chặn báo lỗi Session Timeout ngay lúc redirect do Server/App chạy múi giờ default; (2) Redesign trang Chọn Phương Thức Thanh Toán thành `Layout 2 Cột` (Summary đơn hàng + Nút radio thanh toán) cho Tablet/Desktop nhằm loại bỏ action cuộn chuột làm gãy UI luồng thanh toán; (3) Sử dụng custom `v-btn-primary` thay vì btn viền mỏng nhỏ cho form confirm thanh toán để đồng bộ hệ thống nút lớn toàn site.
 
 ---
 

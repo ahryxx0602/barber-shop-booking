@@ -338,7 +338,7 @@
                     <span class="material-symbols-outlined" x-text="open ? 'close' : 'menu'">menu</span>
                 </button>
                 <div x-show="open" x-cloak @click.away="open = false" x-transition
-                    style="position:absolute;top:72px;left:0;right:0;background:var(--v-cream);border-bottom:1px solid var(--v-rule);padding:24px;display:flex;flex-direction:column;gap:16px;">
+                    style="position:absolute;top:72px;left:0;right:0;z-index:50;background:var(--v-cream);border-bottom:1px solid var(--v-rule);padding:24px;display:flex;flex-direction:column;gap:16px;">
                     <a class="v-nav-link" href="{{ url('/') }}#services">Dịch vụ</a>
                     <a class="v-nav-link" href="{{ url('/') }}#story">Câu chuyện</a>
                     <a class="v-nav-link" href="{{ route('client.barbers.index') }}">Thợ cắt</a>
