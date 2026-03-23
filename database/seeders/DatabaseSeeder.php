@@ -19,6 +19,9 @@ class DatabaseSeeder extends Seeder
             UserSeeder::class,
             BarberSeeder::class,
             ServiceSeeder::class,
+            BookingSeeder::class,
+            ReviewSeeder::class,
+            PaymentSeeder::class,
         ]);
     }
 }

@@ -170,11 +170,17 @@ Cập nhật lần cuối  : 23/03/2026
 - [x] 8+.8 Thu gọn biểu đồ Chart.js — fix canvas tự kéo dài (wrap fixed-height container), giảm chiều cao chart trên Dashboard (200px) và Reports (220px)
 
 ### Giai đoạn 9 — Kiểm thử & Hoàn thiện
+- [x] 9.5 Seed dữ liệu demo đầy đủ cho buổi bảo vệ
+  - [x] `UserSeeder` — 1 admin, 5 barbers, 50 customers (rải 01/2025 → 03/2026)
+  - [x] `BarberSeeder` — cập nhật 5 bio + experience, dùng modulo
+  - [x] `BookingSeeder` — ~200+ bookings (14 tháng lịch sử + T3/2026 + 14 booking hôm nay: 8 pending, 4 confirmed, 2 in_progress), firstOrCreate cho TimeSlot
+  - [x] `ReviewSeeder` — 70% completed có review, rating phân bố thực tế (45% 5⭐), cập nhật barber rating
+  - [x] `PaymentSeeder` — payment cho mọi booking non-cancelled (50% cash, 30% momo, 20% vnpay)
+- [x] 9.7 Fix trang Quản lý Booking — sửa lỗi filter ngày (Carbon object vs string), tối ưu giao diện compact (ngày trống 1 dòng, booking cards dạng table rows, hôm nay viền xanh)
 - [ ] 9.1 Kiểm tra thủ công toàn bộ luồng
 - [ ] 9.2 Xử lý edge cases
 - [ ] 9.3 Responsive mobile
 - [ ] 9.4 Validation message tiếng Việt
-- [ ] 9.5 Seed dữ liệu demo đầy đủ cho buổi bảo vệ
 - [ ] 9.6 Viết README
 
 ---

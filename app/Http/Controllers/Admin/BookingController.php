@@ -42,7 +42,7 @@ class BookingController extends Controller
             $dateStr = $d->toDateString();
             $days[$dateStr] = [
                 'label' => $d->locale('vi')->isoFormat('ddd, DD/MM'),
-                'bookings' => $bookings->where('booking_date', $dateStr)->values(),
+                'bookings' => $bookings->filter(fn ($b) => $b->booking_date->format('Y-m-d') === $dateStr)->values(),
                 'isToday' => $d->isToday(),
             ];
         }

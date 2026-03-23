@@ -17,15 +17,17 @@ class BarberSeeder extends Seeder
             'Chuyên gia cắt tóc nam với hơn 5 năm kinh nghiệm. Thành thạo các kiểu tóc Hàn Quốc, undercut, fade.',
             'Thợ cắt tóc chuyên nghiệp, yêu nghề. Giỏi tư vấn kiểu tóc phù hợp khuôn mặt.',
             'Barber trẻ năng động, cập nhật xu hướng tóc mới nhất. Chuyên tóc nam phong cách.',
+            'Thợ cắt kỳ cựu, chuyên cắt tóc cổ điển và cạo râu truyền thống. Tỉ mỉ từng chi tiết.',
+            'Barber chuyên về tóc nghệ thuật và nhuộm tóc nam. Sáng tạo, luôn đổi mới phong cách.',
         ];
 
-        $experiences = [5, 3, 2];
+        $experiences = [5, 3, 2, 8, 1];
 
         foreach ($barberUsers as $index => $user) {
             $barber = Barber::create([
                 'user_id'          => $user->id,
-                'bio'              => $bios[$index],
-                'experience_years' => $experiences[$index],
+                'bio'              => $bios[$index % count($bios)],
+                'experience_years' => $experiences[$index % count($experiences)],
                 'rating'           => 0.00,
                 'is_active'        => true,
             ]);
