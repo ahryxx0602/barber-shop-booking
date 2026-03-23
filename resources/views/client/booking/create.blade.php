@@ -3,270 +3,317 @@
 @section('title', 'Đặt lịch')
 
 @section('content')
-<section class="bg-bg-light min-h-screen py-12 px-4 sm:px-6 lg:px-8" x-data="bookingWizard()">
-    {{-- Header --}}
-    <div class="w-full max-w-[640px] mx-auto mb-8 flex items-center">
-        <a href="{{ url()->previous() }}" class="flex items-center justify-center w-10 h-10 rounded-full hover:bg-surface transition-colors mr-4">
-            <span class="material-symbols-outlined">arrow_back</span>
-        </a>
-        <h1 class="text-2xl font-bold font-display tracking-tight text-warm-gray">Đặt Lịch Hẹn</h1>
+<section style="background:var(--v-cream);min-height:100vh;padding:32px 16px 48px;" class="sm:px-6 lg:px-8"
+    x-data="bookingWizard()">
+
+    {{-- Header + Summary Bar --}}
+    <div style="max-width:640px;margin:0 auto 20px;display:flex;align-items:center;justify-content:space-between;">
+        <div style="display:flex;align-items:center;">
+            <a href="{{ url()->previous() }}" style="display:flex;align-items:center;justify-content:center;width:36px;height:36px;color:var(--v-ink);margin-right:12px;border:1px solid var(--v-rule);transition:border-color 0.2s;"
+                onmouseover="this.style.borderColor='var(--v-copper)'" onmouseout="this.style.borderColor='var(--v-rule)'">
+                <span class="material-symbols-outlined" style="font-size:20px;">arrow_back</span>
+            </a>
+            <h1 class="v-title-sm" style="font-size:20px;">Đặt Lịch Hẹn</h1>
+        </div>
+        {{-- Mini progress --}}
+        <div style="display:flex;align-items:center;gap:4px;">
+            <div style="width:24px;height:3px;transition:background 0.3s;" :style="selectedServices.length > 0 ? 'background:var(--v-copper)' : 'background:var(--v-rule)'"></div>
+            <div style="width:24px;height:3px;transition:background 0.3s;" :style="selectedBarber ? 'background:var(--v-copper)' : 'background:var(--v-rule)'"></div>
+            <div style="width:24px;height:3px;transition:background 0.3s;" :style="selectedSlot ? 'background:var(--v-copper)' : 'background:var(--v-rule)'"></div>
+            <div style="width:24px;height:3px;transition:background 0.3s;" :style="canSubmit ? 'background:var(--v-copper)' : 'background:var(--v-rule)'"></div>
+        </div>
     </div>
 
     {{-- Booking Form --}}
-    <form action="{{ route('client.booking.store') }}" method="POST" class="w-full max-w-[640px] mx-auto">
+    <form action="{{ route('client.booking.store') }}" method="POST" style="max-width:640px;margin:0 auto;">
         @csrf
 
-        <div class="bg-white border border-muted/20 shadow-sm overflow-hidden">
-            <div class="p-6 sm:p-8 space-y-10">
+        <div style="border:1px solid var(--v-rule);background:#fff;box-shadow:4px 4px 0 var(--v-copper);overflow:hidden;">
 
-                {{-- Step 1: Select Services --}}
-                <section>
-                    <div class="flex items-center mb-5">
-                        <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold mr-3"
-                            :class="selectedServices.length > 0 ? 'bg-primary text-white' : 'bg-surface text-warm-gray-light'">1</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Chọn dịch vụ</h2>
+            {{-- ═══ STEP 1: Select Services ═══ --}}
+            <div style="border-bottom:1px solid var(--v-rule);">
+                {{-- Step Header (clickable to toggle) --}}
+                <button type="button" @click="currentStep = currentStep === 1 ? 0 : 1"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:none;border:none;cursor:pointer;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="v-step-badge" :class="selectedServices.length > 0 ? 'active' : ''" style="width:24px;height:24px;font-size:10px;">1</span>
+                        <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--v-ink);">Chọn dịch vụ</span>
                     </div>
-                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                        @foreach($services as $service)
-                        <label class="relative flex flex-col p-4 border-2 cursor-pointer transition-all duration-200"
-                            :class="selectedServices.includes({{ $service->id }})
-                                ? 'border-primary bg-primary/5 hover:bg-primary/10'
-                                : 'border-muted/20 hover:border-muted/40'">
-                            <input type="checkbox" name="service_ids[]" value="{{ $service->id }}" class="sr-only"
-                                @change="toggleService({{ $service->id }}, {{ $service->price }}, {{ $service->duration_minutes }})"
-                                :checked="selectedServices.includes({{ $service->id }})">
-                            <div class="flex justify-between items-center mb-1">
-                                <span class="font-medium" :class="selectedServices.includes({{ $service->id }}) ? 'text-primary' : 'text-warm-gray'">{{ $service->name }}</span>
-                                <span class="font-semibold" :class="selectedServices.includes({{ $service->id }}) ? 'text-primary' : 'text-warm-gray'">{{ number_format($service->price, 0, ',', '.') }}d</span>
-                            </div>
-                            <span class="text-sm text-muted">{{ $service->duration_minutes }} phút. {{ Str::limit($service->description, 60) }}</span>
-                            <div class="absolute top-3 right-3" x-show="selectedServices.includes({{ $service->id }})">
-                                <span class="material-symbols-outlined fill text-primary text-lg">check_circle</span>
-                            </div>
-                        </label>
-                        @endforeach
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span x-show="selectedServices.length > 0" x-cloak style="font-size:12px;color:var(--v-copper);font-weight:600;" x-text="selectedServices.length + ' dịch vụ · ' + formatPrice(totalPrice)"></span>
+                        <span class="material-symbols-outlined" style="font-size:18px;color:var(--v-muted);transition:transform 0.2s;" :style="currentStep === 1 ? 'transform:rotate(180deg)' : ''">expand_more</span>
                     </div>
-                    @error('service_ids')
-                        <p class="text-error-500 text-sm mt-2">{{ $message }}</p>
-                    @enderror
-                </section>
+                </button>
+                {{-- Step Content --}}
+                <div x-show="currentStep === 1" x-transition.duration.200ms>
+                    <div style="padding:0 20px 20px;">
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+                            @foreach($services as $service)
+                            <label style="position:relative;display:flex;flex-direction:column;padding:12px;border:1px solid var(--v-rule);cursor:pointer;transition:all 0.2s;"
+                                :style="selectedServices.includes({{ $service->id }})
+                                    ? 'border-color:var(--v-copper);background:rgba(176,137,104,0.06);box-shadow:2px 2px 0 var(--v-copper)'
+                                    : ''">
+                                <input type="checkbox" name="service_ids[]" value="{{ $service->id }}" style="position:absolute;opacity:0;width:0;height:0;"
+                                    @change="toggleService({{ $service->id }}, {{ $service->price }}, {{ $service->duration_minutes }})"
+                                    :checked="selectedServices.includes({{ $service->id }})">
+                                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px;">
+                                    <span style="font-weight:500;font-size:13px;transition:color 0.2s;padding-right:18px;" :style="selectedServices.includes({{ $service->id }}) ? 'color:var(--v-copper-dk)' : 'color:var(--v-ink)'">{{ $service->name }}</span>
+                                    <span style="font-weight:600;font-family:var(--font-serif);font-size:13px;white-space:nowrap;transition:color 0.2s;" :style="selectedServices.includes({{ $service->id }}) ? 'color:var(--v-copper)' : 'color:var(--v-ink)'">{{ number_format($service->price, 0, ',', '.') }}đ</span>
+                                </div>
+                                <span style="font-size:11px;color:var(--v-muted);line-height:1.4;">{{ $service->duration_minutes }}p · {{ Str::limit($service->description, 40) }}</span>
+                                <div style="position:absolute;top:8px;right:8px;" x-show="selectedServices.includes({{ $service->id }})">
+                                    <span class="material-symbols-outlined fill" style="font-size:16px;color:var(--v-copper);">check_circle</span>
+                                </div>
+                            </label>
+                            @endforeach
+                        </div>
+                        @error('service_ids')
+                            <p style="color:#dc2626;font-size:12px;margin-top:6px;">{{ $message }}</p>
+                        @enderror
+                        {{-- Auto-advance --}}
+                        <button type="button" x-show="selectedServices.length > 0" @click="currentStep = 2"
+                            style="margin-top:12px;width:100%;padding:10px;border:1px solid var(--v-copper);background:rgba(176,137,104,0.06);color:var(--v-copper-dk);font-size:11px;font-weight:600;letter-spacing:2px;text-transform:uppercase;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;"
+                            onmouseover="this.style.background='var(--v-copper)';this.style.color='var(--v-cream)'" onmouseout="this.style.background='rgba(176,137,104,0.06)';this.style.color='var(--v-copper-dk)'">
+                            Tiếp: Chọn thợ cắt
+                            <span class="material-symbols-outlined" style="font-size:16px;">arrow_forward</span>
+                        </button>
+                    </div>
+                </div>
+            </div>
 
-                <hr class="border-muted/10">
-
-                {{-- Step 2: Choose Barber --}}
-                <section :class="selectedServices.length > 0 ? 'opacity-100' : 'opacity-40 pointer-events-none'" class="transition-opacity duration-500">
-                    <div class="flex items-center mb-5">
-                        <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold mr-3"
-                            :class="selectedBarber ? 'bg-primary text-white' : 'bg-surface text-warm-gray-light'">2</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Chọn thợ cắt</h2>
+            {{-- ═══ STEP 2: Choose Barber ═══ --}}
+            <div style="border-bottom:1px solid var(--v-rule);" :style="selectedServices.length === 0 ? 'opacity:0.4;pointer-events:none' : ''">
+                <button type="button" @click="if(selectedServices.length > 0) currentStep = currentStep === 2 ? 0 : 2"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:none;border:none;cursor:pointer;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="v-step-badge" :class="selectedBarber ? 'active' : ''" style="width:24px;height:24px;font-size:10px;">2</span>
+                        <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--v-ink);">Chọn thợ cắt</span>
                     </div>
-                    <div class="flex gap-6 overflow-x-auto pb-2 time-scroll">
-                        @foreach($barbers as $barber)
-                        <label class="flex flex-col items-center cursor-pointer group flex-shrink-0">
-                            <input type="radio" name="barber_id" value="{{ $barber->id }}" class="sr-only"
-                                @change="selectBarber({{ $barber->id }})"
-                                :checked="selectedBarber == {{ $barber->id }}"
-                                {{ request('barber_id') == $barber->id ? 'checked' : '' }}>
-                            <div class="w-20 h-20 rounded-full overflow-hidden p-0.5 mb-2 transition-all duration-300"
-                                :class="selectedBarber == {{ $barber->id }} ? 'border-2 border-primary' : 'border border-transparent group-hover:border-muted/40'">
-                                @if($barber->user->avatar)
-                                    <img src="{{ Storage::url($barber->user->avatar) }}" alt="{{ $barber->user->name }}"
-                                        class="w-full h-full object-cover rounded-full transition-all duration-300"
-                                        :class="selectedBarber == {{ $barber->id }} ? '' : 'grayscale group-hover:grayscale-0 opacity-70 group-hover:opacity-100'">
-                                @else
-                                    <div class="w-full h-full rounded-full bg-surface flex items-center justify-center">
-                                        <span class="material-symbols-outlined text-2xl text-muted">person</span>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span x-show="selectedBarber" x-cloak style="font-size:12px;color:var(--v-copper);font-weight:600;" x-text="barberNames[selectedBarber] || ''"></span>
+                        <span class="material-symbols-outlined" style="font-size:18px;color:var(--v-muted);transition:transform 0.2s;" :style="currentStep === 2 ? 'transform:rotate(180deg)' : ''">expand_more</span>
+                    </div>
+                </button>
+                <div x-show="currentStep === 2" x-transition.duration.200ms>
+                    <div style="padding:0 20px 20px;">
+                        <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(100px, 1fr));gap:12px;">
+                            @foreach($barbers as $barber)
+                            <label style="display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:10px 4px;border:1px solid transparent;transition:all 0.2s;"
+                                :style="selectedBarber == {{ $barber->id }} ? 'border-color:var(--v-copper);background:rgba(176,137,104,0.06);box-shadow:2px 2px 0 var(--v-copper)' : 'border-color:var(--v-rule)'"
+                                class="group">
+                                <input type="radio" name="barber_id" value="{{ $barber->id }}" style="position:absolute;opacity:0;width:0;height:0;"
+                                    @change="selectBarber({{ $barber->id }}); currentStep = 3"
+                                    :checked="selectedBarber == {{ $barber->id }}"
+                                    {{ request('barber_id') == $barber->id ? 'checked' : '' }}>
+                                <div style="width:64px;height:64px;overflow:hidden;margin-bottom:6px;flex-shrink:0;border:1px solid var(--v-rule);"
+                                    :style="selectedBarber == {{ $barber->id }} ? 'border-color:var(--v-copper)' : ''">
+                                    @if($barber->user->avatar)
+                                        <img src="{{ Storage::url($barber->user->avatar) }}" alt="{{ $barber->user->name }}"
+                                            style="width:100%;height:100%;object-fit:cover;display:block;transition:filter 0.3s;"
+                                            :style="selectedBarber == {{ $barber->id }} ? 'filter:none' : 'filter:grayscale(1);opacity:0.7'">
+                                    @else
+                                        <div style="width:100%;height:100%;background:var(--v-surface);display:flex;align-items:center;justify-content:center;">
+                                            <span class="material-symbols-outlined" style="font-size:24px;color:var(--v-muted);">person</span>
+                                        </div>
+                                    @endif
+                                </div>
+                                <span style="font-size:11px;font-weight:500;text-align:center;line-height:1.3;transition:color 0.2s;"
+                                    :style="selectedBarber == {{ $barber->id }} ? 'color:var(--v-copper-dk)' : 'color:var(--v-muted)'">{{ $barber->user->name }}</span>
+                                @if($barber->rating > 0)
+                                    <div style="display:flex;align-items:center;gap:2px;margin-top:2px;">
+                                        <span class="material-symbols-outlined fill" style="font-size:10px;color:var(--v-copper);">star</span>
+                                        <span style="font-size:10px;color:var(--v-muted);">{{ number_format($barber->rating, 1) }}</span>
                                     </div>
                                 @endif
-                            </div>
-                            <span class="text-sm font-medium transition-colors"
-                                :class="selectedBarber == {{ $barber->id }} ? 'text-primary' : 'text-muted group-hover:text-warm-gray'">{{ $barber->user->name }}</span>
-                            @if($barber->rating > 0)
-                                <div class="flex items-center gap-0.5 mt-1">
-                                    <span class="material-symbols-outlined fill text-primary text-xs">star</span>
-                                    <span class="text-xs text-muted">{{ number_format($barber->rating, 1) }}</span>
-                                </div>
-                            @endif
-                        </label>
-                        @endforeach
+                            </label>
+                            @endforeach
+                        </div>
+                        @error('barber_id')
+                            <p style="color:#dc2626;font-size:12px;margin-top:6px;">{{ $message }}</p>
+                        @enderror
                     </div>
-                    @error('barber_id')
-                        <p class="text-error-500 text-sm mt-2">{{ $message }}</p>
-                    @enderror
-                </section>
+                </div>
+            </div>
 
-                <hr class="border-muted/10">
-
-                {{-- Step 3: Date & Time --}}
-                <section :class="selectedBarber ? 'opacity-100' : 'opacity-40 pointer-events-none'" class="transition-opacity duration-500">
-                    <div class="flex items-center mb-6">
-                        <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold mr-3"
-                            :class="selectedSlot ? 'bg-primary text-white' : 'bg-surface text-warm-gray-light'">3</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Chọn ngày & giờ</h2>
+            {{-- ═══ STEP 3: Date & Time ═══ --}}
+            <div style="border-bottom:1px solid var(--v-rule);" :style="!selectedBarber ? 'opacity:0.4;pointer-events:none' : ''">
+                <button type="button" @click="if(selectedBarber) currentStep = currentStep === 3 ? 0 : 3"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:none;border:none;cursor:pointer;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="v-step-badge" :class="selectedSlot ? 'active' : ''" style="width:24px;height:24px;font-size:10px;">3</span>
+                        <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--v-ink);">Ngày & giờ</span>
                     </div>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
-                        {{-- Date Selector --}}
-                        <div>
-                            <h3 class="text-sm font-medium mb-3 text-warm-gray">Chọn ngày</h3>
-                            <div class="grid grid-cols-3 sm:grid-cols-4 gap-2">
-                                @for($i = 0; $i < 7; $i++)
-                                    @php
-                                        $date = now()->addDays($i);
-                                        $dateStr = $date->format('Y-m-d');
-                                        $dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-                                    @endphp
-                                    <button type="button"
-                                        @click="selectDate('{{ $dateStr }}')"
-                                        class="py-3 px-2 text-center border transition-all duration-200"
-                                        :class="selectedDate === '{{ $dateStr }}'
-                                            ? 'border-primary bg-primary/5 text-primary font-medium'
-                                            : 'border-muted/20 text-warm-gray hover:border-muted/40'">
-                                        <div class="text-xs uppercase tracking-wider mb-1" :class="selectedDate === '{{ $dateStr }}' ? 'text-primary' : 'text-muted'">{{ $dayNames[$date->dayOfWeek] }}</div>
-                                        <div class="text-lg font-semibold">{{ $date->format('d') }}</div>
-                                        <div class="text-xs" :class="selectedDate === '{{ $dateStr }}' ? 'text-primary/70' : 'text-muted'">Thg {{ $date->format('m') }}</div>
-                                    </button>
-                                @endfor
-                            </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span x-show="selectedSlot" x-cloak style="font-size:12px;color:var(--v-copper);font-weight:600;" x-text="selectedDate ? formatDateShort(selectedDate) + ' · ' + (selectedSlotLabel || '') : ''"></span>
+                        <span class="material-symbols-outlined" style="font-size:18px;color:var(--v-muted);transition:transform 0.2s;" :style="currentStep === 3 ? 'transform:rotate(180deg)' : ''">expand_more</span>
+                    </div>
+                </button>
+                <div x-show="currentStep === 3" x-transition.duration.200ms>
+                    <div style="padding:0 20px 20px;">
+                        {{-- Date row - horizontal scroll --}}
+                        <div style="font-size:11px;font-weight:600;color:var(--v-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Chọn ngày</div>
+                        <div style="display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:4px;">
+                            @for($i = 0; $i < 7; $i++)
+                                @php
+                                    $date = now()->addDays($i);
+                                    $dateStr = $date->format('Y-m-d');
+                                    $dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+                                @endphp
+                                <button type="button" @click="selectDate('{{ $dateStr }}')"
+                                    style="flex-shrink:0;width:60px;padding:8px 4px;text-align:center;border:1px solid var(--v-rule);transition:all 0.2s;cursor:pointer;background:transparent;"
+                                    :style="selectedDate === '{{ $dateStr }}'
+                                        ? 'border-color:var(--v-copper);background:rgba(176,137,104,0.08);box-shadow:2px 2px 0 var(--v-copper)'
+                                        : ''">
+                                    <div style="font-size:9px;text-transform:uppercase;letter-spacing:1px;margin-bottom:2px;" :style="selectedDate === '{{ $dateStr }}' ? 'color:var(--v-copper)' : 'color:var(--v-muted)'">{{ $dayNames[$date->dayOfWeek] }}</div>
+                                    <div style="font-size:16px;font-weight:600;font-family:var(--font-serif);line-height:1.2;" :style="selectedDate === '{{ $dateStr }}' ? 'color:var(--v-copper-dk)' : 'color:var(--v-ink)'">{{ $date->format('d') }}</div>
+                                    <div style="font-size:9px;" :style="selectedDate === '{{ $dateStr }}' ? 'color:var(--v-copper)' : 'color:var(--v-muted)'">Thg {{ $date->format('m') }}</div>
+                                </button>
+                            @endfor
                         </div>
 
                         {{-- Time Slots --}}
-                        <div>
-                            <h3 class="text-sm font-medium mb-3 text-warm-gray">Giờ trống</h3>
+                        <div style="font-size:11px;font-weight:600;color:var(--v-muted);letter-spacing:1px;text-transform:uppercase;margin-bottom:8px;">Giờ trống</div>
 
-                            {{-- Loading --}}
-                            <div x-show="loadingSlots" class="flex items-center justify-center py-12">
-                                <div class="w-6 h-6 border-2 border-primary/30 border-t-primary rounded-full animate-spin"></div>
-                            </div>
-
-                            {{-- No date selected --}}
-                            <div x-show="!selectedDate && !loadingSlots" class="text-center py-12 text-muted text-sm">
-                                Vui lòng chọn ngày trước
-                            </div>
-
-                            {{-- No slots --}}
-                            <div x-show="selectedDate && !loadingSlots && slots.length === 0" class="text-center py-12 text-muted text-sm">
-                                Không có giờ trống cho ngày này
-                            </div>
-
-                            {{-- Slot grid --}}
-                            <div x-show="!loadingSlots && slots.length > 0" class="grid grid-cols-3 gap-2 max-h-64 overflow-y-auto pr-1 time-scroll">
-                                <template x-for="slot in slots" :key="slot.id">
-                                    <label class="cursor-pointer">
-                                        <input type="radio" name="time_slot_id" :value="slot.id" class="sr-only"
-                                            @change="selectedSlot = slot.id; selectedSlotLabel = slot.label">
-                                        <div class="py-2.5 px-3 text-center border text-sm transition-all duration-200"
-                                            :class="selectedSlot == slot.id
-                                                ? 'border-primary bg-primary/5 text-primary font-medium'
-                                                : 'border-muted/20 hover:border-primary hover:text-primary'"
-                                            x-text="slot.label"></div>
-                                    </label>
-                                </template>
-                            </div>
+                        <div x-show="loadingSlots" style="display:flex;align-items:center;justify-content:center;padding:24px 0;">
+                            <div style="width:20px;height:20px;border:2px solid var(--v-rule);border-top-color:var(--v-copper);border-radius:50%;animation:spin 1s linear infinite;"></div>
                         </div>
-                    </div>
-                    @error('time_slot_id')
-                        <p class="text-error-500 text-sm mt-2">{{ $message }}</p>
-                    @enderror
-                </section>
 
-                <hr class="border-muted/10">
-
-                {{-- Step 4: Guest Info (only for non-authenticated users) --}}
-                @guest
-                <section :class="selectedSlot ? 'opacity-100' : 'opacity-40 pointer-events-none'" class="transition-opacity duration-500">
-                    <div class="flex items-center mb-5">
-                        <span class="flex items-center justify-center w-7 h-7 rounded-full text-xs font-bold mr-3"
-                            :class="guestName && guestPhone && guestEmail ? 'bg-primary text-white' : 'bg-surface text-warm-gray-light'">4</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Thông tin liên hệ</h2>
-                    </div>
-                    <p class="text-sm text-muted mb-4">Bạn chưa đăng nhập. Vui lòng điền thông tin để chúng tôi liên hệ xác nhận lịch hẹn.</p>
-                    <div class="space-y-4">
-                        <div>
-                            <label for="guest_name" class="block text-sm font-medium text-warm-gray mb-2">Họ và tên <span class="text-primary">*</span></label>
-                            <input type="text" name="guest_name" id="guest_name" value="{{ old('guest_name') }}" required
-                                x-model="guestName"
-                                placeholder="Nguyễn Văn A"
-                                class="w-full px-4 py-3 border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
-                            @error('guest_name')
-                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                            @enderror
+                        <div x-show="!selectedDate && !loadingSlots" style="text-align:center;padding:24px 0;color:var(--v-muted);font-size:12px;">
+                            ← Chọn ngày phía trên
                         </div>
-                        <div>
-                            <label for="guest_phone" class="block text-sm font-medium text-warm-gray mb-2">Số điện thoại <span class="text-primary">*</span></label>
-                            <input type="tel" name="guest_phone" id="guest_phone" value="{{ old('guest_phone') }}" required
-                                x-model="guestPhone"
-                                placeholder="0901234567"
-                                class="w-full px-4 py-3 border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
-                            @error('guest_phone')
-                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-                        <div>
-                            <label for="guest_email" class="block text-sm font-medium text-warm-gray mb-2">Email <span class="text-primary">*</span></label>
-                            <input type="email" name="guest_email" id="guest_email" value="{{ old('guest_email') }}" required
-                                x-model="guestEmail"
-                                placeholder="email@example.com"
-                                class="w-full px-4 py-3 border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors">
-                            @error('guest_email')
-                                <p class="text-red-600 text-sm mt-1">{{ $message }}</p>
-                            @enderror
-                        </div>
-                    </div>
-                    <p class="text-xs text-muted mt-3 flex items-center gap-1">
-                        <span class="material-symbols-outlined text-[14px]">info</span>
-                        Đã có tài khoản? <a href="{{ route('login') }}?redirect={{ urlencode(route('client.booking.create')) }}" class="text-primary hover:underline font-medium">Đăng nhập tại đây</a>
-                    </p>
-                </section>
 
-                <hr class="border-muted/10">
-                @endguest
+                        <div x-show="selectedDate && !loadingSlots && slots.length === 0" style="text-align:center;padding:24px 0;color:var(--v-muted);font-size:12px;">
+                            Không có giờ trống cho ngày này
+                        </div>
 
-                {{-- Step Note --}}
-                <section :class="selectedSlot ? 'opacity-100' : 'opacity-40 pointer-events-none'" class="transition-opacity duration-500">
-                    <div class="flex items-center mb-4">
-                        <span class="flex items-center justify-center w-7 h-7 rounded-full bg-surface text-warm-gray-light text-xs font-bold mr-3">@auth 4 @else 5 @endauth</span>
-                        <h2 class="text-lg font-semibold font-display text-warm-gray">Ghi chú (tuỳ chọn)</h2>
+                        <div x-show="!loadingSlots && slots.length > 0" style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;max-height:180px;overflow-y:auto;padding-right:4px;">
+                            <template x-for="slot in slots" :key="slot.id">
+                                <label style="cursor:pointer;">
+                                    <input type="radio" name="time_slot_id" :value="slot.id" style="position:absolute;opacity:0;width:0;height:0;"
+                                        @change="selectedSlot = slot.id; selectedSlotLabel = slot.label; @guest currentStep = 4 @else currentStep = 5 @endguest">
+                                    <div style="padding:8px 4px;text-align:center;border:1px solid var(--v-rule);font-size:12px;transition:all 0.2s;"
+                                        :style="selectedSlot == slot.id
+                                            ? 'border-color:var(--v-copper);background:rgba(176,137,104,0.08);color:var(--v-copper-dk);font-weight:600;box-shadow:2px 2px 0 var(--v-copper)'
+                                            : 'color:var(--v-ink)'"
+                                        x-text="slot.label"></div>
+                                </label>
+                            </template>
+                        </div>
+
+                        @error('time_slot_id')
+                            <p style="color:#dc2626;font-size:12px;margin-top:6px;">{{ $message }}</p>
+                        @enderror
                     </div>
-                    <textarea name="note" rows="3" placeholder="Yêu cầu đặc biệt, kiểu tóc mong muốn..."
-                        class="w-full px-4 py-3 border border-muted/20 text-warm-gray placeholder-muted text-sm focus:border-primary focus:ring-1 focus:ring-primary outline-none transition-colors resize-none">{{ old('note') }}</textarea>
-                </section>
+                </div>
             </div>
 
-            {{-- Sticky Footer --}}
-            <div class="p-6 bg-surface/30 border-t border-muted/10">
-                {{-- Summary --}}
-                <div class="flex justify-between items-center mb-2 text-sm">
-                    <span class="text-muted">Dịch vụ</span>
-                    <span class="font-medium text-warm-gray" x-text="selectedServices.length + ' dịch vụ'">0 dịch vụ</span>
+            {{-- ═══ STEP 4: Guest Info (non-auth only) ═══ --}}
+            @guest
+            <div style="border-bottom:1px solid var(--v-rule);" :style="!selectedSlot ? 'opacity:0.4;pointer-events:none' : ''">
+                <button type="button" @click="if(selectedSlot) currentStep = currentStep === 4 ? 0 : 4"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:none;border:none;cursor:pointer;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="v-step-badge" :class="guestName && guestPhone && guestEmail ? 'active' : ''" style="width:24px;height:24px;font-size:10px;">4</span>
+                        <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--v-ink);">Thông tin liên hệ</span>
+                    </div>
+                    <div style="display:flex;align-items:center;gap:8px;">
+                        <span x-show="guestName" x-cloak style="font-size:12px;color:var(--v-copper);font-weight:600;" x-text="guestName"></span>
+                        <span class="material-symbols-outlined" style="font-size:18px;color:var(--v-muted);transition:transform 0.2s;" :style="currentStep === 4 ? 'transform:rotate(180deg)' : ''">expand_more</span>
+                    </div>
+                </button>
+                <div x-show="currentStep === 4" x-transition.duration.200ms>
+                    <div style="padding:0 20px 20px;">
+                        <p style="font-size:12px;color:var(--v-muted);margin-bottom:12px;">Bạn chưa đăng nhập. Vui lòng điền thông tin liên hệ.</p>
+                        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                            <div style="grid-column:span 2;">
+                                <label for="guest_name" style="display:block;font-size:11px;font-weight:600;color:var(--v-muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Họ và tên <span style="color:var(--v-copper);">*</span></label>
+                                <input type="text" name="guest_name" id="guest_name" value="{{ old('guest_name') }}" required
+                                    x-model="guestName" placeholder="Nguyễn Văn A" class="v-input" style="padding:10px 14px;font-size:13px;">
+                                @error('guest_name')
+                                    <p style="color:#dc2626;font-size:11px;margin-top:3px;">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="guest_phone" style="display:block;font-size:11px;font-weight:600;color:var(--v-muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">SĐT <span style="color:var(--v-copper);">*</span></label>
+                                <input type="tel" name="guest_phone" id="guest_phone" value="{{ old('guest_phone') }}" required
+                                    x-model="guestPhone" placeholder="0901234567" class="v-input" style="padding:10px 14px;font-size:13px;">
+                                @error('guest_phone')
+                                    <p style="color:#dc2626;font-size:11px;margin-top:3px;">{{ $message }}</p>
+                                @enderror
+                            </div>
+                            <div>
+                                <label for="guest_email" style="display:block;font-size:11px;font-weight:600;color:var(--v-muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Email <span style="color:var(--v-copper);">*</span></label>
+                                <input type="email" name="guest_email" id="guest_email" value="{{ old('guest_email') }}" required
+                                    x-model="guestEmail" placeholder="email@example.com" class="v-input" style="padding:10px 14px;font-size:13px;">
+                                @error('guest_email')
+                                    <p style="color:#dc2626;font-size:11px;margin-top:3px;">{{ $message }}</p>
+                                @enderror
+                            </div>
+                        </div>
+                        <p style="font-size:10px;color:var(--v-muted);margin-top:10px;display:flex;align-items:center;gap:4px;">
+                            <span class="material-symbols-outlined" style="font-size:12px;">info</span>
+                            Đã có tài khoản? <a href="{{ route('login') }}?redirect={{ urlencode(route('client.booking.create')) }}" style="color:var(--v-copper);font-weight:600;text-decoration:none;">Đăng nhập</a>
+                        </p>
+                    </div>
                 </div>
-                <div class="flex justify-between items-center mb-2 text-sm">
-                    <span class="text-muted">Thời gian</span>
-                    <span class="font-medium text-warm-gray" x-text="totalDuration + ' phút'">0 phút</span>
+            </div>
+            @endguest
+
+            {{-- ═══ STEP 5: Note (optional, always visible inline) ═══ --}}
+            <div :style="!selectedSlot ? 'opacity:0.4;pointer-events:none' : ''">
+                <button type="button" @click="if(selectedSlot) currentStep = currentStep === 5 ? 0 : 5"
+                    style="width:100%;display:flex;align-items:center;justify-content:space-between;padding:14px 20px;background:none;border:none;cursor:pointer;">
+                    <div style="display:flex;align-items:center;gap:10px;">
+                        <span class="v-step-badge" style="width:24px;height:24px;font-size:10px;">@auth 4 @else 5 @endauth</span>
+                        <span style="font-family:var(--font-serif);font-size:16px;font-weight:600;color:var(--v-ink);">Ghi chú</span>
+                        <span style="font-size:11px;color:var(--v-muted);font-style:italic;">tuỳ chọn</span>
+                    </div>
+                    <span class="material-symbols-outlined" style="font-size:18px;color:var(--v-muted);transition:transform 0.2s;" :style="currentStep === 5 ? 'transform:rotate(180deg)' : ''">expand_more</span>
+                </button>
+                <div x-show="currentStep === 5" x-transition.duration.200ms>
+                    <div style="padding:0 20px 16px;">
+                        <textarea name="note" rows="2" placeholder="Yêu cầu đặc biệt, kiểu tóc mong muốn..."
+                            class="v-textarea" style="font-size:13px;">{{ old('note') }}</textarea>
+                    </div>
                 </div>
-                <div class="flex justify-between items-center mb-4">
-                    <span class="text-muted text-sm">Tổng cộng</span>
-                    <span class="font-bold text-xl text-warm-gray" x-text="formatPrice(totalPrice)">0d</span>
+            </div>
+
+            {{-- ═══ STICKY FOOTER: Summary + Submit ═══ --}}
+            <div style="padding:16px 20px;background:var(--v-surface);border-top:1px solid var(--v-rule);">
+                {{-- Compact summary row --}}
+                <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
+                    <div style="display:flex;align-items:center;gap:12px;font-size:12px;color:var(--v-muted);">
+                        <span x-text="selectedServices.length + ' dịch vụ'">0 dịch vụ</span>
+                        <span style="width:1px;height:12px;background:var(--v-rule);"></span>
+                        <span x-text="totalDuration + ' phút'">0 phút</span>
+                    </div>
+                    <span style="font-family:var(--font-serif);font-weight:700;font-size:20px;color:var(--v-ink);" x-text="formatPrice(totalPrice)">0đ</span>
                 </div>
-                <button type="submit"
-                    :disabled="!canSubmit"
-                    class="w-full py-4 text-white font-bold tracking-widest uppercase text-sm transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary"
-                    :class="canSubmit ? 'bg-primary hover:bg-primary-dark cursor-pointer' : 'bg-muted/40 cursor-not-allowed'">
+                <button type="submit" :disabled="!canSubmit" class="v-btn-primary"
+                    style="width:100%;justify-content:center;height:48px;"
+                    :style="canSubmit ? '' : 'opacity:0.35;cursor:not-allowed;pointer-events:none'">
                     Xác Nhận Đặt Lịch
                 </button>
-                <p class="text-center text-xs text-muted mt-3 flex items-center justify-center gap-1">
-                    <span class="material-symbols-outlined text-[14px]">lock</span>
-                    Thanh toán sau khi sử dụng dịch vụ.
+                <p style="text-align:center;font-size:10px;color:var(--v-muted);margin-top:8px;display:flex;align-items:center;justify-content:center;gap:4px;">
+                    <span class="material-symbols-outlined" style="font-size:12px;">lock</span>
+                    Thanh toán tại quầy sau khi sử dụng dịch vụ.
                 </p>
             </div>
         </div>
     </form>
 </section>
 
+@push('styles')
+<style>
+    @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+@endpush
+
 @push('scripts')
 <script>
 function bookingWizard() {
     return {
+        currentStep: 1,
         selectedServices: [],
         servicePrices: {},
         serviceDurations: {},
@@ -282,10 +329,15 @@ function bookingWizard() {
         guestName: '{{ old("guest_name", "") }}',
         guestPhone: '{{ old("guest_phone", "") }}',
         guestEmail: '{{ old("guest_email", "") }}',
+        barberNames: {
+            @foreach($barbers as $barber)
+                {{ $barber->id }}: '{{ $barber->user->name }}',
+            @endforeach
+        },
 
         init() {
             if (this.selectedBarber) {
-                // Ready for date selection
+                this.currentStep = 3;
             }
         },
 
@@ -335,7 +387,13 @@ function bookingWizard() {
         },
 
         formatPrice(price) {
-            return new Intl.NumberFormat('vi-VN').format(price) + 'd';
+            return new Intl.NumberFormat('vi-VN').format(price) + 'đ';
+        },
+
+        formatDateShort(dateStr) {
+            const d = new Date(dateStr);
+            const days = ['CN','T2','T3','T4','T5','T6','T7'];
+            return days[d.getDay()] + ' ' + String(d.getDate()).padStart(2,'0') + '/' + String(d.getMonth()+1).padStart(2,'0');
         },
 
         get canSubmit() {

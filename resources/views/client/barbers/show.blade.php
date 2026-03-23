@@ -3,172 +3,181 @@
 @section('title', $barber->user->name)
 
 @section('content')
-<section class="bg-bg-light min-h-screen">
-    <div class="max-w-[1000px] mx-auto px-6 md:px-12 py-16 md:py-24">
+<section style="background:var(--v-cream);min-height:100vh;">
+    <div style="max-width:900px;margin:0 auto;padding:32px 24px 64px;" class="md:px-12">
         {{-- Back link --}}
-        <a href="{{ route('client.barbers.index') }}" class="inline-flex items-center gap-2 text-warm-gray-light hover:text-primary transition-colors text-sm mb-10">
-            <span class="material-symbols-outlined text-lg">arrow_back</span>
-            Quay lại danh sách
+        <a href="{{ route('client.barbers.index') }}" style="display:inline-flex;align-items:center;gap:6px;color:var(--v-muted);text-decoration:none;font-size:10px;font-weight:600;letter-spacing:2px;text-transform:uppercase;margin-bottom:24px;transition:color 0.2s;"
+            onmouseover="this.style.color='var(--v-copper)'" onmouseout="this.style.color='var(--v-muted)'">
+            <span class="material-symbols-outlined" style="font-size:14px;">arrow_back</span>
+            Danh sách thợ cắt
         </a>
 
-        {{-- Profile --}}
-        <div class="flex flex-col md:flex-row gap-10 md:gap-16 mb-16">
-            {{-- Avatar --}}
-            <div class="w-64 h-80 shrink-0 overflow-hidden mx-auto md:mx-0">
-                @if($barber->user->avatar)
-                    <img src="{{ Storage::url($barber->user->avatar) }}" alt="{{ $barber->user->name }}"
-                        class="w-full h-full object-cover filter grayscale hover:grayscale-0 transition-all duration-700" />
-                @else
-                    <div class="w-full h-full bg-surface flex items-center justify-center">
-                        <span class="material-symbols-outlined text-8xl text-muted/40">person</span>
-                    </div>
-                @endif
-            </div>
-
-            {{-- Info --}}
-            <div class="flex-1">
-                <div class="flex items-center gap-4 mb-4">
-                    <div class="w-8 h-[1.5px] bg-primary"></div>
-                    <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Thợ cắt</span>
-                </div>
-                <h1 class="font-serif text-4xl md:text-5xl font-bold text-warm-gray mb-4">{{ $barber->user->name }}</h1>
-
-                <div class="flex items-center gap-6 mb-6 text-sm text-warm-gray-light">
-                    <div class="flex items-center gap-1">
-                        <span class="material-symbols-outlined text-base text-primary">work_history</span>
-                        {{ $barber->experience_years }} năm kinh nghiệm
-                    </div>
-                    @if($barber->rating > 0)
-                    <div class="flex items-center gap-1">
-                        @for($i = 1; $i <= 5; $i++)
-                            <span class="material-symbols-outlined {{ $i <= round($barber->rating) ? 'fill text-primary' : 'text-muted/30' }} text-sm">star</span>
-                        @endfor
-                        <span class="font-medium text-warm-gray ml-1">{{ number_format($barber->rating, 1) }}</span>
-                        <span class="text-muted">({{ $barber->reviews->count() }} đánh giá)</span>
-                    </div>
+        {{-- ═══ PROFILE CARD — avatar + info side by side ═══ --}}
+        <div style="border:1px solid var(--v-rule);background:#fff;box-shadow:4px 4px 0 var(--v-copper);margin-bottom:24px;overflow:hidden;">
+            <div style="display:flex;flex-direction:column;" class="sm:flex-row">
+                {{-- Avatar (compact) --}}
+                <div style="width:100%;height:200px;overflow:hidden;position:relative;flex-shrink:0;" class="sm:w-48 sm:h-auto">
+                    @if($barber->user->avatar)
+                        <img src="{{ Storage::url($barber->user->avatar) }}" alt="{{ $barber->user->name }}"
+                            class="v-img-grayscale" style="width:100%;height:100%;object-fit:cover;" />
+                    @else
+                        <div style="width:100%;height:100%;background:var(--v-surface);display:flex;align-items:center;justify-content:center;">
+                            <span class="material-symbols-outlined" style="font-size:56px;color:var(--v-muted);opacity:0.4;">person</span>
+                        </div>
                     @endif
+                    <div class="corner corner-tl"></div>
+                    <div class="corner corner-br"></div>
                 </div>
 
-                @if($barber->bio)
-                <p class="text-base leading-[1.8] text-warm-gray-light mb-8">{{ $barber->bio }}</p>
-                @endif
+                {{-- Info --}}
+                <div style="padding:20px 24px;flex:1;display:flex;flex-direction:column;justify-content:center;">
+                    <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px;">
+                        <div style="width:20px;height:1.5px;background:var(--v-copper);"></div>
+                        <span class="v-label">Thợ cắt</span>
+                    </div>
+                    <h1 style="font-family:var(--font-serif);font-size:clamp(1.5rem,3vw,2rem);font-weight:700;color:var(--v-ink);margin-bottom:10px;">{{ $barber->user->name }}</h1>
 
-                <a href="{{ route('client.booking.create') }}?barber_id={{ $barber->id }}" class="inline-flex items-center justify-center h-[52px] px-8 bg-primary text-white text-[11px] font-bold uppercase tracking-[2.5px] transition-all duration-300 hover:bg-warm-gray">
-                    Đặt lịch với {{ $barber->user->name }}
-                </a>
-            </div>
-        </div>
-
-        {{-- Working Schedule --}}
-        @if($barber->workingSchedules->isNotEmpty())
-        <div class="mb-16">
-            <h2 class="text-xl font-bold text-warm-gray mb-6 flex items-center gap-3">
-                <span class="material-symbols-outlined text-primary">calendar_month</span>
-                Lịch làm việc
-            </h2>
-            <div class="grid grid-cols-2 sm:grid-cols-4 lg:grid-cols-7 gap-3">
-                @php
-                    $dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
-                @endphp
-                @for($day = 0; $day <= 6; $day++)
-                    @php
-                        $schedule = $barber->workingSchedules->firstWhere('day_of_week', $day);
-                    @endphp
-                    <div class="text-center p-4 {{ $schedule && !$schedule->is_day_off ? 'bg-white border border-muted/20' : 'bg-surface/50 border border-transparent' }}">
-                        <div class="text-xs font-bold tracking-widest uppercase text-warm-gray-light mb-2">{{ $dayNames[$day] }}</div>
-                        @if($schedule && !$schedule->is_day_off)
-                            <div class="text-sm font-medium text-warm-gray">
-                                {{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }}
-                            </div>
-                            <div class="text-xs text-muted">đến</div>
-                            <div class="text-sm font-medium text-warm-gray">
-                                {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}
-                            </div>
-                        @else
-                            <div class="text-sm text-muted italic">Nghỉ</div>
+                    <div style="display:flex;align-items:center;gap:16px;margin-bottom:12px;font-size:13px;color:var(--v-muted);flex-wrap:wrap;">
+                        <div style="display:flex;align-items:center;gap:4px;">
+                            <span class="material-symbols-outlined" style="font-size:14px;color:var(--v-copper);">work_history</span>
+                            {{ $barber->experience_years }} năm KN
+                        </div>
+                        @if($barber->rating > 0)
+                        <div style="display:flex;align-items:center;gap:3px;">
+                            @for($i = 1; $i <= 5; $i++)
+                                <span class="material-symbols-outlined {{ $i <= round($barber->rating) ? 'fill' : '' }}" style="font-size:12px;color:{{ $i <= round($barber->rating) ? 'var(--v-copper)' : 'var(--v-muted)' }};opacity:{{ $i <= round($barber->rating) ? '1' : '0.3' }};">star</span>
+                            @endfor
+                            <span style="font-weight:600;color:var(--v-ink);margin-left:2px;">{{ number_format($barber->rating, 1) }}</span>
+                            <span style="color:var(--v-muted);">({{ $barber->reviews->count() }})</span>
+                        </div>
                         @endif
                     </div>
-                @endfor
+
+                    @if($barber->bio)
+                    <p style="font-size:13px;line-height:1.7;color:var(--v-muted);margin-bottom:16px;">{{ Str::limit($barber->bio, 150) }}</p>
+                    @endif
+
+                    <a href="{{ route('client.booking.create') }}?barber_id={{ $barber->id }}" class="v-btn-primary" style="align-self:flex-start;height:44px;padding:0 28px;font-size:9px;">
+                        Đặt lịch ngay
+                    </a>
+                </div>
             </div>
         </div>
-        @endif
 
-        {{-- Reviews --}}
-        <div>
-            <h2 class="text-xl font-bold text-warm-gray mb-6 flex items-center gap-3">
-                <span class="material-symbols-outlined text-primary">rate_review</span>
-                Đánh giá từ khách hàng
-                @if($barber->reviews->isNotEmpty())
-                    <span class="text-sm font-normal text-muted">({{ $barber->reviews->count() }})</span>
-                @endif
-            </h2>
+        {{-- ═══ SCHEDULE + REVIEWS — side by side on desktop ═══ --}}
+        <div style="display:grid;grid-template-columns:1fr;gap:24px;" class="md:grid-cols-5">
 
-            @if($barber->reviews->isNotEmpty())
-                {{-- Rating summary --}}
-                <div class="bg-white border border-muted/10 p-6 mb-6 flex flex-col sm:flex-row items-center gap-6">
-                    <div class="text-center">
-                        <div class="text-4xl font-bold text-warm-gray">{{ number_format($barber->rating, 1) }}</div>
-                        <div class="flex items-center gap-0.5 mt-1">
-                            @for($i = 1; $i <= 5; $i++)
-                                <span class="material-symbols-outlined {{ $i <= round($barber->rating) ? 'fill text-primary' : 'text-muted/30' }} text-base">star</span>
-                            @endfor
-                        </div>
-                        <div class="text-xs text-muted mt-1">{{ $barber->reviews->count() }} đánh giá</div>
+            {{-- LEFT: Schedule (2 cols) --}}
+            @if($barber->workingSchedules->isNotEmpty())
+            <div class="md:col-span-2">
+                <div style="border:1px solid var(--v-rule);background:#fff;overflow:hidden;height:100%;">
+                    <div style="padding:12px 16px;background:var(--v-surface);border-bottom:1px solid var(--v-rule);">
+                        <span style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--v-muted);">Lịch làm việc</span>
                     </div>
-                    <div class="flex-1 w-full space-y-1">
-                        @for($star = 5; $star >= 1; $star--)
-                            @php
-                                $count = $barber->reviews->where('rating', $star)->count();
-                                $pct = $barber->reviews->count() > 0 ? ($count / $barber->reviews->count()) * 100 : 0;
-                            @endphp
-                            <div class="flex items-center gap-2 text-sm">
-                                <span class="w-3 text-right text-muted">{{ $star }}</span>
-                                <span class="material-symbols-outlined fill text-primary text-xs">star</span>
-                                <div class="flex-1 h-2 bg-surface rounded-full overflow-hidden">
-                                    <div class="h-full bg-primary rounded-full" style="width: {{ $pct }}%"></div>
-                                </div>
-                                <span class="w-6 text-right text-xs text-muted">{{ $count }}</span>
+                    <div style="padding:8px;">
+                        @php $dayNames = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7']; @endphp
+                        @for($day = 0; $day <= 6; $day++)
+                            @php $schedule = $barber->workingSchedules->firstWhere('day_of_week', $day); @endphp
+                            <div style="display:flex;align-items:center;justify-content:space-between;padding:6px 8px;{{ $day < 6 ? 'border-bottom:1px solid var(--v-rule);' : '' }}">
+                                <span style="font-size:11px;font-weight:600;color:{{ $schedule && !$schedule->is_day_off ? 'var(--v-ink)' : 'var(--v-muted)' }};width:24px;">{{ $dayNames[$day] }}</span>
+                                @if($schedule && !$schedule->is_day_off)
+                                    <span style="font-size:12px;color:var(--v-ink);">{{ \Carbon\Carbon::parse($schedule->start_time)->format('H:i') }} – {{ \Carbon\Carbon::parse($schedule->end_time)->format('H:i') }}</span>
+                                @else
+                                    <span style="font-size:11px;color:var(--v-muted);font-style:italic;">Nghỉ</span>
+                                @endif
                             </div>
                         @endfor
                     </div>
                 </div>
+            </div>
+            @endif
 
-                {{-- Review list --}}
-                <div class="space-y-4" x-data="{ showAll: false }">
-                    @foreach($barber->reviews->sortByDesc('created_at')->values() as $index => $review)
-                        <div class="bg-white border border-muted/10 p-6" x-show="showAll || {{ $index }} < 5" x-transition>
-                            <div class="flex items-center justify-between mb-3">
-                                <div>
-                                    <span class="font-medium text-warm-gray">{{ $review->customer->name }}</span>
-                                    <span class="text-sm text-muted ml-2">{{ $review->created_at->diffForHumans() }}</span>
-                                </div>
-                                <div class="flex items-center gap-0.5">
+            {{-- RIGHT: Reviews (3 cols) --}}
+            <div class="{{ $barber->workingSchedules->isNotEmpty() ? 'md:col-span-3' : 'md:col-span-5' }}">
+                <div style="border:1px solid var(--v-rule);background:#fff;overflow:hidden;">
+                    <div style="padding:12px 16px;background:var(--v-surface);border-bottom:1px solid var(--v-rule);display:flex;align-items:center;justify-content:space-between;">
+                        <span style="font-size:9px;font-weight:700;letter-spacing:2px;text-transform:uppercase;color:var(--v-muted);">Đánh giá</span>
+                        @if($barber->reviews->isNotEmpty())
+                            <span style="font-size:11px;color:var(--v-muted);">{{ $barber->reviews->count() }} đánh giá</span>
+                        @endif
+                    </div>
+
+                    @if($barber->reviews->isNotEmpty())
+                        {{-- Rating summary bar (compact) --}}
+                        <div style="padding:16px;border-bottom:1px solid var(--v-rule);display:flex;align-items:center;gap:16px;">
+                            <div style="text-align:center;flex-shrink:0;">
+                                <div style="font-family:var(--font-serif);font-size:32px;font-weight:700;color:var(--v-ink);line-height:1;">{{ number_format($barber->rating, 1) }}</div>
+                                <div style="display:flex;align-items:center;gap:1px;margin-top:4px;justify-content:center;">
                                     @for($i = 1; $i <= 5; $i++)
-                                        <span class="material-symbols-outlined {{ $i <= $review->rating ? 'fill text-primary' : 'text-muted/30' }} text-sm">star</span>
+                                        <span class="material-symbols-outlined {{ $i <= round($barber->rating) ? 'fill' : '' }}" style="font-size:10px;color:{{ $i <= round($barber->rating) ? 'var(--v-copper)' : 'var(--v-muted)' }};opacity:{{ $i <= round($barber->rating) ? '1' : '0.3' }};">star</span>
                                     @endfor
                                 </div>
                             </div>
-                            @if($review->comment)
-                                <p class="text-warm-gray-light text-sm leading-relaxed">{{ $review->comment }}</p>
+                            <div style="flex:1;display:flex;flex-direction:column;gap:3px;">
+                                @for($star = 5; $star >= 1; $star--)
+                                    @php
+                                        $count = $barber->reviews->where('rating', $star)->count();
+                                        $pct = $barber->reviews->count() > 0 ? ($count / $barber->reviews->count()) * 100 : 0;
+                                    @endphp
+                                    <div style="display:flex;align-items:center;gap:4px;">
+                                        <span style="width:8px;font-size:10px;text-align:right;color:var(--v-muted);">{{ $star }}</span>
+                                        <div style="flex:1;height:4px;background:var(--v-surface);overflow:hidden;">
+                                            <div style="height:100%;background:var(--v-copper);width:{{ $pct }}%;"></div>
+                                        </div>
+                                        <span style="width:16px;text-align:right;font-size:9px;color:var(--v-muted);">{{ $count }}</span>
+                                    </div>
+                                @endfor
+                            </div>
+                        </div>
+
+                        {{-- Review list (compact rows) --}}
+                        <div x-data="{ showAll: false }">
+                            @foreach($barber->reviews->sortByDesc('created_at')->values() as $index => $review)
+                                <div style="padding:10px 16px;border-bottom:1px solid var(--v-rule);" x-show="showAll || {{ $index }} < 3" x-transition>
+                                    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:{{ $review->comment ? '4px' : '0' }};">
+                                        <div style="display:flex;align-items:center;gap:6px;">
+                                            <span style="font-size:12px;font-weight:600;color:var(--v-ink);">{{ $review->customer->name }}</span>
+                                            <span style="font-size:10px;color:var(--v-muted);">{{ $review->created_at->diffForHumans() }}</span>
+                                        </div>
+                                        <div style="display:flex;align-items:center;gap:1px;">
+                                            @for($i = 1; $i <= 5; $i++)
+                                                <span class="material-symbols-outlined {{ $i <= $review->rating ? 'fill' : '' }}" style="font-size:10px;color:{{ $i <= $review->rating ? 'var(--v-copper)' : 'var(--v-muted)' }};opacity:{{ $i <= $review->rating ? '1' : '0.3' }};">star</span>
+                                            @endfor
+                                        </div>
+                                    </div>
+                                    @if($review->comment)
+                                        <p style="font-size:12px;line-height:1.5;color:var(--v-muted);">{{ Str::limit($review->comment, 120) }}</p>
+                                    @endif
+                                </div>
+                            @endforeach
+
+                            @if($barber->reviews->count() > 3)
+                                <button @click="showAll = !showAll" type="button"
+                                    style="width:100%;padding:10px;background:var(--v-surface);border:none;cursor:pointer;font-size:9px;font-weight:600;letter-spacing:2px;text-transform:uppercase;color:var(--v-copper);display:flex;align-items:center;justify-content:center;gap:4px;transition:color 0.2s;"
+                                    onmouseover="this.style.color='var(--v-ink)'" onmouseout="this.style.color='var(--v-copper)'">
+                                    <span x-text="showAll ? 'Thu gọn' : 'Xem tất cả {{ $barber->reviews->count() }} đánh giá'"></span>
+                                    <span class="material-symbols-outlined" style="font-size:14px;" x-text="showAll ? 'expand_less' : 'expand_more'"></span>
+                                </button>
                             @endif
                         </div>
-                    @endforeach
-
-                    @if($barber->reviews->count() > 5)
-                        <button @click="showAll = !showAll" type="button"
-                            class="flex items-center gap-2 text-sm font-semibold text-primary hover:text-warm-gray transition-colors mx-auto">
-                            <span x-text="showAll ? 'Thu gọn' : 'Xem tất cả {{ $barber->reviews->count() }} đánh giá'"></span>
-                            <span class="material-symbols-outlined text-base" x-text="showAll ? 'expand_less' : 'expand_more'"></span>
-                        </button>
+                    @else
+                        <div style="padding:24px;text-align:center;">
+                            <span class="material-symbols-outlined" style="font-size:24px;color:var(--v-muted);opacity:0.3;display:block;margin-bottom:4px;">rate_review</span>
+                            <p style="font-size:12px;color:var(--v-muted);">Chưa có đánh giá nào.</p>
+                        </div>
                     @endif
                 </div>
-            @else
-                <div class="bg-white border border-muted/10 p-8 text-center">
-                    <span class="material-symbols-outlined text-3xl text-muted/30 mb-2">rate_review</span>
-                    <p class="text-sm text-muted">Chưa có đánh giá nào.</p>
-                </div>
-            @endif
+            </div>
         </div>
     </div>
 </section>
+
+@push('styles')
+<style>
+    @media (min-width: 640px) {
+        .sm\:w-48 { width: 192px; }
+        .sm\:h-auto { height: auto; }
+    }
+</style>
+@endpush
 @endsection

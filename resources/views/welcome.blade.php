@@ -2,100 +2,440 @@
 
 @section('title', 'Trang chủ')
 
-@section('content')
-    {{-- Hero Section --}}
-    <section class="relative w-full min-h-[90vh] flex flex-col lg:flex-row noise-bg">
-        {{-- Left: Hero Image --}}
-        @php $heroService = \App\Models\Service::where('is_active', true)->whereNotNull('image')->first(); @endphp
-        <div class="hidden lg:block absolute top-0 left-0 w-1/2 h-full z-0 overflow-hidden">
-            <div class="w-full h-[120%] -mt-[10%] relative">
-                @if($heroService && $heroService->image)
-                    <div class="absolute inset-0 bg-cover bg-center bg-no-repeat filter grayscale contrast-[1.1]"
-                        style="background-image: url('{{ Storage::url($heroService->image) }}');"></div>
-                @else
-                    <div class="absolute inset-0 bg-warm-gray/[0.06]"></div>
-                @endif
-                {{-- Sepia overlay --}}
-                <div class="absolute inset-0 bg-[#6b4a2e] opacity-[0.15] mix-blend-color"></div>
-                {{-- Gradient fade to right --}}
-                <div
-                    class="absolute inset-0 bg-gradient-to-l from-bg-light via-bg-light/60 to-transparent w-40 right-0 left-auto">
-                </div>
-            </div>
-        </div>
+@push('styles')
+    <style>
+        /* ── SERVICE ROW ────────────────────────────────── */
+        .svc-row {
+            position: relative;
+            display: flex;
+            justify-content: space-between;
+            align-items: baseline;
+            padding: 14px 0;
+            border-bottom: 1px solid var(--v-rule);
+            cursor: pointer;
+            transition: padding-left 0.2s ease, color 0.2s ease;
+        }
 
-        {{-- Right: Typography --}}
-        <div
-            class="flex flex-col justify-center px-6 pt-24 pb-16 md:px-12 lg:px-24 lg:pt-0 z-10 lg:w-1/2 ml-auto bg-bg-light/90 lg:bg-transparent">
-            <div class="max-w-xl mx-auto lg:mx-0 lg:mr-auto lg:pl-16 xl:pl-28 flex flex-col gap-10 md:gap-12">
-                <div class="flex flex-col gap-6">
-                    <div class="flex items-center gap-4 mb-2">
-                        <div class="w-8 h-[1.5px] bg-primary"></div>
-                        <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Est. 2024
-                            &mdash; Da Nang</span>
-                    </div>
-                    <h1
-                        class="font-serif text-5xl md:text-[68px] lg:text-[76px] font-bold leading-[1.02] tracking-[-0.015em] text-warm-gray">
-                        Nghệ Thuật<br />Cắt Tóc Nam.
+        .svc-row::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 50%;
+            transform: translateY(-50%);
+            width: 0;
+            height: 2px;
+            background: var(--v-copper);
+            transition: width 0.25s ease;
+        }
+
+        .svc-row:hover {
+            padding-left: 16px;
+        }
+
+        .svc-row:hover::before {
+            width: 10px;
+        }
+
+        .svc-row:hover .service-name {
+            color: var(--v-copper-dk);
+        }
+
+        .svc-row:hover .service-price {
+            color: var(--v-copper);
+        }
+
+        .service-name {
+            font-size: 14px;
+            font-weight: 500;
+            transition: color 0.2s;
+        }
+
+        .service-price {
+            font-size: 14px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
+            transition: color 0.2s;
+        }
+
+        /* ── BARBER CARD ─────────────────────────────────── */
+        .barber-card {
+            position: relative;
+            transition: transform 0.3s ease;
+        }
+
+        .barber-card:hover {
+            transform: translateY(-6px);
+        }
+
+        .barber-img-wrap {
+            position: relative;
+            width: 200px;
+            height: 200px;
+            margin: 0 auto 20px;
+            border: 2px solid var(--v-rule);
+            box-shadow: 5px 5px 0 var(--v-copper);
+            overflow: hidden;
+            transition: box-shadow 0.25s ease, border-color 0.25s ease;
+        }
+
+        .barber-card:hover .barber-img-wrap {
+            box-shadow: 7px 7px 0 var(--v-copper-dk);
+            border-color: var(--v-copper);
+        }
+
+        .barber-img-wrap img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            filter: grayscale(1) contrast(1.05);
+            transition: filter 0.6s ease;
+        }
+
+        .barber-card:hover .barber-img-wrap img {
+            filter: grayscale(0) contrast(1);
+        }
+
+        /* ── FLOATING IMAGE PANEL ───────────────────────── */
+        #svcImgPanel {
+            position: fixed;
+            pointer-events: none;
+            opacity: 0;
+            z-index: 9999;
+            width: 200px;
+            background: var(--v-ink);
+            border: 1px solid var(--v-copper);
+            box-shadow: 5px 5px 0 var(--v-copper-dk);
+            overflow: hidden;
+            transition: opacity 0.2s ease, transform 0.2s ease;
+            transform: translateY(10px) rotate(-1deg);
+        }
+
+        #svcImgPanel.active {
+            opacity: 1;
+            transform: translateY(0) rotate(0deg);
+        }
+
+        #svcPanelImg {
+            height: 180px;
+            background-size: cover;
+            background-position: center;
+            filter: grayscale(1) contrast(1.05) sepia(0.2);
+        }
+
+        #svcPanelMeta {
+            padding: 10px 12px 12px;
+        }
+
+        #svcPanelName {
+            font-size: 9px;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: rgba(245, 240, 232, 0.45);
+            margin-bottom: 4px;
+        }
+
+        #svcPanelPrice {
+            font-size: 13px;
+            font-weight: 600;
+            color: var(--v-copper);
+            letter-spacing: 0.5px;
+        }
+
+        /* ── HERO IMAGE CORNERS ─────────────────────────── */
+        .corner {
+            position: absolute;
+            width: 20px;
+            height: 20px;
+        }
+
+        .corner-tl {
+            top: 0;
+            left: 0;
+            border-top: 2px solid var(--v-copper);
+            border-left: 2px solid var(--v-copper);
+        }
+
+        .corner-tr {
+            top: 0;
+            right: 0;
+            border-top: 2px solid var(--v-copper);
+            border-right: 2px solid var(--v-copper);
+        }
+
+        .corner-bl {
+            bottom: 0;
+            left: 0;
+            border-bottom: 2px solid var(--v-copper);
+            border-left: 2px solid var(--v-copper);
+        }
+
+        .corner-br {
+            bottom: 0;
+            right: 0;
+            border-bottom: 2px solid var(--v-copper);
+            border-right: 2px solid var(--v-copper);
+        }
+
+        /* ── SECTION LABEL ──────────────────────────────── */
+        .v-label {
+            font-size: 9px;
+            font-weight: 600;
+            letter-spacing: 4px;
+            text-transform: uppercase;
+            color: var(--v-muted);
+        }
+
+        /* ── SECTION TITLE (serif large) ────────────────── */
+        .v-title {
+            font-family: var(--font-serif);
+            font-size: clamp(2.5rem, 5vw, 4.5rem);
+            font-weight: 700;
+            line-height: 1.1;
+            color: var(--v-ink);
+            letter-spacing: -0.01em;
+        }
+
+        .v-title-light {
+            color: var(--v-cream);
+        }
+
+        /* ── STORY SECTION DARK ─────────────────────────── */
+        .story-dark {
+            background: var(--v-ink);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .story-dark::before {
+            content: 'CLASSIC CUT';
+            position: absolute;
+            bottom: -40px;
+            right: -20px;
+            font-family: var(--font-display);
+            font-size: 140px;
+            font-weight: 300;
+            color: rgba(255, 255, 255, 0.03);
+            white-space: nowrap;
+            pointer-events: none;
+            letter-spacing: 10px;
+        }
+
+        /* ── CTA BANNER ─────────────────────────────────── */
+        .cta-banner {
+            background: var(--v-copper);
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-banner::before {
+            content: '';
+            position: absolute;
+            inset: 8px;
+            border: 1px solid rgba(255, 255, 255, 0.25);
+            pointer-events: none;
+        }
+
+        /* ── SCROLL INDICATOR ───────────────────────────── */
+        @keyframes scrollDot {
+
+            0%,
+            100% {
+                transform: translateY(0);
+                opacity: 1;
+            }
+
+            50% {
+                transform: translateY(8px);
+                opacity: 0.3;
+            }
+        }
+
+        .scroll-dot {
+            animation: scrollDot 1.6s ease-in-out infinite;
+        }
+    </style>
+@endpush
+
+@section('content')
+
+    {{-- ╔══════════════════════════════════════════════╗ --}}
+    {{-- ║ HERO SECTION ║ --}}
+    {{-- ╚══════════════════════════════════════════════╝ --}}
+    <section class="v-noise relative w-full min-h-[92vh] flex flex-col lg:flex-row items-stretch overflow-hidden"
+        style="background: var(--v-cream);">
+
+        {{-- LEFT: Typography --}}
+        <div class="relative z-20 flex flex-col justify-center
+                    px-6 pt-28 pb-16
+                    md:px-14
+                    lg:pl-[10vw] lg:pr-16 lg:pt-0
+                    w-full lg:w-[52%]
+                    order-last lg:order-first">
+
+            {{-- Watermark behind text --}}
+            <div aria-hidden="true" style="
+                position:absolute; top:50%; left: -10px; transform:translateY(-55%);
+                font-family: var(--font-display); font-size: 200px; font-weight: 300;
+                color: rgba(28,23,19,0.04); white-space:nowrap; pointer-events:none;
+                letter-spacing: 8px; line-height:1; user-select:none;">
+                1924
+            </div>
+
+            <div class="relative max-w-[520px] mx-auto lg:mx-0 flex flex-col gap-10">
+
+                {{-- Label --}}
+                <div class="flex items-center gap-4">
+                    <div style="width:32px;height:1.5px;background:var(--v-copper)"></div>
+                    <span class="v-label">Est. 2024 &mdash; Da Nang</span>
+                </div>
+
+                {{-- Heading --}}
+                <div class="flex flex-col gap-3">
+                    <h1 class="v-title" style="color: var(--v-ink)">
+                        <em style="font-style:italic; font-weight:400; color:var(--v-copper)">Nghệ Thuật</em><br>
+                        Cắt Tóc Nam.
                     </h1>
-                    <p class="text-base md:text-lg font-normal text-warm-gray-light leading-[1.7] max-w-sm">
-                        Trải nghiệm tiệm cắt tóc vintage cao cấp. Sự kết hợp giữa nghệ thuật truyền thống và phong cách hiện
-                        đại.
+                    <p style="font-size:15px; line-height:1.8; color:var(--v-muted); max-width:360px; margin-top:4px;">
+                        Trải nghiệm tiệm cắt tóc vintage cao cấp — nơi kỹ thuật truyền thống
+                        gặp gỡ phong cách hiện đại tại Đà Nẵng.
                     </p>
                 </div>
-                <div class="flex items-center gap-8">
-                    <a href="{{ route('client.booking.create') }}"
-                        class="group relative flex items-center justify-center h-[52px] w-[200px] bg-primary text-white text-[11px] font-bold uppercase tracking-[2.5px] transition-all duration-300 hover:bg-warm-gray overflow-hidden">
-                        <span class="relative z-10 transition-transform duration-300 group-hover:-translate-y-10">Đặt Lịch
-                            Ngay</span>
-                        <span
-                            class="absolute z-10 transition-transform duration-300 translate-y-10 group-hover:translate-y-0">Đặt
-                            Lịch Ngay</span>
+
+                {{-- CTAs --}}
+                <div class="flex flex-wrap items-center gap-5">
+                    <a href="{{ route('client.booking.create') }}" class="v-btn-primary">
+                        Đặt Lịch Ngay
                     </a>
-                    <a href="#services"
-                        class="text-[11px] font-semibold tracking-[2px] uppercase text-warm-gray-light hover:text-primary transition-colors border-b border-warm-gray-light/40 pb-0.5">Xem
-                        Dịch Vụ</a>
+                    <a href="#services" style="
+                        font-size:10px; font-weight:600; letter-spacing:3px; text-transform:uppercase;
+                        color:var(--v-muted); text-decoration:none;
+                        border-bottom:1px solid var(--v-rule); padding-bottom:3px;
+                        transition: color 0.2s, border-color 0.2s;"
+                        onmouseover="this.style.color='var(--v-copper)';this.style.borderColor='var(--v-copper)'"
+                        onmouseout="this.style.color='var(--v-muted)';this.style.borderColor='var(--v-rule)'">
+                        Xem Dịch Vụ ↓
+                    </a>
+                </div>
+
+                {{-- Stats strip --}}
+                <div style="display:flex; gap:32px; padding-top:8px; border-top:1px solid var(--v-rule);">
+                    <div>
+                        <div
+                            style="font-family:var(--font-serif);font-size:28px;font-weight:700;color:var(--v-ink);line-height:1">
+                            10+</div>
+                        <div class="v-label" style="margin-top:4px;">Thợ chuyên nghiệp</div>
+                    </div>
+                    <div style="width:1px;background:var(--v-rule)"></div>
+                    <div>
+                        <div
+                            style="font-family:var(--font-serif);font-size:28px;font-weight:700;color:var(--v-ink);line-height:1">
+                            5★</div>
+                        <div class="v-label" style="margin-top:4px;">Đánh giá khách hàng</div>
+                    </div>
+                    <div style="width:1px;background:var(--v-rule)"></div>
+                    <div>
+                        <div
+                            style="font-family:var(--font-serif);font-size:28px;font-weight:700;color:var(--v-ink);line-height:1">
+                            2024</div>
+                        <div class="v-label" style="margin-top:4px;">Thành lập</div>
+                    </div>
                 </div>
             </div>
         </div>
 
-        {{-- Mobile Image --}}
-        <div class="lg:hidden w-full h-[400px] relative order-first">
-            @if($heroService && $heroService->image)
-                <div class="absolute inset-0 bg-cover bg-center bg-no-repeat filter grayscale contrast-[1.1]"
-                    style="background-image: url('{{ Storage::url($heroService->image) }}');"></div>
-            @else
-                <div class="absolute inset-0 bg-warm-gray/[0.06]"></div>
-            @endif
-            <div class="absolute inset-0 bg-[#6b4a2e] opacity-[0.15] mix-blend-color"></div>
-            <div class="absolute inset-0 bg-gradient-to-b from-bg-light/80 via-transparent to-bg-light"></div>
+        {{-- RIGHT: Image --}}
+        <div class="relative w-full lg:w-[48%] flex items-center justify-center
+                    p-8 pt-20 lg:p-12 xl:pr-20
+                    order-first lg:order-last">
+            <div class="relative w-full max-w-lg" style="padding: 20px;">
+
+                {{-- Outer frame (double border vintage style) --}}
+                <div style="
+                    position:absolute; inset:0;
+                    border: 1px solid var(--v-copper);
+                    pointer-events:none; z-index:2;
+                "></div>
+                <div style="
+                    position:absolute; inset:8px;
+                    border: 1px solid rgba(176,137,104,0.35);
+                    pointer-events:none; z-index:2;
+                "></div>
+
+                {{-- Corner accents (larger, bolder) --}}
+                <div
+                    style="position:absolute;top:-4px;left:-4px;width:28px;height:28px;border-top:3px solid var(--v-copper);border-left:3px solid var(--v-copper);z-index:3;">
+                </div>
+                <div
+                    style="position:absolute;top:-4px;right:-4px;width:28px;height:28px;border-top:3px solid var(--v-copper);border-right:3px solid var(--v-copper);z-index:3;">
+                </div>
+                <div
+                    style="position:absolute;bottom:-4px;left:-4px;width:28px;height:28px;border-bottom:3px solid var(--v-copper);border-left:3px solid var(--v-copper);z-index:3;">
+                </div>
+                <div
+                    style="position:absolute;bottom:-4px;right:-4px;width:28px;height:28px;border-bottom:3px solid var(--v-copper);border-right:3px solid var(--v-copper);z-index:3;">
+                </div>
+
+                {{-- Hard offset shadow box --}}
+                <div style="
+                    position:absolute; inset:0;
+                    transform: translate(8px, 8px);
+                    background: var(--v-copper); opacity: 0.25;
+                    z-index:0;
+                "></div>
+
+                {{-- Image --}}
+                <div class="relative overflow-hidden" style="aspect-ratio:4/3; z-index:1;">
+                    <img src="https://images.unsplash.com/photo-1599351431202-1e0f0137899a?auto=format&fit=crop&q=80&w=1200"
+                        alt="Barber Tools" style="width:100%;height:100%;object-fit:cover;
+                               filter: grayscale(0.4) contrast(1.1) sepia(0.15);
+                               transition: filter 0.5s ease;"
+                        onmouseover="this.style.filter='grayscale(0) contrast(1) sepia(0)'"
+                        onmouseout="this.style.filter='grayscale(0.4) contrast(1.1) sepia(0.15)'">
+                    {{-- Vintage color wash --}}
+                    <div
+                        style="position:absolute;inset:0;background:rgba(107,74,46,0.12);mix-blend-mode:multiply;pointer-events:none;">
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Vertical text sidebar --}}
+        <div style="
+            position:absolute; left:24px; bottom:40px;
+            writing-mode:vertical-rl; text-orientation:mixed;
+            font-size:9px; font-weight:600; letter-spacing:5px; text-transform:uppercase;
+            color: var(--v-muted); opacity:0.5;
+            display: none;
+        " class="lg:block">
+            Classic Cut Barbershop &mdash; Da Nang
         </div>
     </section>
 
-    {{-- Scroll Indicator --}}
-    <div class="h-24 bg-bg-light relative z-20 flex items-center justify-center border-t border-warm-gray/10">
-        <div class="flex flex-col items-center gap-4">
-            <div class="w-[1px] h-12 bg-warm-gray/20"></div>
-            <p class="text-warm-gray-light font-medium tracking-[4px] uppercase text-[10px]">Khám phá thêm</p>
+    {{-- ── SCROLL INDICATOR ──────────────────────── --}}
+    <div
+        style="height:72px; background:var(--v-cream); display:flex; align-items:center; justify-content:center; border-top:1px solid var(--v-rule);">
+        <div style="display:flex; flex-direction:column; align-items:center; gap:8px;">
+            <div class="scroll-dot" style="width:6px;height:6px;border-radius:50%;background:var(--v-copper);"></div>
+            <p class="v-label">Khám phá thêm</p>
         </div>
     </div>
 
-    {{-- Services Section --}}
-    <section id="services" class="bg-bg-light">
-        <div class="w-full max-w-[1400px] mx-auto px-4 md:px-10 lg:px-20 py-16 md:py-24">
-            {{-- Section Header --}}
-            <div class="text-center mb-16 md:mb-24 relative">
-                <div aria-hidden="true" class="absolute inset-0 flex items-center">
-                    <div class="w-full border-t border-muted/30"></div>
+
+    {{-- ╔══════════════════════════════════════════════╗ --}}
+    {{-- ║ SERVICES SECTION ║ --}}
+    {{-- ╚══════════════════════════════════════════════╝ --}}
+    <section id="services" style="background:var(--v-cream);">
+        <div style="max-width:1380px; margin:0 auto; padding:80px 24px 100px;">
+
+            {{-- Header --}}
+            <div style="text-align:center; margin-bottom:64px;">
+                <div class="v-ornament" style="max-width:480px;margin:0 auto 20px;">
+                    Dịch Vụ
                 </div>
-                <div class="relative flex justify-center">
-                    <h2
-                        class="bg-bg-light px-8 text-4xl md:text-5xl lg:text-6xl font-light tracking-tight text-warm-gray font-display">
-                        Dịch Vụ Của Chúng Tôi</h2>
-                </div>
+                <h2 class="v-title">Của Chúng Tôi</h2>
             </div>
 
-            {{-- Services Grid 3 columns - from DB --}}
+            {{-- Grid --}}
             @php
                 $services = \App\Models\Service::where('is_active', true)->get();
                 $perCol = max(1, (int) ceil($services->count() / 3));
@@ -103,205 +443,272 @@
                 $columnTitles = ['Cắt Tóc', 'Tạo Kiểu', 'Chăm Sóc'];
             @endphp
 
-            <div
-                class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-x-0 gap-y-12 border-t border-muted/20 md:border-t-0">
+            <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:0; border:1px solid var(--v-rule);">
                 @foreach($chunks as $index => $chunk)
                     <div
-                        class="flex flex-col {{ $index < 2 ? 'lg:border-r' : '' }} border-muted/20 px-4 md:px-8 py-8 {{ $index > 0 ? 'border-t md:border-t-0' : '' }}">
-                        <h3 class="text-xl font-bold mb-8 uppercase tracking-widest text-primary text-center">
-                            {{ $columnTitles[$index] ?? 'Dịch Vụ' }}</h3>
-                        <div class="flex flex-col gap-2">
-                            @foreach($chunk as $service)
-                                <div class="group cursor-pointer flex justify-between items-end py-4 border-b border-muted/10 hover:bg-surface rounded-sm transition-colors duration-300 px-2 -mx-2 leader-line svc-row"
-                                    data-img="{{ $service->image ? Storage::url($service->image) : '' }}"
-                                    data-name="{{ $service->name }}"
-                                    data-price="{{ number_format($service->price, 0, ',', '.') }}d">
-                                    <span
-                                        class="service-name text-base font-medium pr-2 bg-bg-light group-hover:bg-surface transition-colors duration-300">{{ $service->name }}</span>
-                                    <span
-                                        class="service-price text-base font-bold pl-2 bg-bg-light group-hover:bg-surface transition-colors duration-300">{{ number_format($service->price, 0, ',', '.') }}d</span>
-                                </div>
-                                @if($service->description)
-                                    <p class="text-sm text-muted mt-1 mb-2 pr-8">{{ Str::limit($service->description, 80) }}</p>
-                                @endif
-                            @endforeach
-                        </div>
-                        {{-- Column image from first service with image --}}
+                        style="padding:40px 32px; {{ $index < 2 ? 'border-right:1px solid var(--v-rule);' : '' }} position:relative;">
 
+                        {{-- Column header --}}
+                        <div
+                            style="text-align:center; margin-bottom:32px; padding-bottom:24px; border-bottom:1px solid var(--v-rule); position:relative;">
+                            <div class="v-ornament">{{ $columnTitles[$index] ?? 'Dịch Vụ' }}</div>
+                        </div>
+
+                        {{-- Service rows --}}
+                        @foreach($chunk as $service)
+                            <div class="svc-row" data-img="{{ $service->image ? Storage::url($service->image) : '' }}"
+                                data-name="{{ $service->name }}" data-price="{{ number_format($service->price, 0, ',', '.') }}đ">
+                                <span class="service-name">{{ $service->name }}</span>
+                                <span class="service-price" style="font-family:var(--font-serif)">
+                                    {{ number_format($service->price, 0, ',', '.') }}đ
+                                </span>
+                            </div>
+                            @if($service->description)
+                                <p style="font-size:12px;color:var(--v-muted);margin:-4px 0 8px 0;line-height:1.6;">
+                                    {{ Str::limit($service->description, 80) }}
+                                </p>
+                            @endif
+                        @endforeach
                     </div>
                 @endforeach
             </div>
-{{-- ===== FLOATING IMAGE PANEL ===== --}}
-        <div id="svcImgPanel" style="
-            position: fixed; pointer-events: none; opacity: 0; z-index: 50;
-            width: 180px; background: #2a2118; overflow: hidden;
-            transition: opacity 0.25s ease, transform 0.25s ease;
-            transform: translateY(8px);
-        ">
-            <div id="svcPanelImg" style="
-                height: 200px; background-size: cover; background-position: center;
-                filter: grayscale(100%) contrast(1.05); position: relative;
-            ">
-                <div style="position:absolute;inset:0;background:rgba(107,74,46,0.18);mix-blend-mode:multiply;"></div>
-            </div>
-            <div id="svcPanelName" style="padding:8px 10px 2px;font-size:10px;letter-spacing:2px;text-transform:uppercase;color:rgba(255,255,255,0.55);"></div>
-            <div id="svcPanelPrice" style="padding:0 10px 10px;font-size:12px;font-weight:500;color:#c8956a;letter-spacing:0.05em;"></div>
-            {{-- corner accents --}}
-            <div style="position:absolute;top:0;left:0;width:10px;height:10px;border-top:1.5px solid #c8956a;border-left:1.5px solid #c8956a;"></div>
-            <div style="position:absolute;bottom:0;right:0;width:10px;height:10px;border-bottom:1.5px solid #c8956a;border-right:1.5px solid #c8956a;"></div>
-        </div>
 
-        <script>
-        (function(){
-            const panel   = document.getElementById('svcImgPanel');
-            const panelImg  = document.getElementById('svcPanelImg');
-            const panelName = document.getElementById('svcPanelName');
-            const panelPrice= document.getElementById('svcPanelPrice');
-
-            document.querySelectorAll('.svc-row').forEach(row => {
-                row.addEventListener('mouseenter', function(e) {
-                    const img = this.dataset.img;
-                    if (!img) return;
-                    panelImg.style.backgroundImage = `url('${img}')`;
-                    panelName.textContent  = this.dataset.name  || '';
-                    panelPrice.textContent = this.dataset.price || '';
-                    panel.style.opacity   = '1';
-                    panel.style.transform = 'translateY(0)';
-                });
-                row.addEventListener('mousemove', function(e) {
-                    const x = e.clientX + 20;
-                    const y = e.clientY - 80;
-                    panel.style.left = Math.min(x, window.innerWidth - 200) + 'px';
-                    panel.style.top  = Math.max(10, y) + 'px';
-                });
-                row.addEventListener('mouseleave', function() {
-                    panel.style.opacity   = '0';
-                    panel.style.transform = 'translateY(8px)';
-                });
-            });
-        })();
-        </script>
-        {{-- ===== END FLOATING IMAGE PANEL ===== --}}
             {{-- CTA --}}
-            <div class="mt-24 pt-12 border-t border-muted/20 text-center">
-                <h2 class="text-2xl font-light mb-8 font-display">Sẵn sàng cho một diện mạo mới?</h2>
-                <a href="{{ route('client.booking.create') }}"
-                    class="inline-flex items-center justify-center h-14 px-8 bg-warm-gray text-bg-light text-sm font-bold uppercase tracking-widest transition-all duration-300 hover:bg-primary hover:text-white">
-                    Đặt Lịch Ngay
+            <div
+                style="margin-top:64px; text-align:center; display:flex;flex-direction:column;align-items:center;gap:24px;">
+                <div class="v-ornament" style="max-width:360px; margin:0 auto;">
+                    Sẵn sàng cho một diện mạo mới?
+                </div>
+                <a href="{{ route('client.booking.create') }}" class="v-btn-primary">Đặt Lịch Ngay</a>
+            </div>
+        </div>
+    </section>
+
+
+    {{-- ── FLOATING IMAGE PANEL ──────────────────── --}}
+    <div id="svcImgPanel">
+        <div id="svcPanelImg"></div>
+        <div id="svcPanelMeta">
+            <div id="svcPanelName"></div>
+            <div id="svcPanelPrice"></div>
+        </div>
+        {{-- Corner accents --}}
+        <div
+            style="position:absolute;top:0;left:0;width:12px;height:12px;border-top:1.5px solid var(--v-copper);border-left:1.5px solid var(--v-copper);">
+        </div>
+        <div
+            style="position:absolute;bottom:0;right:0;width:12px;height:12px;border-bottom:1.5px solid var(--v-copper);border-right:1.5px solid var(--v-copper);">
+        </div>
+    </div>
+
+
+    {{-- ╔══════════════════════════════════════════════╗ --}}
+    {{-- ║ STORY SECTION (Dark) ║ --}}
+    {{-- ╚══════════════════════════════════════════════╝ --}}
+    <section id="story" class="story-dark v-noise">
+        <div style="max-width:1160px; margin:0 auto; padding:80px 32px 96px;">
+
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:80px; align-items:center;">
+
+                {{-- Text side --}}
+                <div style="position:relative; z-index:2;">
+                    <div class="v-ornament" style="justify-content:flex-start;margin-bottom:28px;">
+                        Câu Chuyện Của Chúng Tôi
+                    </div>
+                    <h2 class="v-title v-title-light" style="margin-bottom:28px;">
+                        Nơi Nghệ Thuật<br>
+                        <em style="font-style:italic;font-weight:400;color:var(--v-copper)">Gặp Gỡ</em> Phong Cách.
+                    </h2>
+                    <p style="color:rgba(245,240,232,0.65);line-height:1.85;margin-bottom:16px;font-size:15px;">
+                        Classic Cut ra đời từ niềm đam mê với nghệ thuật cắt tóc truyền thống. Chúng tôi tin rằng
+                        mỗi lần cắt tóc là một trải nghiệm — không chỉ là dịch vụ.
+                    </p>
+                    <p style="color:rgba(245,240,232,0.65);line-height:1.85;margin-bottom:36px;font-size:15px;">
+                        Đội ngũ thợ cắt được đào tạo bài bản, sử dụng kỹ thuật truyền thống kết hợp công cụ hiện
+                        đại để mang lại kết quả hoàn hảo nhất.
+                    </p>
+                    <a href="{{ route('client.barbers.index') }}" style="font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+                               color:var(--v-copper);text-decoration:none;
+                               border-bottom:1px solid rgba(176,137,104,0.4);padding-bottom:3px;
+                               transition:border-color 0.2s;" onmouseover="this.style.borderColor='var(--v-copper)'"
+                        onmouseout="this.style.borderColor='rgba(176,137,104,0.4)'">
+                        Gặp gỡ đội ngũ &rarr;
+                    </a>
+                </div>
+
+                {{-- Image side --}}
+                <div style="position:relative; display:flex; justify-content:center; z-index:2;">
+                    @php
+                        $storyImage = \App\Models\Service::where('is_active', true)->whereNotNull('image')->skip(1)->first()
+                            ?? \App\Models\Service::where('is_active', true)->whereNotNull('image')->first();
+                    @endphp
+                    <div style="position:relative; max-width:340px; width:100%;">
+                        {{-- Hard offset shadow --}}
+                        <div
+                            style="position:absolute;inset:0;transform:translate(10px,10px);background:var(--v-copper);opacity:0.3;">
+                        </div>
+
+                        <div
+                            style="position:relative; aspect-ratio:3/4; overflow:hidden; border:1px solid rgba(176,137,104,0.4);">
+                            @if($storyImage && $storyImage->image)
+                                <img src="{{ Storage::url($storyImage->image) }}" alt="{{ $storyImage->name }}" style="width:100%;height:100%;object-fit:cover;
+                                               filter:grayscale(1) contrast(1.05) sepia(0.1);
+                                               transition: filter 0.7s ease;"
+                                    onmouseover="this.style.filter='grayscale(0) contrast(1) sepia(0)'"
+                                    onmouseout="this.style.filter='grayscale(1) contrast(1.05) sepia(0.1)'">
+                            @else
+                                <div
+                                    style="width:100%;height:100%;background:rgba(255,255,255,0.04);display:flex;align-items:center;justify-content:center;">
+                                    <p
+                                        style="font-family:var(--font-display);font-size:48px;color:rgba(255,255,255,0.1);font-weight:300;letter-spacing:4px;text-align:center;line-height:1.2;">
+                                        Classic<br>Cut
+                                    </p>
+                                </div>
+                            @endif
+                            {{-- Corner accents --}}
+                            <div
+                                style="position:absolute;top:8px;left:8px;width:16px;height:16px;border-top:2px solid var(--v-copper);border-left:2px solid var(--v-copper);">
+                            </div>
+                            <div
+                                style="position:absolute;top:8px;right:8px;width:16px;height:16px;border-top:2px solid var(--v-copper);border-right:2px solid var(--v-copper);">
+                            </div>
+                            <div
+                                style="position:absolute;bottom:8px;left:8px;width:16px;height:16px;border-bottom:2px solid var(--v-copper);border-left:2px solid var(--v-copper);">
+                            </div>
+                            <div
+                                style="position:absolute;bottom:8px;right:8px;width:16px;height:16px;border-bottom:2px solid var(--v-copper);border-right:2px solid var(--v-copper);">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </section>
+
+
+    {{-- ╔══════════════════════════════════════════════╗ --}}
+    {{-- ║ BARBERS SECTION ║ --}}
+    {{-- ╚══════════════════════════════════════════════╝ --}}
+    <section style="background:var(--v-parchment);">
+        <div style="max-width:1200px; margin:0 auto; padding:80px 32px 96px;">
+
+            {{-- Header --}}
+            <div style="text-align:center; margin-bottom:56px;">
+                <div class="v-ornament" style="max-width:320px; margin:0 auto 16px;">
+                    Đội ngũ
+                </div>
+                <h2 class="v-title">Thợ Cắt Của Chúng Tôi</h2>
+            </div>
+
+            {{-- Grid --}}
+            @php
+                $barbers = \App\Models\Barber::with('user')->where('is_active', true)->take(3)->get();
+            @endphp
+
+            <div style="display:grid; grid-template-columns:repeat(auto-fit, minmax(260px, 1fr)); gap:48px 32px;">
+                @foreach($barbers as $barber)
+                    <a href="{{ route('client.barbers.show', $barber) }}" class="barber-card"
+                        style="text-align:center; text-decoration:none;">
+                        <div class="barber-img-wrap">
+                            @if($barber->user->avatar)
+                                <img src="{{ Storage::url($barber->user->avatar) }}" alt="{{ $barber->user->name }}">
+                            @else
+                                <div
+                                    style="width:100%;height:100%;background:var(--v-surface);display:flex;align-items:center;justify-content:center;">
+                                    <span class="material-symbols-outlined"
+                                        style="font-size:52px;color:var(--v-muted);">person</span>
+                                </div>
+                            @endif
+                        </div>
+                        <h3
+                            style="font-family:var(--font-serif);font-size:20px;font-weight:700;color:var(--v-ink);margin-bottom:4px;transition:color 0.2s;">
+                            {{ $barber->user->name }}
+                        </h3>
+                        <p
+                            style="font-size:12px;letter-spacing:2px;text-transform:uppercase;color:var(--v-muted);margin-bottom:8px;">
+                            {{ $barber->experience_years }} năm kinh nghiệm
+                        </p>
+                        @if($barber->rating > 0)
+                            <div style="display:flex;align-items:center;justify-content:center;gap:4px;">
+                                <span class="material-symbols-outlined fill"
+                                    style="font-size:14px;color:var(--v-copper);">star</span>
+                                <span
+                                    style="font-size:13px;font-weight:600;color:var(--v-ink);">{{ number_format($barber->rating, 1) }}</span>
+                            </div>
+                        @endif
+                    </a>
+                @endforeach
+            </div>
+
+            <div style="text-align:center; margin-top:48px;">
+                <a href="{{ route('client.barbers.index') }}" class="v-btn-outline">
+                    Xem Tất Cả Thợ Cắt
                 </a>
             </div>
         </div>
     </section>
 
-    {{-- Story Section --}}
-    <section id="story" class="bg-warm-gray text-bg-light noise-bg">
-        <div class="max-w-[1200px] mx-auto px-6 md:px-12 lg:px-24 py-20 md:py-32">
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-16 items-center">
-                <div>
-                    <div class="flex items-center gap-4 mb-8">
-                        <div class="w-8 h-[1.5px] bg-primary"></div>
-                        <span class="text-[10px] font-semibold tracking-[4px] uppercase text-bg-light/50">Câu chuyện</span>
-                    </div>
-                    <h2 class="font-serif text-4xl md:text-5xl font-bold leading-tight mb-8 text-bg-light">
-                        Nơi Nghệ Thuật<br />Gặp Gỡ Phong Cách.
-                    </h2>
-                    <p class="text-base leading-[1.8] text-bg-light/70 mb-6">
-                        Classic Cut ra đời từ niềm đam mê với nghệ thuật cắt tóc truyền thống. Chúng tôi tin rằng mỗi lần
-                        cắt tóc là một trải nghiệm — không chỉ là dịch vụ.
-                    </p>
-                    <p class="text-base leading-[1.8] text-bg-light/70 mb-8">
-                        Đội ngũ thợ cắt của chúng tôi được đào tạo bài bản, sử dụng kỹ thuật truyền thống kết hợp công cụ
-                        hiện đại để mang lại kết quả hoàn hảo nhất.
-                    </p>
-                    <a href="{{ route('client.barbers.index') }}"
-                        class="text-[11px] font-semibold tracking-[2px] uppercase text-bg-light/60 hover:text-primary transition-colors border-b border-bg-light/20 pb-0.5">
-                        Gặp gỡ đội ngũ &rarr;
-                    </a>
-                </div>
-                <div class="relative flex items-center justify-center">
-                    @php $storyImage = \App\Models\Service::where('is_active', true)->whereNotNull('image')->skip(1)->first() ?? \App\Models\Service::where('is_active', true)->whereNotNull('image')->first(); @endphp
-                    <div class="aspect-[3/4] w-full max-w-sm relative overflow-hidden">
-                        @if($storyImage && $storyImage->image)
-                            <img src="{{ Storage::url($storyImage->image) }}" alt="{{ $storyImage->name }}"
-                                class="w-full h-full object-cover filter grayscale contrast-[1.1] opacity-90 hover:grayscale-0 hover:opacity-100 transition-all duration-700">
-                            <div class="absolute inset-0 bg-[#6b4a2e] opacity-[0.12] mix-blend-color"></div>
-                        @else
-                            <div class="w-full h-full bg-bg-light/[0.06] flex flex-col items-center justify-center text-center gap-4">
-                                <p class="text-[10px] tracking-[4px] uppercase text-bg-light/30">Since 2024</p>
-                                <p class="font-serif text-3xl text-bg-light/20 font-bold">Classic<br/>Cut</p>
-                            </div>
-                        @endif
-                        {{-- Corner accents --}}
-                        <div class="absolute top-3 left-3 w-6 h-6 border-t-2 border-l-2 border-primary/60"></div>
-                        <div class="absolute top-3 right-3 w-6 h-6 border-t-2 border-r-2 border-primary/60"></div>
-                        <div class="absolute bottom-3 left-3 w-6 h-6 border-b-2 border-l-2 border-primary/60"></div>
-                        <div class="absolute bottom-3 right-3 w-6 h-6 border-b-2 border-r-2 border-primary/60"></div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </section>
 
-    {{-- Barbers Preview --}}
-    <section class="bg-bg-light">
-        <div class="max-w-[1200px] mx-auto px-6 md:px-12 lg:px-24 py-20 md:py-28">
-            <div class="text-center mb-16">
-                <div class="flex items-center justify-center gap-4 mb-6">
-                    <div class="w-8 h-[1.5px] bg-primary"></div>
-                    <span class="text-[10px] font-semibold tracking-[4px] uppercase text-warm-gray-light">Đội ngũ</span>
-                    <div class="w-8 h-[1.5px] bg-primary"></div>
-                </div>
-                <h2 class="font-serif text-4xl md:text-5xl font-bold text-warm-gray">Thợ Cắt Của Chúng Tôi</h2>
+    {{-- ╔══════════════════════════════════════════════╗ --}}
+    {{-- ║ CTA BANNER ║ --}}
+    {{-- ╚══════════════════════════════════════════════╝ --}}
+    <section class="cta-banner">
+        <div style="max-width:720px; margin:0 auto; padding:80px 32px; text-align:center; position:relative; z-index:1;">
+            <div class="v-ornament" style="max-width:280px;margin:0 auto 20px;">
+                Hôm nay
             </div>
-
-            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-                @php
-                    $barbers = \App\Models\Barber::with('user')->where('is_active', true)->take(3)->get();
-                @endphp
-                @foreach($barbers as $barber)
-                    <a href="{{ route('client.barbers.show', $barber) }}" class="group block text-center">
-                        <div
-                            class="w-48 h-48 mx-auto rounded-full overflow-hidden mb-6 border-2 border-transparent group-hover:border-primary transition-all duration-500">
-                            @if($barber->user->avatar)
-                                <img src="{{ Storage::url($barber->user->avatar) }}" alt="{{ $barber->user->name }}"
-                                    class="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-700">
-                            @else
-                                <div class="w-full h-full bg-surface flex items-center justify-center">
-                                    <span class="material-symbols-outlined text-5xl text-muted">person</span>
-                                </div>
-                            @endif
-                        </div>
-                        <h3 class="text-lg font-bold text-warm-gray group-hover:text-primary transition-colors">
-                            {{ $barber->user->name }}</h3>
-                        <p class="text-sm text-warm-gray-light mt-1">{{ $barber->experience_years }} năm kinh nghiệm</p>
-                        @if($barber->rating > 0)
-                            <div class="flex items-center justify-center gap-1 mt-2">
-                                <span class="material-symbols-outlined fill text-primary text-sm">star</span>
-                                <span class="text-sm font-medium text-warm-gray">{{ number_format($barber->rating, 1) }}</span>
-                            </div>
-                        @endif
-                    </a>
-                @endforeach
-            </div>
-
-            <div class="text-center mt-12">
-                <a href="{{ route('client.barbers.index') }}"
-                    class="text-[11px] font-semibold tracking-[2px] uppercase text-warm-gray-light hover:text-primary transition-colors border-b border-warm-gray-light/40 pb-0.5">Xem
-                    tất cả thợ cắt &rarr;</a>
-            </div>
-        </div>
-    </section>
-
-    {{-- CTA Banner --}}
-    <section class="bg-primary noise-bg">
-        <div class="max-w-[800px] mx-auto px-6 py-20 md:py-24 text-center">
-            <h2 class="font-serif text-3xl md:text-5xl font-bold text-white mb-6">Sẵn Sàng Đặt Lịch?</h2>
-            <p class="text-white/70 text-base mb-10 max-w-md mx-auto">Chọn dịch vụ, chọn thợ cắt yêu thích, và đặt lịch ngay
-                hôm nay.</p>
-            <a href="{{ route('client.booking.create') }}"
-                class="inline-flex items-center justify-center h-14 px-10 bg-white text-primary text-sm font-bold uppercase tracking-widest transition-all duration-300 hover:bg-bg-light">
+            <h2 style="font-family:var(--font-serif);font-size:clamp(2rem,4vw,3.5rem);font-weight:700;
+                       color:#fff;margin-bottom:16px;line-height:1.15;">
+                Sẵn Sàng Đặt Lịch?
+            </h2>
+            <p
+                style="color:rgba(255,255,255,0.8);font-size:15px;line-height:1.7;margin-bottom:40px;max-width:400px;margin-left:auto;margin-right:auto;">
+                Chọn dịch vụ, chọn thợ cắt yêu thích, và đặt lịch ngay hôm nay.
+            </p>
+            <a href="{{ route('client.booking.create') }}" style="display:inline-flex;align-items:center;justify-content:center;
+                       height:54px;padding:0 40px;
+                       background:var(--v-ink); color:var(--v-cream);
+                       font-size:10px;font-weight:600;letter-spacing:3px;text-transform:uppercase;
+                       text-decoration:none;
+                       border:1px solid var(--v-ink);
+                       box-shadow: 4px 4px 0 rgba(28,23,19,0.4);
+                       transition: transform 0.15s, box-shadow 0.15s;"
+                onmouseover="this.style.transform='translate(-2px,-2px)';this.style.boxShadow='6px 6px 0 rgba(28,23,19,0.4)'"
+                onmouseout="this.style.transform='';this.style.boxShadow='4px 4px 0 rgba(28,23,19,0.4)'">
                 Đặt Lịch Ngay
             </a>
         </div>
     </section>
+
+
+    {{-- ── FLOATING PANEL SCRIPT ─────────────────── --}}
+    <script>
+        (function () {
+            const panel = document.getElementById('svcImgPanel');
+            const panelImg = document.getElementById('svcPanelImg');
+            const panelName = document.getElementById('svcPanelName');
+            const panelPrice = document.getElementById('svcPanelPrice');
+
+            document.querySelectorAll('.svc-row').forEach(row => {
+                row.addEventListener('mouseenter', function () {
+                    const img = this.dataset.img;
+                    if (!img) return;
+                    panelImg.style.backgroundImage = `url('${img}')`;
+                    panelName.textContent = this.dataset.name || '';
+                    panelPrice.textContent = this.dataset.price || '';
+                    panel.classList.add('active');
+                });
+                row.addEventListener('mousemove', function (e) {
+                    const x = e.clientX + 24;
+                    const y = e.clientY - 90;
+                    panel.style.left = Math.min(x, window.innerWidth - 220) + 'px';
+                    panel.style.top = Math.max(10, y) + 'px';
+                });
+                row.addEventListener('mouseleave', function () {
+                    panel.classList.remove('active');
+                });
+            });
+        })();
+    </script>
+
 @endsection
