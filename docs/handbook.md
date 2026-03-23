@@ -696,6 +696,122 @@ PATCH /booking/{booking}/cancel
 | `price_snapshot` | Ghi nhớ giá tại thời điểm đặt (giá sau có thể đổi) | booking_services pivot |
 | FSM `canTransitionTo()` | Kiểm soát chuyển trạng thái hợp lệ | Mọi method trong BookingService |
 
+### 🔒 Xử lý Race Condition — 2 người đặt cùng slot cùng lúc
+
+#### Race Condition là gì?
+
+Race Condition = **2 tiến trình chạy đồng thời, tranh nhau tài nguyên chung**, dẫn đến kết quả sai nếu không có cơ chế kiểm soát.
+
+**Ví dụ cụ thể trong dự án:**
+- Slot 10:00 sáng của barber Tuấn chỉ còn **1 chỗ trống**.
+- Khách A và Khách B **cùng lúc** nhấn "Đặt lịch" chọn slot này.
+- Nếu không xử lý → **cả 2 đều đặt thành công** → barber có 2 lịch hẹn 10:00 → sai!
+
+#### Cách dự án xử lý: 3 lớp bảo vệ
+
+```php
+// BookingService::create() — File: app/Services/BookingService.php
+
+public function create(CreateBookingData $data, ?User $customer = null): Booking
+{
+    // ┌─ LỚP 1: DB Transaction ──────────────────────────────────┐
+    // │ Đảm bảo tất cả thao tác DB thành công hoặc rollback hết │
+    return DB::transaction(function () use ($data, $customer) {
+    
+        // ┌─ LỚP 2: Pessimistic Locking ────────────────────────┐
+        // │ lockForUpdate() = khóa hàng trong DB                 │
+        // │ Ai đến trước → giữ khóa, người sau phải CHỜ         │
+        $slot = TimeSlot::lockForUpdate()->findOrFail($data->time_slot_id);
+        //                 ^^^^^^^^^^^^^^
+        //                 SQL: SELECT * FROM time_slots WHERE id=? FOR UPDATE
+        //                 → Hàng bị LOCK cho đến khi transaction COMMIT/ROLLBACK
+        
+        // ┌─ LỚP 3: Status Check ──────────────────────────────┐
+        // │ Sau khi có lock, kiểm tra slot còn available không   │
+        if ($slot->status !== TimeSlotStatus::Available) {
+            throw new SlotNotAvailableException(
+                'Slot này vừa được đặt, vui lòng chọn lại.'
+            );
+        }
+        // └──────────────────────────────────────────────────────┘
+        
+        // ... tạo booking, attach services ...
+        
+        $slot->update(['status' => TimeSlotStatus::Booked]);
+        //              ^^^^^^^^^ Đổi sang Booked → người sau sẽ thấy Booked
+        
+    }); // ← COMMIT transaction → giải lock
+}
+```
+
+#### Timeline chi tiết: 2 người đặt cùng slot cùng lúc
+
+```
+Thời gian │  Khách A (request trước vài ms)     │  Khách B (request sau vài ms)
+──────────┼──────────────────────────────────────┼─────────────────────────────────────
+T1        │  POST /booking                       │  POST /booking
+T2        │  BEGIN TRANSACTION                   │  BEGIN TRANSACTION
+T3        │  SELECT * FROM time_slots            │  SELECT * FROM time_slots
+          │  WHERE id=5 FOR UPDATE               │  WHERE id=5 FOR UPDATE
+          │  → ✅ Lấy được lock!                 │  → ⏳ BỊ CHẶN (hàng đang bị A lock)
+          │                                      │     A chưa commit → B phải chờ
+T4        │  status = 'available' → OK ✅        │  (vẫn đang chờ...)
+T5        │  Booking::create() ✅                │  (vẫn đang chờ...)
+T6        │  services()->attach() ✅             │  (vẫn đang chờ...)
+T7        │  slot → status = 'booked' ✅         │  (vẫn đang chờ...)
+T8        │  Log::info() ✅                      │  (vẫn đang chờ...)
+T9        │  COMMIT → giải lock 🔓               │  → Lock được giải! Đọc slot
+T10       │  Redirect → Payment page ✅          │  status = 'booked' → ❌ FAIL!
+T11       │                                      │  throw SlotNotAvailableException
+T12       │                                      │  ROLLBACK transaction
+T13       │                                      │  Redirect back + lỗi:
+          │                                      │  "Slot vừa được đặt, chọn lại." 
+```
+
+**Kết quả:**
+- ✅ Khách A: đặt thành công, chuyển sang trang thanh toán
+- ❌ Khách B: nhận thông báo lỗi, quay lại form chọn slot khác
+- ✅ **Không bao giờ** có 2 booking trùng slot
+
+#### Nếu KHÔNG có `lockForUpdate()`?
+
+```
+Thời gian │  Khách A                             │  Khách B
+──────────┼──────────────────────────────────────┼────────────────────────────────
+T1        │  SELECT * FROM time_slots WHERE id=5 │  SELECT * FROM time_slots WHERE id=5
+          │  status = 'available' → OK ✅        │  status = 'available' → OK ✅
+          │  (CẢ HAI đều thấy slot trống!)       │  (CẢ HAI đều thấy slot trống!)
+T2        │  Booking::create() ← booking #1      │  Booking::create() ← booking #2
+T3        │  slot → 'booked'                     │  slot → 'booked'
+          │                                      │
+          │  ❌ 2 BOOKING CHO CÙNG 1 SLOT!       │  ❌ RACE CONDITION XẢY RA!
+```
+
+#### Tóm tắt 3 lớp bảo vệ
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ LỚP 1: DB::transaction                                      │
+│ → Nếu bất kỳ bước nào fail → ROLLBACK toàn bộ              │
+│ → Không bao giờ có trạng thái "nửa chừng"                   │
+│                                                              │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │ LỚP 2: lockForUpdate()                              │   │
+│   │ → Khóa hàng slot trong DB ở cấp database            │   │
+│   │ → Request thứ 2 PHẢI CHỜ request thứ 1 commit       │   │
+│   │ → Đây là "Pessimistic Locking" (bi quan = giả sử    │   │
+│   │   sẽ có xung đột → khóa trước cho chắc)             │   │
+│   │                                                      │   │
+│   │   ┌──────────────────────────────────────────────┐   │   │
+│   │   │ LỚP 3: Status Check                         │   │   │
+│   │   │ → Sau khi có lock, kiểm tra lại status       │   │   │
+│   │   │ → Nếu 'booked' → throw Exception            │   │   │
+│   │   │ → User nhận thông báo "slot đã hết"          │   │   │
+│   │   └──────────────────────────────────────────────┘   │   │
+│   └──────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────┘
+```
+
 ---
 
 ## 8. Luồng thanh toán (Payment Flow)
