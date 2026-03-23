@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\BookingCompleted;
-use App\Models\Notification;
+use App\Jobs\SendBookingNotificationJob;
 
 class SendBookingCompletedNotification
 {
@@ -12,13 +12,10 @@ class SendBookingCompletedNotification
         $booking = $event->booking;
         $booking->loadMissing(['customer', 'barber.user']);
 
-        Notification::create([
-            'user_id' => $booking->customer_id,
-            'type' => 'booking_completed',
-            'title' => 'Lịch hẹn hoàn thành',
-            'message' => "Lịch hẹn #{$booking->booking_code} đã hoàn thành. "
-                       . "Cảm ơn bạn đã sử dụng dịch vụ! "
-                       . "Hãy để lại đánh giá cho thợ cắt tóc nhé.",
-        ]);
+        $message = "Lịch hẹn #{$booking->booking_code} đã hoàn thành. "
+                 . "Cảm ơn bạn đã sử dụng dịch vụ! "
+                 . "Hãy để lại đánh giá cho thợ cắt tóc nhé.";
+
+        SendBookingNotificationJob::dispatch($booking->customer_id, $message);
     }
 }

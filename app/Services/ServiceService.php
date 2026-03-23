@@ -8,13 +8,18 @@ use Illuminate\Support\Facades\Storage;
 
 class ServiceService
 {
+    public function __construct(private CacheService $cacheService) {}
     public function create(array $data, ?UploadedFile $image = null): Service
     {
         if ($image) {
             $data['image'] = $image->store('services', 'public');
         }
 
-        return Service::create($data);
+        $service = Service::create($data);
+
+        $this->cacheService->clearServiceCache();
+
+        return $service;
     }
 
     public function update(Service $service, array $data, ?UploadedFile $image = null): Service
@@ -26,6 +31,8 @@ class ServiceService
 
         $service->update($data);
 
+        $this->cacheService->clearServiceCache();
+
         return $service->fresh();
     }
 
@@ -33,6 +40,8 @@ class ServiceService
     {
         $this->deleteImage($service);
         $service->delete();
+
+        $this->cacheService->clearServiceCache();
     }
 
     protected function deleteImage(Service $service): void

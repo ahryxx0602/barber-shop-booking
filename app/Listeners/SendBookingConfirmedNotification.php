@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\BookingConfirmed;
-use App\Models\Notification;
+use App\Jobs\SendBookingNotificationJob;
 
 class SendBookingConfirmedNotification
 {
@@ -12,13 +12,11 @@ class SendBookingConfirmedNotification
         $booking = $event->booking;
         $booking->loadMissing(['customer', 'barber.user', 'services']);
 
-        Notification::create([
-            'user_id' => $booking->customer_id,
-            'type' => 'booking_confirmed',
-            'title' => 'Lịch hẹn đã xác nhận',
-            'message' => "Lịch hẹn #{$booking->booking_code} đã được xác nhận bởi {$booking->barber->user->name}. "
-                       . "Ngày: {$booking->booking_date->format('d/m/Y')}, "
-                       . "Giờ: {$booking->start_time}.",
-        ]);
+        $message = "Lịch hẹn #{$booking->booking_code} đã được xác nhận bởi {$booking->barber->user->name}. "
+                 . "Ngày: {$booking->booking_date->format('d/m/Y')}, "
+                 . "Giờ: {$booking->start_time}.";
+
+        // Dispatch job bất đồng bộ thay vì ghi trực tiếp
+        SendBookingNotificationJob::dispatch($booking->customer_id, $message);
     }
 }

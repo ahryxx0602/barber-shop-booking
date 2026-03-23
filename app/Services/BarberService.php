@@ -13,9 +13,10 @@ use Illuminate\Support\Facades\Storage;
 
 class BarberService
 {
+    public function __construct(private CacheService $cacheService) {}
     public function create(CreateBarberData $data, ?UploadedFile $avatar = null): Barber
     {
-        return DB::transaction(function () use ($data, $avatar) {
+        $barber = DB::transaction(function () use ($data, $avatar) {
             $userData = [
                 'name'     => $data->name,
                 'email'    => $data->email,
@@ -37,11 +38,15 @@ class BarberService
                 'is_active'        => $data->is_active,
             ]);
         });
+
+        $this->cacheService->clearBarberCache();
+
+        return $barber;
     }
 
     public function update(Barber $barber, UpdateBarberData $data, ?UploadedFile $avatar = null): Barber
     {
-        return DB::transaction(function () use ($barber, $data, $avatar) {
+        $result = DB::transaction(function () use ($barber, $data, $avatar) {
             $userData = [
                 'name'  => $data->name,
                 'email' => $data->email,
@@ -67,6 +72,10 @@ class BarberService
 
             return $barber->fresh('user');
         });
+
+        $this->cacheService->clearBarberCache();
+
+        return $result;
     }
 
     public function delete(Barber $barber): void
@@ -75,6 +84,8 @@ class BarberService
             $this->deleteAvatar($barber->user);
             $barber->user->delete();
         });
+
+        $this->cacheService->clearBarberCache();
     }
 
     protected function deleteAvatar(User $user): void
