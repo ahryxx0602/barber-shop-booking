@@ -11,6 +11,7 @@ class Barber extends Model
         'bio',
         'experience_years',
         'rating',
+        'commission_rate',
         'is_active',
     ];
 
@@ -48,5 +49,11 @@ class Barber extends Model
     public function leaves()
     {
         return $this->hasMany(BarberLeave::class);
+    }
+
+    // barbers ─────────── commissions (1-n)
+    public function commissions()
+    {
+        return $this->hasMany(Commission::class);
     }
 }

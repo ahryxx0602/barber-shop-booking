@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BarberController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\CommissionController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
@@ -39,6 +40,11 @@ Route::middleware(['auth', 'role:admin'])
 
         // Mã giảm giá
         Route::resource('coupons', CouponController::class)->except(['show']);
+
+        // Hoa hồng (Commission)
+        Route::get('commissions', [CommissionController::class, 'index'])->name('commissions.index');
+        Route::patch('commissions/{barber}/rate', [CommissionController::class, 'updateRate'])->name('commissions.updateRate');
+        Route::patch('commissions/bulk-rate', [CommissionController::class, 'bulkUpdateRate'])->name('commissions.bulkUpdateRate');
 
         // Báo cáo
         Route::get('reports/chart-data', [ReportController::class, 'chartData'])->name('reports.chartData');
