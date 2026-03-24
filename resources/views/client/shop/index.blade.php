@@ -88,11 +88,18 @@
                                 <span style="font-family:var(--font-display);font-size:20px;font-weight:600;color:var(--v-copper);">
                                     {{ number_format($product->price, 0, ',', '.') }}₫
                                 </span>
-                                @if($product->stock_quantity <= 0)
-                                    <span style="font-size:10px;font-weight:600;letter-spacing:1px;text-transform:uppercase;color:#dc2626;">Hết hàng</span>
-                                @elseif($product->stock_quantity <= 5)
-                                    <span style="font-size:10px;color:var(--v-muted);">Còn {{ $product->stock_quantity }}</span>
-                                @endif
+                                <div style="display:flex;align-items:center;gap:4px;">
+                                    @if($product->stock_quantity <= 0)
+                                        <span style="width:6px;height:6px;border-radius:50%;background:#ef4444;display:inline-block;"></span>
+                                        <span style="font-size:10px;font-weight:600;color:#dc2626;">Hết hàng</span>
+                                    @elseif($product->stock_quantity <= 10)
+                                        <span style="width:6px;height:6px;border-radius:50%;background:#f59e0b;display:inline-block;"></span>
+                                        <span style="font-size:10px;color:#92400e;">Còn {{ $product->stock_quantity }}</span>
+                                    @else
+                                        <span style="width:6px;height:6px;border-radius:50%;background:#22c55e;display:inline-block;"></span>
+                                        <span style="font-size:10px;color:#166534;">Kho: {{ $product->stock_quantity }}</span>
+                                    @endif
+                                </div>
                             </div>
                         </div>
                     </a>

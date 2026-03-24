@@ -69,31 +69,66 @@ class ShopController extends Controller
     }
 
     /**
-     * Trang giỏ hàng.
+     * Trang giỏ hàng — xử lý edge cases: SP hết hàng, bị disable, SL vượt stock.
      */
     public function cart()
     {
         $cart = session()->get('cart', []);
         $cartItems = [];
+        $warnings = [];
         $subtotal = 0;
+        $cartUpdated = false;
 
         foreach ($cart as $productId => $item) {
             $product = Product::find($productId);
-            if ($product && $product->is_active) {
-                // Điều chỉnh SL nếu vượt stock
-                $quantity = min($item['quantity'], $product->stock_quantity);
-                if ($quantity <= 0) continue;
 
-                $cartItems[] = [
-                    'product'  => $product,
-                    'quantity' => $quantity,
-                    'total'    => $product->price * $quantity,
-                ];
-                $subtotal += $product->price * $quantity;
+            // Edge case 1: SP đã bị xóa khỏi DB
+            if (!$product) {
+                $warnings[] = "Một sản phẩm không còn tồn tại và đã được xóa khỏi giỏ.";
+                unset($cart[$productId]);
+                $cartUpdated = true;
+                continue;
             }
+
+            // Edge case 2: SP bị disable (admin tắt bán)
+            if (!$product->is_active) {
+                $warnings[] = "Sản phẩm \"{$product->name}\" hiện không còn bán và đã được xóa khỏi giỏ.";
+                unset($cart[$productId]);
+                $cartUpdated = true;
+                continue;
+            }
+
+            // Edge case 3: SP hết hàng (stock = 0)
+            if ($product->stock_quantity <= 0) {
+                $warnings[] = "Sản phẩm \"{$product->name}\" đã hết hàng và được xóa khỏi giỏ.";
+                unset($cart[$productId]);
+                $cartUpdated = true;
+                continue;
+            }
+
+            // Edge case 4: SL trong giỏ vượt stock hiện tại → tự giảm
+            $quantity = $item['quantity'];
+            if ($quantity > $product->stock_quantity) {
+                $warnings[] = "Sản phẩm \"{$product->name}\" chỉ còn {$product->stock_quantity}, đã điều chỉnh số lượng.";
+                $quantity = $product->stock_quantity;
+                $cart[$productId]['quantity'] = $quantity;
+                $cartUpdated = true;
+            }
+
+            $cartItems[] = [
+                'product'  => $product,
+                'quantity' => $quantity,
+                'total'    => $product->price * $quantity,
+            ];
+            $subtotal += $product->price * $quantity;
         }
 
-        return view('client.shop.cart', compact('cartItems', 'subtotal'));
+        // Cập nhật session nếu có thay đổi
+        if ($cartUpdated) {
+            session()->put('cart', $cart);
+        }
+
+        return view('client.shop.cart', compact('cartItems', 'subtotal', 'warnings'));
     }
 
     /**
@@ -108,8 +143,14 @@ class ShopController extends Controller
 
         $product = Product::findOrFail($request->product_id);
 
+        // Edge case: SP bị disable
         if (!$product->is_active) {
-            return response()->json(['success' => false, 'message' => 'Sản phẩm không còn bán.'], 422);
+            return response()->json(['success' => false, 'message' => 'Sản phẩm hiện không còn bán.'], 422);
+        }
+
+        // Edge case: SP hết hàng
+        if ($product->stock_quantity <= 0) {
+            return response()->json(['success' => false, 'message' => "Sản phẩm \"{$product->name}\" đã hết hàng."], 422);
         }
 
         $quantity = $request->quantity ?? 1;
@@ -119,11 +160,18 @@ class ShopController extends Controller
         $currentQty = $cart[$product->id]['quantity'] ?? 0;
         $newQty = $currentQty + $quantity;
 
-        // Kiểm tra stock
+        // Edge case: SL vượt stock
         if ($newQty > $product->stock_quantity) {
+            $remaining = $product->stock_quantity - $currentQty;
+            if ($remaining <= 0) {
+                return response()->json([
+                    'success' => false,
+                    'message' => "Bạn đã có {$currentQty} sản phẩm \"{$product->name}\" trong giỏ (tối đa {$product->stock_quantity}).",
+                ], 422);
+            }
             return response()->json([
                 'success' => false,
-                'message' => "Sản phẩm \"{$product->name}\" chỉ còn {$product->stock_quantity} trong kho.",
+                'message' => "Chỉ có thể thêm tối đa {$remaining} sản phẩm \"{$product->name}\" nữa.",
             ], 422);
         }
 
@@ -157,7 +205,18 @@ class ShopController extends Controller
             return response()->json(['success' => false, 'message' => 'Sản phẩm không có trong giỏ.'], 422);
         }
 
-        // Kiểm tra stock
+        // Edge case: SP bị disable hoặc hết hàng → xóa khỏi giỏ
+        if (!$product->is_active || $product->stock_quantity <= 0) {
+            unset($cart[$product->id]);
+            session()->put('cart', $cart);
+            return response()->json([
+                'success' => false,
+                'message' => "Sản phẩm \"{$product->name}\" hiện không có sẵn và đã được xóa khỏi giỏ.",
+                'removed' => true,
+            ], 422);
+        }
+
+        // Edge case: SL vượt stock
         if ($request->quantity > $product->stock_quantity) {
             return response()->json([
                 'success' => false,
