@@ -11,6 +11,8 @@ use App\Events\BookingCancelled;
 use App\Events\BookingCompleted;
 use App\Events\BookingConfirmed;
 use App\Exceptions\SlotNotAvailableException;
+use App\Jobs\SendBookingNotificationJob;
+use App\Models\Barber;
 use App\Models\Booking;
 use App\Models\Service;
 use App\Models\TimeSlot;
@@ -50,10 +52,14 @@ class BookingService
             $discountAmount = 0;
             $couponCode = null;
             if ($data->coupon_code) {
-                $coupon = $this->couponService->validate($data->coupon_code, $totalPrice);
-                $discountAmount = $this->couponService->calculateDiscount($coupon, $totalPrice);
-                $couponCode = $coupon->code;
-                $this->couponService->markUsed($coupon);
+                try {
+                    $coupon = $this->couponService->validate($data->coupon_code, $totalPrice);
+                    $discountAmount = $this->couponService->calculateDiscount($coupon, $totalPrice);
+                    $couponCode = $coupon->code;
+                    $this->couponService->markUsed($coupon);
+                } catch (\InvalidArgumentException $e) {
+                    // Cố tình bỏ qua mã giảm giá không hợp lệ, tiếp tục quá trình đặt lịch với giá gốc
+                }
             }
 
             $booking = Booking::create([
@@ -87,6 +93,20 @@ class BookingService
                 'total_price' => $totalPrice - $discountAmount,
                 'discount' => $discountAmount,
             ]);
+
+            // Gửi thông báo cho thợ cắt
+            $barber = \App\Models\Barber::find($data->barber_id);
+            if ($barber && $barber->user_id) {
+                $message = "Bạn có lịch hẹn mới #{$booking->booking_code} từ khách hàng {$customer->name} "
+                         . "vào lúc {$booking->start_time} ngày {$booking->booking_date->format('d/m/Y')}.";
+
+                \App\Jobs\SendBookingNotificationJob::dispatch(
+                    $barber->user_id,
+                    $message,
+                    'Có người đặt lịch mới',
+                    'new_booking'
+                );
+            }
 
             return $booking;
         });

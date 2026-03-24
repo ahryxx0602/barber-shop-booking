@@ -58,6 +58,30 @@ class BookingController extends Controller
         return response()->json($slots);
     }
 
+    public function applyCoupon(Request $request, \App\Services\CouponService $couponService): JsonResponse
+    {
+        $request->validate([
+            'coupon_code' => 'required|string',
+            'total_price' => 'required|numeric|min:0',
+        ]);
+
+        try {
+            $coupon = $couponService->validate($request->coupon_code, $request->total_price);
+            $discountAmount = $couponService->calculateDiscount($coupon, $request->total_price);
+
+            return response()->json([
+                'valid' => true,
+                'discount_amount' => $discountAmount,
+                'message' => 'Áp dụng mã thành công!',
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'valid' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
     public function store(StoreBookingRequest $request)
     {
         try {
@@ -71,6 +95,8 @@ class BookingController extends Controller
                 ->with('success', 'Đặt lịch thành công! Vui lòng chọn phương thức thanh toán.');
         } catch (\App\Exceptions\SlotNotAvailableException $e) {
             return back()->withErrors(['time_slot_id' => $e->getMessage()])->withInput();
+        } catch (\InvalidArgumentException $e) {
+            return back()->withErrors(['coupon_code' => $e->getMessage()])->withInput();
         }
     }
 
