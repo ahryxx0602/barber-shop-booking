@@ -22,6 +22,7 @@
 13. [Console Commands — Tác vụ nền](#13-console-commands--tác-vụ-nền)
 14. [Database Schema — Sơ đồ CSDL](#14-database-schema--sơ-đồ-cơ-sở-dữ-liệu)
 15. [Tổng kết sơ đồ kiến trúc](#15-tổng-kết-sơ-đồ-kiến-trúc)
+16. [Nghiệp vụ mở rộng - Giai đoạn 11](#16-nghiệp-vụ-mở-rộng---giai-đoạn-11)
 
 ---
 
@@ -2104,6 +2105,91 @@ Khi cần thêm tính năng (VD: tạo coupon/mã giảm giá):
 9. Tạo Views:        resources/views/admin/coupons/
 10. Cập nhật Cache:  CacheService nếu cần cache
 ```
+
+---
+
+## 16. Nghiệp vụ mở rộng - Giai đoạn 11
+
+Giai đoạn 11 tập trung vào việc áp dụng các cơ chế chăm sóc và giữ chân khách hàng (Retention) cho hệ thống BarberBook, biến các tác vụ thủ công thành quy trình tự động. Dưới đây là giải thích luồng xử lý chi tiết (Business Logic) dành cho lập trình viên:
+
+### 16.1 Hệ thống tích điểm (Loyalty Points)
+**Mục đích:** Tặng điểm thưởng cho khách hàng sau khi hoàn tất thanh toán dịch vụ, và dùng điểm này để giảm giá cho lần đặt lịch kế tiếp.
+
+**Luồng A: Cộng điểm tự động**
+1. **Trigger:** Khi thợ hoặc admin chuyển trạng thái booking sang `Completed` (hoàn thành cắt tóc). `BookingService::complete()` sẽ được gọi.
+2. **Event & Listener:** Service sẽ phát ra (dispatch) sự kiện `BookingCompleted`. Lập trình viên thiết lập một `AddLoyaltyPointsListener` để lắng nghe sự kiện này.
+3. **Logic tính điểm:** 
+   - Lấy `booking->total_price` (Ví dụ: 150.000 VNĐ).
+   - Truy vấn bảng cấu hình (`settings`) để lấy tỷ lệ quy đổi mặc định (VD: Cứ 10.000 VNĐ = 1 điểm). Tính ra khách được cộng thêm 15 điểm.
+4. **Cập nhật Database:** Tìm record trong bảng `loyalty_points` tương ứng với `user_id` của khách hàng.
+   - Cộng 15 vào cột `total_points` (điểm có thể dùng để tiêu).
+   - Cộng 15 vào cột `lifetime_points` (tổng số điểm lịch sử tích luỹ, có thể dùng sau này để nâng hạng thẻ Đồng/Bạc/Vàng).
+5. **Thông báo:** Bắn push notification cho khách (ví dụ báo bằng chuông điện thoại): "Bạn vừa tích thêm 15 điểm từ ...".
+
+**Luồng B: Tiêu điểm (Dùng điểm giảm giá)**
+1. Khi khách hàng vào màn hình **Xác nhận đặt lịch**, Frontend hiển thị số dư điểm hiện tại (VD: Có 50 điểm = giảm được 50,000đ). Hỏi khách "Có muốn dùng không?".
+2. Khách check vào ô "Có", form request tạo booking có trường `use_points = true`.
+3. **Trong `BookingService::create()`:**
+   - Dò lại `loyalty_points` của user. Ghi nhận user có 50 điểm.
+   - Tính tổng tiền hóa đơn gốc (VD: 200,000đ). Trừ đi tiền quy từ điểm -> `total_price` còn 150,000đ. Lưu và tạo booking thành công!
+   - Kèm theo trong Transaction Database đó, hệ thống lập tức cập nhật lại trừ 50 ở cột `total_points` của user đi. 
+
+**Luồng C: Quản lý & Cấu hình (Dành cho Admin)**
+1. **Lưu trữ Cấu hình (Settings):** Cần có bảng `settings` (hoặc hệ thống key-value cache) để lưu 3 tham số động thay vì hard-code:
+   - `loyalty_earn_rate`: Số tiền cần tiêu để được 1 điểm (VD: `10000` VNĐ = 1 điểm).
+   - `loyalty_redeem_rate`: Giá trị của 1 điểm khi mang ra giảm giá (VD: 1 điểm = `1000` VNĐ).
+   - `loyalty_enabled`: Công tắc Bật/Tắt module tích điểm của cả quán.
+2. **Giao diện cấu hình System Settings:** Admin có form để nhập và cập nhật các tham số trên. Ví dụ dịp Tết Admin muốn kích cầu có thể hạ mức điểm `loyalty_earn_rate` xuống `5000` = 1 điểm.
+3. **Giao diện Quản lý Khách Hàng:** Admin khi bấm vào Chi tiết một User (Customer) sẽ thấy hiển thị Tổng điểm khả dụng (`total_points`). Có thể thiết kế thêm nút "Tặng điểm/Trừ điểm thủ công" cho admin để xử lý khiếu nại hoặc làm event tri ân riêng từng người.
+
+### 16.2 Mã khoá giảm giá (Coupons)
+**Mục đích:** Cho phép Admin tạo ra mã Voucher (Ví dụ `KHAITRUONG2026`) để chạy Campaign kích thích đặt lịch.
+
+**Tạo và Kiểm tra Mã (Validation Flow):**
+1. Admin tạo mã vào bảng `coupons`. Chọn loại hình (`type`):
+   - `fixed`: Trừ thẳng tiền (Ví dụ 20.000đ).
+   - `percentage`: Trừ % hoá đơn (Ví dụ giảm 10%, có thể cài `max_discount` tối đa giảm giá 100.000đ).
+2. Khi khách nhập mã vào ô "Mã khuyến mãi" ở UI:
+   - Gọi một endpoint `POST /api/coupons/apply`.
+   - Lớp `CouponService::validate($code)` làm 4 bước kiểm tra gắt gao:
+      - Mã có tồn tại trong CSDL và `is_active` có bằng `true` không?
+      - Thời gian hệ thống (`now()`) có nằm giữa `start_date` và `end_date` không?
+      - Đã xài hết `usage_limit` do Admin cấp chưa?
+      - Liệu user này có xài lạm dụng cùng 1 mã nhiều lần không? (Nếu quy định 1 người chỉ dùng 1 lần, phải query tìm xem user này đã từng áp dụng mã này chưa ở các booking trước đó).
+3. Sau khi booking tạo thành công, tiến hành tăng biến `usage_count` (số lượt đã dùng mã) lên thêm +1.
+
+### 16.3 Đặt lịch định kỳ (Recurring Booking)
+**Mục đích:** Khách có thói quen hớt tóc mỗi 4 tuần vào chiều Chủ Nhật có thể bấm "Tạo lịch hẹn định kỳ", không phải thao tác lại trên App mỗi tháng.
+
+**Luồng Sinh Lịch Hẹn Chồng Chéo:**
+1. Trên form Booking, UI có thêm Switch Option chọn: "Lặp lại: Không / Mỗi Tuần / Mỗi 2 Tuần / Mỗi 4 Tuần". Option lặp lại cao nhất là 4 lượt để tránh đầy tràn Database.
+2. Dữ liệu khi gửi có chứa `frequency = 'monthly'`.
+3. **Bên trong Service:** Thay vì tạo 1 `Booking`, `BookingService` sẽ vào vòng lặp (For Each) theo chu kỳ.
+   - Lần quét thứ 1 (Tuần này): Kiểm tra `TimeSlot` -> Thành công. Sinh booking.
+   - Lần quét thứ 2 (4 tuần sau): Dò xem vào đúng `TimeSlot` ngày đó thợ rảnh không? -> Nếu rảnh sinh thêm `Booking`.
+   - Các Booking trong tương lai (Clone) sẽ được gắn cờ `original_booking_id` = ID của Booking lần đầu tiên khách gọi.
+   - Nếu trong tương lai (4 tuần sau) Lịch hôm đó Barber xin nghỉ hoặc Slot có người xí trước, Service sẽ ghi nhận Error/Báo lỗi hoặc Warning để thông báo khách tự chọn giờ khác cho tuần đó.
+
+### 16.4 Danh sách Thợ yêu thích (Favorites Barbers)
+**Mục đích:** Lưu danh sách những thợ quen thuộc để khách hàng dễ booking trong lần tới.
+
+**Luồng Thao tác (Tim/Không Tim):**
+1. **Thiết kế CSDL:** Tạo 1 bảng pivot `user_favorite_barbers` nối giữa `user_id` và `barber_id`. Nó chỉ lưu đúng 2 khoá đó cùng `created_at`.
+2. Giao diện: Tại Profile thợ hoặc màn hình danh sách Thợ, ta có nút ♥ (Trái tim). 
+   - Ấn vào ♥: Javascript gọi một request AJAX lên endpoint `POST /client/barbers/{id}/favorite`.
+   - Lớp Controller dùng hàm Toggle (nếu có rồi thì xoá, chưa có thì thêm). Trả về response JSON "Đã yêu thích". Nút tim đổi sang màu đỏ!
+3. **Ứng dụng lúc đặt lịch:** Tại form tạo Booking, lúc hệ thống lấy danh sách "Chọn thợ cắt". Data được lấy ra sẽ Sort By theo logic: Ai được Heart ♥ thì nằm ở đầu List (`OrderBy('is_favorite', 'desc')`). Điều này giúp khách hàng nhấp là thấy ngay thợ hợp ý dạo nọ.
+
+### 16.5 Waitlist - Danh sách chờ săn slot
+**Mục đích:** Săn khung giờ vàng (Ví dụ 19:00 rảnh rỗi nhất). Khung giờ này bốc hơi cực nhanh, khi nó "Booked", khách ấn "Thông báo cho tôi khi thợ rảnh lại".
+
+**Luồng Báo Chỗ Trống:**
+1. Khách hàng đăng ký waitlist cho Slot `[7 giờ tối, ngày 30/11, của Thợ Quang]`. Hệ thống insert dữ liệu này vào bảng `waitlists` với trang thái mặc định là `waiting`. UI sẽ nói: "Cám ơn, khi Quang trống lịch mình gọi nha".
+2. Khúc hay cấn nhất: Giả sử vị khách hiện tại nắm slot 19:00 bận việc không tới đột xuất, khách đó huỷ lịch (Trạng thái Status -> Cancelled).
+3. Khi `BookingService::cancel()` kích hoạt sự kiện `BookingCancelled`:
+   - Lập tức, `NotifyWaitlistOnCancellationListener` nhảy vào. Lục thùng Database bảng `waitlists`. Nó quét ra 3 người đang canh slot "7h Tối - Thợ Quang" nãy.
+   - Gửi tức thì PUSH Notification trên ĐT hoặc SMS/Email cho 3 khách hàng cắm mốc rình đó, trạng thái waitlist của họ chuyển thành `notified`.
+4. Ai trong số 3 người cầm đt lên trước, click vào link "Đặt Slot", hệ thống áp dụng cơ chế giành giựt First-Come First-Served. Người Book đầu được Slot -> Đổi thành `Booked`. Còn 2 người kia chậm tay bấm lỗi 404 (Slot báo mất).
 
 ---
 
