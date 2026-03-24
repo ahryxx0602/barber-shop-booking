@@ -22,6 +22,10 @@
                 <span class="material-symbols-outlined" style="font-size:14px;">stars</span>
                 Điểm thưởng
             </a>
+            <a href="{{ route('client.profile.favorites') }}" class="v-btn-outline v-btn-sm" style="gap:8px;">
+                <span class="material-symbols-outlined" style="font-size:14px;">favorite</span>
+                Thợ yêu thích
+            </a>
             <a href="{{ route('client.profile.edit') }}" class="v-btn-outline v-btn-sm" style="gap:8px;">
                 <span class="material-symbols-outlined" style="font-size:14px;">edit</span>
                 Chỉnh sửa

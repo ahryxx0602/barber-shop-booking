@@ -72,5 +72,13 @@ class ProfileController extends Controller
 
         return view('client.profile.loyalty', compact('user', 'balance', 'history'));
     }
+
+    public function favorites(Request $request): View
+    {
+        $user = $request->user();
+        $favoriteBarbers = $user->favoriteBarbers()->with('user')->get();
+
+        return view('client.profile.favorites', compact('user', 'favoriteBarbers'));
+    }
 }
 
