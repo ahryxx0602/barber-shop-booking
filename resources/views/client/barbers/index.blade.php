@@ -72,8 +72,8 @@
                                     @endif
                                 </div>
                                 @auth
-                                <button type="button" @click.prevent="toggleFavorite($event, {{ $barber->id }}, $el)"
-                                    style="position:absolute;top:8px;right:8px;width:32px;height:32px;border-radius:50%;background:#fff;border:1px solid var(--v-rule);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:all 0.2s;box-shadow:2px 2px 0 rgba(0,0,0,0.1);"
+                                <button type="button" onclick="toggleFavorite(event, {{ $barber->id }}, this)"
+                                    style="position:absolute;top:8px;right:8px;width:30px;height:30px;border-radius:50%;background:#fff;border:1px solid var(--v-rule);display:flex;align-items:center;justify-content:center;cursor:pointer;z-index:10;transition:all 0.2s;box-shadow:2px 2px 0 rgba(0,0,0,0.1);"
                                     onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
                                     <span class="material-symbols-outlined {{ auth()->user()->favoriteBarbers->contains($barber->id) ? 'fill' : '' }}" 
                                           style="font-size:16px; transition:color 0.2s; color:{{ auth()->user()->favoriteBarbers->contains($barber->id) ? '#dc2626' : 'var(--v-muted)' }};">favorite</span>
@@ -155,10 +155,9 @@
         overflow-x: auto;
         scroll-behavior: smooth;
         scroll-snap-type: x mandatory;
-        justify-content: center;
         -ms-overflow-style: none;
         scrollbar-width: none;
-        padding: 4px 0 8px;
+        padding: 4px 4px 8px;
     }
     .barber-scroll-track::-webkit-scrollbar { display: none; }
 
@@ -186,7 +185,10 @@
 @push('scripts')
 <script>
 function toggleFavorite(event, barberId, btn) {
-    if (event) event.preventDefault();
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
     const icon = btn.querySelector('span');
     fetch(`/barbers/${barberId}/favorite`, {
         method: 'POST',
@@ -203,7 +205,7 @@ function toggleFavorite(event, barberId, btn) {
         return res.json();
     })
     .then(data => {
-        if (data.status === 'attached') {
+        if (data.favorited) {
             icon.classList.add('fill');
             icon.style.color = '#dc2626';
         } else {

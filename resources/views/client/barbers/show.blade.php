@@ -63,7 +63,7 @@
                         </a>
                         
                         @auth
-                        <button type="button" @click.prevent="toggleFavorite($event, {{ $barber->id }}, $el)"
+                        <button type="button" onclick="toggleFavorite(event, {{ $barber->id }}, this)"
                             style="width:44px;height:44px;border-radius:2px;background:#fff;border:1px solid var(--v-rule);display:flex;align-items:center;justify-content:center;cursor:pointer;transition:all 0.2s;box-shadow:4px 4px 0 var(--v-copper);"
                             onmouseover="this.style.boxShadow='2px 2px 0 var(--v-copper-dk)';this.style.transform='translate(2px,2px)'" 
                             onmouseout="this.style.boxShadow='4px 4px 0 var(--v-copper)';this.style.transform='translate(0,0)'">
@@ -196,7 +196,10 @@
 @push('scripts')
 <script>
 function toggleFavorite(event, barberId, btn) {
-    if (event) event.preventDefault();
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+    }
     const icon = btn.querySelector('span');
     fetch(`/barbers/${barberId}/favorite`, {
         method: 'POST',
@@ -213,7 +216,7 @@ function toggleFavorite(event, barberId, btn) {
         return res.json();
     })
     .then(data => {
-        if (data.status === 'attached') {
+        if (data.favorited) {
             icon.classList.add('fill');
             icon.style.color = '#dc2626';
         } else {
