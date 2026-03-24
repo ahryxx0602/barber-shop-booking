@@ -167,6 +167,21 @@
           </li>
           <!-- /Booking -->
 
+          <!-- Menu: Mã giảm giá -->
+          <li>
+            <a href="{{ route('admin.coupons.index') }}" @click="selected = 'Coupon'" class="menu-item group"
+              :class="selected === 'Coupon' ? 'menu-item-active' : 'menu-item-inactive'">
+              <svg :class="selected === 'Coupon' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
+                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
+                <line x1="7" y1="7" x2="7.01" y2="7"></line>
+              </svg>
+              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Mã giảm giá</span>
+            </a>
+          </li>
+          <!-- /Mã giảm giá -->
+
           <!-- Menu: Người dùng -->
           <li>
             <a href="{{ route('admin.users.index') }}" @click="selected = 'NguoiDung'" class="menu-item group"

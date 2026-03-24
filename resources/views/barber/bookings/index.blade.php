@@ -37,7 +37,7 @@
     @endif
 
     {{-- Stats row --}}
-    <div class="grid grid-cols-4 gap-3 mb-5">
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
         <div class="bg-white dark:bg-gray-800 rounded-lg border border-gray-200 dark:border-gray-700 px-4 py-3">
             <p class="text-xl font-bold text-gray-800 dark:text-white">{{ $stats['total'] }}</p>
             <p class="text-xs text-gray-500 dark:text-gray-400">Tổng</p>
