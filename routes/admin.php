@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\CommissionController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
+use App\Http\Controllers\Admin\ProductController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
@@ -22,6 +23,10 @@ Route::middleware(['auth', 'role:admin'])
         Route::resource('services', ServiceController::class)->except(['show']);
         Route::resource('barbers', BarberController::class)->except(['show']);
         Route::resource('branches', BranchController::class)->except(['show']);
+
+        // Sản phẩm (E-commerce)
+        Route::resource('products', ProductController::class)->except(['show']);
+        Route::patch('products/{product}/toggle', [ProductController::class, 'toggleActive'])->name('products.toggle');
 
         // Lịch làm việc
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');

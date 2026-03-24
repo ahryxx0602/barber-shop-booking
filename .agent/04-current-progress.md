@@ -9,7 +9,7 @@
 
 ```
 Giai đoạn đang làm : 13 — Mở rộng quản trị Admin (Exp P3)
-Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅)
+Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅)
 Cập nhật lần cuối  : 24/03/2026
 ```
 
@@ -359,7 +359,23 @@ Cập nhật lần cuối  : 24/03/2026
 - [x] Thêm `google_maps.api_key` vào `config/services.php`
 - [x] Thêm `shipping` config (base_fee, per_km_fee, max_fee, free_above, shop coordinates)
 
-**Phase 3–8:** Chưa bắt đầu
+#### Chi tiết Phase 3 — Admin CRUD sản phẩm (13.3):
+
+**Form Requests — đã xong:**
+- [x] `StoreProductRequest` (name, price, stock_quantity, sku unique, category enum, image, is_active)
+- [x] `UpdateProductRequest` (tương tự Store, SKU ignore current product)
+
+**Controller — đã xong:**
+- [x] `Admin\ProductController` (index, create, store, edit, update, destroy, toggleActive)
+- [x] Routes: `Route::resource('products')` + `PATCH products/{product}/toggle`
+
+**Views — đã xong:**
+- [x] `admin/products/index.blade.php` (stats cards, filter category/search, bảng SP, pagination)
+- [x] `admin/products/create.blade.php` (form tạo SP: drag-drop image, category select, SKU auto, toggle active)
+- [x] `admin/products/edit.blade.php` (form sửa SP: pre-fill data, hiện ảnh cũ)
+- [x] Sidebar admin: thêm menu "Sản phẩm" (icon Package) giữa Dịch vụ và Thợ cắt
+
+**Phase 4–8:** Chưa bắt đầu
 - [ ] 13.4 Audit Log nâng cao (Ghi lại mọi thay đổi Model)
 - [ ] 13.5 Dashboard Analytics nâng cao (Heatmap, So sánh kỳ)
 
@@ -378,3 +394,5 @@ Cập nhật lần cuối  : 23/03/2026
 - **24/03/2026**: 13.3 Phase 1 hoàn thành — Tạo 5 migrations (`products`, `shipping_addresses`, `orders`, `order_items`, `order_payments`), 3 enums (`ProductCategory`, `OrderStatus`, `OrderPaymentMethod`), 5 models (`Product`, `Order`, `OrderItem`, `ShippingAddress`, `OrderPayment`). Cập nhật `User` model thêm 2 relationships (`orders()`, `shippingAddresses()`). `OrderPayment` reuse `PaymentStatus` enum từ booking, dùng `OrderPaymentMethod` riêng (thêm COD). `OrderStatus` có FSM guard `canTransitionTo()` giống `BookingStatus`.
 
 Khi hoàn thành cả giai đoạn, đổi `⬜ Chưa bắt đầu` thành `✅ Hoàn thành` trong bảng tổng quan.
+
+- **24/03/2026**: 13.3 Phase 3 hoàn thành — Admin CRUD Sản phẩm: (1) Tạo `StoreProductRequest` + `UpdateProductRequest` với validation đầy đủ (name, price, stock, SKU unique, category enum, image max 2MB); (2) Tạo `Admin\ProductController` (index/create/store/edit/update/destroy/toggleActive) dùng ProductService + DTOs theo pattern chuẩn; (3) Routes resource + PATCH toggle; (4) View `index.blade.php` có 3 stats cards (tổng SP, đang bán, hết hàng), filter bar (category + search), bảng đầy đủ (ảnh, tên, SKU, giá, tồn kho warning, danh mục, status, actions toggle/edit/delete); (5) View `create.blade.php` + `edit.blade.php` với form đầy đủ (name, description, price, stock, SKU auto-generate, category select, image drag-drop preview, is_active toggle); (6) Sidebar admin thêm menu "Sản phẩm" (icon Package 3D box) giữa Dịch vụ và Thợ cắt.
