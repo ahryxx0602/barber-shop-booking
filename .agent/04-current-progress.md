@@ -375,7 +375,27 @@ Cập nhật lần cuối  : 24/03/2026
 - [x] `admin/products/edit.blade.php` (form sửa SP: pre-fill data, hiện ảnh cũ)
 - [x] Sidebar admin: thêm menu "Sản phẩm" (icon Package) giữa Dịch vụ và Thợ cắt
 
-**Phase 4–8:** Chưa bắt đầu
+#### Chi tiết Phase 4 — Client: Shop, Cart, Checkout (13.3):
+
+**Form Requests — đã xong:**
+- [x] `StoreAddressRequest` (recipient_name, phone, address, ward, district, city, lat/lng, is_default)
+
+**Controllers — đã xong:**
+- [x] `Client\ShopController` (index, show, cart, addToCart, updateCart, removeFromCart, checkout, getShippingFee, placeOrder, orderSuccess, orders, orderShow, cancelOrder)
+- [x] `Client\ShippingAddressController` (store, setDefault, destroy — AJAX)
+- [x] Routes: shop (public), cart (session), checkout/orders/addresses (auth)
+
+**Views — đã xong:**
+- [x] `client/shop/index.blade.php` — Grid sản phẩm, filter category/search, AJAX add to cart, toast, pagination
+- [x] `client/shop/show.blade.php` — Chi tiết SP, chọn SL, AJAX add, SP liên quan cùng category
+- [x] `client/shop/cart.blade.php` — Bảng responsive (desktop table + mobile cards), +/- SL, xóa
+- [x] `client/shop/checkout.blade.php` — 2 cột: chọn/thêm địa chỉ + order summary (VAT + phí ship AJAX) + PTTT
+- [x] `client/shop/order-success.blade.php` — Checkmark SVG animation, info đơn, link chi tiết
+- [x] `client/orders/index.blade.php` — Danh sách đơn hàng, status badge, tổng tiền, pagination
+- [x] `client/orders/show.blade.php` — Chi tiết: SP, timeline trạng thái, breakdown, thanh toán, địa chỉ, hủy đơn
+- [x] Cập nhật `layouts/client.blade.php` — Link Cửa hàng + Cart icon badge (desktop/mobile) + Footer link
+
+**Phase 5–8:** Chưa bắt đầu
 - [ ] 13.4 Audit Log nâng cao (Ghi lại mọi thay đổi Model)
 - [ ] 13.5 Dashboard Analytics nâng cao (Heatmap, So sánh kỳ)
 
@@ -396,3 +416,6 @@ Cập nhật lần cuối  : 23/03/2026
 Khi hoàn thành cả giai đoạn, đổi `⬜ Chưa bắt đầu` thành `✅ Hoàn thành` trong bảng tổng quan.
 
 - **24/03/2026**: 13.3 Phase 3 hoàn thành — Admin CRUD Sản phẩm: (1) Tạo `StoreProductRequest` + `UpdateProductRequest` với validation đầy đủ (name, price, stock, SKU unique, category enum, image max 2MB); (2) Tạo `Admin\ProductController` (index/create/store/edit/update/destroy/toggleActive) dùng ProductService + DTOs theo pattern chuẩn; (3) Routes resource + PATCH toggle; (4) View `index.blade.php` có 3 stats cards (tổng SP, đang bán, hết hàng), filter bar (category + search), bảng đầy đủ (ảnh, tên, SKU, giá, tồn kho warning, danh mục, status, actions toggle/edit/delete); (5) View `create.blade.php` + `edit.blade.php` với form đầy đủ (name, description, price, stock, SKU auto-generate, category select, image drag-drop preview, is_active toggle); (6) Sidebar admin thêm menu "Sản phẩm" (icon Package 3D box) giữa Dịch vụ và Thợ cắt.
+
+- **24/03/2026**: 13.3 Phase 4 hoàn thành — Client: Shop, Cart, Checkout: (1) `StoreAddressRequest` validation; (2) `ShopController` 13 methods (shop listing, product detail, session cart AJAX, checkout, phí ship AJAX via ShippingService, đặt hàng COD via OrderService, order history, cancel); (3) `ShippingAddressController` 3 methods AJAX (store/setDefault/destroy); (4) Routes: shop+cart public, checkout+orders+addresses auth; (5) 7 views Blade vintage: shop index (grid, filter, toast), show (chi tiết, SL, SP liên quan), cart (responsive table/cards), checkout (2 cột Alpine.js), order-success (SVG animation), orders index/show (timeline, breakdown, hủy đơn); (6) Nav client thêm link Cửa hàng + Cart badge (desktop/mobile) + footer.
+

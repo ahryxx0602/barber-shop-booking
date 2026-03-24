@@ -318,6 +318,13 @@
                 <a class="v-nav-link" href="{{ url('/') }}#story">Câu chuyện</a>
                 <a class="v-nav-link" href="{{ route('client.barbers.index') }}">Thợ cắt</a>
                 <a class="v-nav-link" href="{{ route('client.branches.index') }}">Chi nhánh</a>
+                <a class="v-nav-link" href="{{ route('client.shop.index') }}">Cửa hàng</a>
+                {{-- Cart Icon --}}
+                @php $cartCount = array_sum(array_column(session('cart', []), 'quantity')); @endphp
+                <a href="{{ route('client.cart') }}" style="position:relative;display:inline-flex;align-items:center;color:var(--v-muted);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='var(--v-copper)'" onmouseout="this.style.color='var(--v-muted)'">
+                    <span class="material-symbols-outlined" style="font-size:22px;">shopping_cart</span>
+                    <span class="cart-badge-count" style="display:{{ $cartCount > 0 ? 'flex' : 'none' }};position:absolute;top:-6px;right:-8px;width:18px;height:18px;border-radius:50%;background:var(--v-copper);color:#fff;font-size:9px;font-weight:700;align-items:center;justify-content:center;">{{ $cartCount }}</span>
+                </a>
                 @auth
                     <a class="v-nav-link" href="{{ route('client.profile.show') }}" style="display:inline-flex;align-items:center;gap:8px;">
                         @if(auth()->user()->avatar)
@@ -344,6 +351,14 @@
                     <a class="v-nav-link" href="{{ url('/') }}#story">Câu chuyện</a>
                     <a class="v-nav-link" href="{{ route('client.barbers.index') }}">Thợ cắt</a>
                     <a class="v-nav-link" href="{{ route('client.branches.index') }}">Chi nhánh</a>
+                    <a class="v-nav-link" href="{{ route('client.shop.index') }}">Cửa hàng</a>
+                    <a class="v-nav-link" href="{{ route('client.cart') }}" style="display:flex;align-items:center;gap:6px;">
+                        <span class="material-symbols-outlined" style="font-size:18px;">shopping_cart</span>
+                        Giỏ hàng
+                        @if($cartCount > 0)
+                            <span class="cart-badge-count" style="display:flex;width:18px;height:18px;border-radius:50%;background:var(--v-copper);color:#fff;font-size:9px;font-weight:700;align-items:center;justify-content:center;">{{ $cartCount }}</span>
+                        @endif
+                    </a>
                     @auth
                         <a class="v-nav-link" href="{{ route('client.profile.show') }}" style="display:flex;align-items:center;gap:8px;">
                             @if(auth()->user()->avatar)
@@ -393,6 +408,7 @@
                         <li><a href="{{ url('/') }}#services" style="font-size:14px;">Dịch vụ</a></li>
                         <li><a href="{{ route('client.barbers.index') }}" style="font-size:14px;">Đội ngũ thợ cắt</a></li>
                         <li><a href="{{ route('client.branches.index') }}" style="font-size:14px;">Hệ thống chi nhánh</a></li>
+                        <li><a href="{{ route('client.shop.index') }}" style="font-size:14px;">Cửa hàng sản phẩm</a></li>
                         <li><a href="{{ route('client.booking.create') }}" style="font-size:14px;">Đặt lịch ngay</a></li>
                     </ul>
                 </div>

@@ -7,6 +7,8 @@ use App\Http\Controllers\Client\FavoriteBarberController as ClientFavoriteBarber
 use App\Http\Controllers\Client\PaymentController as ClientPaymentController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
 use App\Http\Controllers\Client\ReviewController as ClientReviewController;
+use App\Http\Controllers\Client\ShippingAddressController as ClientShippingAddressController;
+use App\Http\Controllers\Client\ShopController as ClientShopController;
 use App\Http\Controllers\Client\WaitlistController as ClientWaitlistController;
 use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\Route;
@@ -21,6 +23,16 @@ Route::name('client.')->group(function () {
     Route::get('/barbers/{barber}', [ClientBarberController::class, 'show'])->name('barbers.show');
     Route::get('/branches', [\App\Http\Controllers\Client\BranchController::class, 'index'])->name('branches.index');
     Route::get('/booking/slots', [ClientBookingController::class, 'getSlots'])->name('booking.slots');
+
+    // Shop — public (ai cũng xem được)
+    Route::get('/shop', [ClientShopController::class, 'index'])->name('shop.index');
+    Route::get('/shop/{product:slug}', [ClientShopController::class, 'show'])->name('shop.show');
+
+    // Cart — session-based (không cần auth)
+    Route::get('/cart', [ClientShopController::class, 'cart'])->name('cart');
+    Route::post('/cart/add', [ClientShopController::class, 'addToCart'])->name('cart.add');
+    Route::patch('/cart/update', [ClientShopController::class, 'updateCart'])->name('cart.update');
+    Route::delete('/cart/remove', [ClientShopController::class, 'removeFromCart'])->name('cart.remove');
 
     // Booking - accessible to both guests and authenticated users
     Route::post('/booking/apply-coupon', [ClientBookingController::class, 'applyCoupon'])->name('booking.apply-coupon');
@@ -48,6 +60,20 @@ Route::name('client.')->group(function () {
         Route::post('/reviews', [ClientReviewController::class, 'store'])->name('reviews.store');
         Route::post('/barbers/{barber}/favorite', [ClientFavoriteBarberController::class, 'toggle'])->name('barbers.favorite');
         Route::post('/waitlist', [ClientWaitlistController::class, 'store'])->name('waitlist.store');
+
+        // Checkout & Orders (cần đăng nhập)
+        Route::get('/checkout', [ClientShopController::class, 'checkout'])->name('checkout');
+        Route::post('/checkout/shipping-fee', [ClientShopController::class, 'getShippingFee'])->name('checkout.shipping-fee');
+        Route::post('/checkout/place-order', [ClientShopController::class, 'placeOrder'])->name('order.place');
+        Route::get('/order-success/{order}', [ClientShopController::class, 'orderSuccess'])->name('shop.order-success');
+        Route::get('/orders', [ClientShopController::class, 'orders'])->name('orders.index');
+        Route::get('/orders/{order}', [ClientShopController::class, 'orderShow'])->name('orders.show');
+        Route::patch('/orders/{order}/cancel', [ClientShopController::class, 'cancelOrder'])->name('orders.cancel');
+
+        // Shipping Addresses (AJAX)
+        Route::post('/addresses', [ClientShippingAddressController::class, 'store'])->name('addresses.store');
+        Route::patch('/addresses/{address}/default', [ClientShippingAddressController::class, 'setDefault'])->name('addresses.default');
+        Route::delete('/addresses/{address}', [ClientShippingAddressController::class, 'destroy'])->name('addresses.destroy');
     });
 });
 
