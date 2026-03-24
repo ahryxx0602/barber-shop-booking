@@ -32,11 +32,12 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         // Event listeners cho booking lifecycle
-        Event::listen(BookingConfirmed::class, SendBookingConfirmedNotification::class);
-        Event::listen(BookingCancelled::class, SendBookingCancelledNotification::class);
-        Event::listen(BookingCancelled::class, NotifyWaitlistOnCancel::class);
-        Event::listen(BookingCompleted::class, SendBookingCompletedNotification::class);
-        Event::listen(BookingCompleted::class, RewardPointsForBooking::class);
+        // Event listeners cho booking lifecycle (Đã bị vô hiệu hoá do Laravel 11 tự động phát hiện listener trong app/Listeners, tránh bị chạy 2 lần gửi mail)
+        // Event::listen(BookingConfirmed::class, SendBookingConfirmedNotification::class);
+        // Event::listen(BookingCancelled::class, SendBookingCancelledNotification::class);
+        // Event::listen(BookingCancelled::class, NotifyWaitlistOnCancel::class);
+        // Event::listen(BookingCompleted::class, SendBookingCompletedNotification::class);
+        // Event::listen(BookingCompleted::class, RewardPointsForBooking::class);
 
         // Rate limiting
         RateLimiter::for('login', function (Request $request) {
