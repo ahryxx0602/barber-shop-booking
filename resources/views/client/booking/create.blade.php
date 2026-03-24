@@ -107,9 +107,22 @@
                 </button>
                 <div x-show="currentStep === 2" x-transition.duration.200ms>
                     <div style="padding:0 20px 20px;">
+                        {{-- Branch filter --}}
+                        @if($branches->count() > 0)
+                        <div style="margin-bottom:12px;">
+                            <select x-model="selectedBranch" @change="filterBarberByBranch()"
+                                style="width:100%;padding:8px 12px;border:1px solid var(--v-rule);background:#fff;font-size:12px;color:var(--v-ink);cursor:pointer;font-family:var(--font-body);outline:none;">
+                                <option value="">Tất cả chi nhánh</option>
+                                @foreach($branches as $branch)
+                                    <option value="{{ $branch->id }}">{{ $branch->name }}</option>
+                                @endforeach
+                            </select>
+                        </div>
+                        @endif
                         <div style="display:grid;grid-template-columns:repeat(auto-fill, minmax(100px, 1fr));gap:12px;">
                             @foreach($barbers as $barber)
-                            <label style="display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:10px 4px;border:1px solid transparent;transition:all 0.2s;"
+                            <label x-show="!selectedBranch || selectedBranch == '{{ $barber->branch_id }}'"
+                                style="display:flex;flex-direction:column;align-items:center;cursor:pointer;padding:10px 4px;border:1px solid transparent;transition:all 0.2s;"
                                 :style="selectedBarber == {{ $barber->id }} ? 'border-color:var(--v-copper);background:rgba(176,137,104,0.06);box-shadow:2px 2px 0 var(--v-copper)' : 'border-color:var(--v-rule)'"
                                 class="group">
                                 <input type="radio" name="barber_id" value="{{ $barber->id }}" style="position:absolute;opacity:0;width:0;height:0;"
@@ -135,6 +148,9 @@
                                         <span class="material-symbols-outlined fill" style="font-size:10px;color:var(--v-copper);">star</span>
                                         <span style="font-size:10px;color:var(--v-muted);">{{ number_format($barber->rating, 1) }}</span>
                                     </div>
+                                @endif
+                                @if($barber->branch)
+                                    <span style="font-size:9px;color:var(--v-copper);margin-top:2px;text-align:center;line-height:1.2;">{{ Str::limit($barber->branch->name, 15) }}</span>
                                 @endif
                             </label>
                             @endforeach
@@ -386,6 +402,7 @@ function bookingWizard() {
         totalPrice: 0,
         totalDuration: 0,
         selectedBarber: {{ request('barber_id', 'null') }},
+        selectedBranch: '',
         selectedDate: null,
         selectedSlot: null,
         selectedSlotLabel: null,
@@ -484,6 +501,22 @@ function bookingWizard() {
             this.selectedSlotLabel = null;
             if (this.selectedDate) {
                 this.fetchSlots();
+            }
+        },
+
+        filterBarberByBranch() {
+            // Nếu barber đang chọn không thuộc chi nhánh mới → reset
+            if (this.selectedBarber && this.selectedBranch) {
+                const barberBranches = {
+                    @foreach($barbers as $barber)
+                        {{ $barber->id }}: '{{ $barber->branch_id }}',
+                    @endforeach
+                };
+                if (barberBranches[this.selectedBarber] != this.selectedBranch) {
+                    this.selectedBarber = null;
+                    this.selectedSlot = null;
+                    this.selectedSlotLabel = null;
+                }
             }
         },
 

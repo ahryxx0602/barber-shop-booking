@@ -317,6 +317,7 @@
                 <a class="v-nav-link" href="{{ url('/') }}#services">Dịch vụ</a>
                 <a class="v-nav-link" href="{{ url('/') }}#story">Câu chuyện</a>
                 <a class="v-nav-link" href="{{ route('client.barbers.index') }}">Thợ cắt</a>
+                <a class="v-nav-link" href="{{ route('client.branches.index') }}">Chi nhánh</a>
                 @auth
                     <a class="v-nav-link" href="{{ route('client.profile.show') }}" style="display:inline-flex;align-items:center;gap:8px;">
                         @if(auth()->user()->avatar)
@@ -342,6 +343,7 @@
                     <a class="v-nav-link" href="{{ url('/') }}#services">Dịch vụ</a>
                     <a class="v-nav-link" href="{{ url('/') }}#story">Câu chuyện</a>
                     <a class="v-nav-link" href="{{ route('client.barbers.index') }}">Thợ cắt</a>
+                    <a class="v-nav-link" href="{{ route('client.branches.index') }}">Chi nhánh</a>
                     @auth
                         <a class="v-nav-link" href="{{ route('client.profile.show') }}" style="display:flex;align-items:center;gap:8px;">
                             @if(auth()->user()->avatar)
@@ -390,6 +392,7 @@
                     <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;">
                         <li><a href="{{ url('/') }}#services" style="font-size:14px;">Dịch vụ</a></li>
                         <li><a href="{{ route('client.barbers.index') }}" style="font-size:14px;">Đội ngũ thợ cắt</a></li>
+                        <li><a href="{{ route('client.branches.index') }}" style="font-size:14px;">Hệ thống chi nhánh</a></li>
                         <li><a href="{{ route('client.booking.create') }}" style="font-size:14px;">Đặt lịch ngay</a></li>
                     </ul>
                 </div>

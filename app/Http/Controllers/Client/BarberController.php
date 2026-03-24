@@ -12,7 +12,7 @@ class BarberController extends Controller
     public function index(Request $request): View
     {
         // Tối ưu N+1 Query (Issue #6): Thêm withCount('reviews') để tránh lazy load khi hiển thị số lượng đánh giá
-        $barbers = Barber::with('user')
+        $barbers = Barber::with('user', 'branch')
             ->withCount('reviews')
             ->where('is_active', true)
             ->when($request->search, function ($query, $search) {
@@ -20,9 +20,14 @@ class BarberController extends Controller
                     $q->where('name', 'like', "%{$search}%");
                 });
             })
+            ->when($request->branch_id, function ($query, $branchId) {
+                $query->where('branch_id', $branchId);
+            })
             ->get();
 
-        return view('client.barbers.index', compact('barbers'));
+        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+
+        return view('client.barbers.index', compact('barbers', 'branches'));
     }
 
     public function show(Barber $barber): View

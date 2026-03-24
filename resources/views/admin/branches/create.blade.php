@@ -1,57 +1,44 @@
 @extends('layouts.tailadmin')
 
-@section('title', 'Sửa Thợ cắt')
+@section('title', 'Thêm Chi nhánh mới')
 
 @section('content')
     <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Sửa Thợ cắt: {{ $barber->user->name }}</h2>
+        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Thêm Chi nhánh mới</h2>
     </div>
 
     <div class="max-w-2xl">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
 
-                <form method="POST" action="{{ route('admin.barbers.update', $barber) }}" enctype="multipart/form-data">
+                <form method="POST" action="{{ route('admin.branches.store') }}" enctype="multipart/form-data">
                     @csrf
-                    @method('PUT')
 
                     <div class="space-y-5">
-                        {{-- Thông tin tài khoản --}}
+                        {{-- Thông tin chi nhánh --}}
                         <div class="pb-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 class="text-sm font-semibold text-gray-800 dark:text-white uppercase tracking-wider">Thông tin tài khoản</h3>
+                            <h3 class="text-sm font-semibold text-gray-800 dark:text-white uppercase tracking-wider">Thông tin chi nhánh</h3>
                         </div>
 
                         {{-- Tên --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Tên thợ cắt <span class="text-red-500">*</span>
+                                Tên chi nhánh <span class="text-red-500">*</span>
                             </label>
-                            <input type="text" name="name" value="{{ old('name', $barber->user->name) }}"
+                            <input type="text" name="name" value="{{ old('name') }}"
                                    class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500 @error('name') border-red-500 @enderror">
                             @error('name')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        {{-- Email --}}
+                        {{-- Địa chỉ --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Email <span class="text-red-500">*</span>
+                                Địa chỉ <span class="text-red-500">*</span>
                             </label>
-                            <input type="email" name="email" value="{{ old('email', $barber->user->email) }}"
-                                   class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500 @error('email') border-red-500 @enderror">
-                            @error('email')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        {{-- Mật khẩu --}}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Mật khẩu mới <span class="text-gray-400 text-xs font-normal">(để trống nếu không đổi)</span>
-                            </label>
-                            <input type="password" name="password"
-                                   class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500 @error('password') border-red-500 @enderror">
-                            @error('password')
+                            <input type="text" name="address" value="{{ old('address') }}"
+                                   class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500 @error('address') border-red-500 @enderror">
+                            @error('address')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -59,56 +46,25 @@
                         {{-- Số điện thoại --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Số điện thoại</label>
-                            <input type="text" name="phone" value="{{ old('phone', $barber->user->phone) }}"
+                            <input type="text" name="phone" value="{{ old('phone') }}"
                                    class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500">
                         </div>
 
-                        {{-- Thông tin thợ --}}
-                        <div class="pt-2 pb-4 border-b border-gray-200 dark:border-gray-700">
-                            <h3 class="text-sm font-semibold text-gray-800 dark:text-white uppercase tracking-wider">Thông tin nghề nghiệp</h3>
-                        </div>
-
-                        {{-- Chi nhánh --}}
+                        {{-- Mô tả --}}
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chi nhánh</label>
-                            <select name="branch_id"
-                                    class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500">
-                                <option value="">— Chưa gán chi nhánh —</option>
-                                @foreach($branches as $branch)
-                                    <option value="{{ $branch->id }}" {{ old('branch_id', $barber->branch_id) == $branch->id ? 'selected' : '' }}>
-                                        {{ $branch->name }} — {{ $branch->address }}
-                                    </option>
-                                @endforeach
-                            </select>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Mô tả</label>
+                            <textarea name="description" rows="3"
+                                      class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500">{{ old('description') }}</textarea>
                         </div>
 
-                        {{-- Kinh nghiệm --}}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">
-                                Số năm kinh nghiệm <span class="text-red-500">*</span>
-                            </label>
-                            <input type="number" name="experience_years" value="{{ old('experience_years', $barber->experience_years) }}" min="0" max="50"
-                                   class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500 @error('experience_years') border-red-500 @enderror">
-                            @error('experience_years')
-                                <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        {{-- Bio --}}
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giới thiệu</label>
-                            <textarea name="bio" rows="3"
-                                      class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500">{{ old('bio', $barber->bio) }}</textarea>
-                        </div>
-
-                        {{-- Avatar --}}
-                        <div x-data="imageUpload('{{ $barber->user->avatar ? Storage::url($barber->user->avatar) : '' }}')" x-cloak>
-                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ảnh đại diện</label>
+                        {{-- Ảnh chi nhánh --}}
+                        <div x-data="imageUpload()" x-cloak>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">Ảnh chi nhánh</label>
 
                             {{-- Preview --}}
                             <template x-if="preview">
                                 <div class="mb-3 relative inline-block">
-                                    <img :src="preview" class="w-24 h-24 object-cover rounded-full border-2 border-brand-300 dark:border-brand-600 shadow-sm" alt="Preview">
+                                    <img :src="preview" class="w-32 h-24 object-cover rounded-lg border-2 border-brand-300 dark:border-brand-600 shadow-sm" alt="Preview">
                                     <button type="button" @click="removeImage()"
                                             class="absolute -top-1 -right-1 w-5 h-5 bg-red-500 text-white rounded-full flex items-center justify-center text-xs hover:bg-red-600 shadow">
                                         ✕
@@ -133,10 +89,10 @@
                                 <p class="text-xs text-gray-400 dark:text-gray-500 mt-1">JPG, JPEG, PNG, WEBP (tối đa 2MB)</p>
                             </div>
 
-                            <input type="file" name="avatar" accept="image/jpeg,image/png,image/webp" x-ref="fileInput"
+                            <input type="file" name="image" accept="image/jpeg,image/png,image/webp" x-ref="fileInput"
                                    @change="handleFileSelect($event)" class="hidden">
 
-                            @error('avatar')
+                            @error('image')
                                 <p class="mt-1 text-xs text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -145,18 +101,18 @@
                         <div class="flex items-center gap-2">
                             <input type="hidden" name="is_active" value="0">
                             <input type="checkbox" name="is_active" id="is_active" value="1"
-                                   {{ old('is_active', $barber->is_active) ? 'checked' : '' }}
+                                   {{ old('is_active', 1) ? 'checked' : '' }}
                                    class="rounded border-gray-300 dark:border-gray-600 dark:bg-gray-700 text-brand-500">
-                            <label for="is_active" class="text-sm text-gray-700 dark:text-gray-300">Kích hoạt thợ</label>
+                            <label for="is_active" class="text-sm text-gray-700 dark:text-gray-300">Kích hoạt chi nhánh</label>
                         </div>
                     </div>
 
                     <div class="mt-6 flex items-center gap-3">
                         <button type="submit"
                                 class="px-4 py-2 bg-brand-500 text-white text-sm font-medium rounded-md hover:bg-brand-600">
-                            Cập nhật
+                            Lưu chi nhánh
                         </button>
-                        <a href="{{ route('admin.barbers.index') }}"
+                        <a href="{{ route('admin.branches.index') }}"
                            class="px-4 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 text-sm font-medium rounded-md border border-gray-300 dark:border-gray-600 hover:bg-gray-50 dark:hover:bg-gray-600">
                             Hủy
                         </a>
@@ -169,9 +125,9 @@
 
 @push('scripts')
 <script>
-    function imageUpload(existingUrl = '') {
+    function imageUpload() {
         return {
-            preview: existingUrl || null,
+            preview: null,
             isDragging: false,
             handleFileSelect(event) {
                 const file = event.target.files[0];

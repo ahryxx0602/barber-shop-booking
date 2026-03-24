@@ -67,6 +67,20 @@
                             <h3 class="text-sm font-semibold text-gray-800 dark:text-white uppercase tracking-wider">Thông tin nghề nghiệp</h3>
                         </div>
 
+                        {{-- Chi nhánh --}}
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Chi nhánh</label>
+                            <select name="branch_id"
+                                    class="w-full border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white rounded-md shadow-sm focus:ring-brand-500 focus:border-brand-500">
+                                <option value="">— Chưa gán chi nhánh —</option>
+                                @foreach($branches as $branch)
+                                    <option value="{{ $branch->id }}" {{ old('branch_id') == $branch->id ? 'selected' : '' }}>
+                                        {{ $branch->name }} — {{ $branch->address }}
+                                    </option>
+                                @endforeach
+                            </select>
+                        </div>
+
                         {{-- Kinh nghiệm --}}
                         <div>
                             <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">

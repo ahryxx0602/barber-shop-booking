@@ -24,6 +24,7 @@ readonly class UpdateBarberData
         public ?string $bio = null,
         public int $experience_years = 0,
         public bool $is_active = false,
+        public ?int $branch_id = null,
     ) {}
 
     /**
@@ -41,6 +42,7 @@ readonly class UpdateBarberData
             bio: $data['bio'] ?? null,
             experience_years: (int) ($data['experience_years'] ?? 0),
             is_active: (bool) ($data['is_active'] ?? false),
+            branch_id: isset($data['branch_id']) ? (int) $data['branch_id'] : null,
         );
     }
 }

@@ -16,14 +16,25 @@
             </p>
         </div>
 
-        {{-- Search --}}
-        <div style="max-width:440px;margin:0 auto 28px;" x-data="{ search: '{{ request('search') }}' }">
-            <form method="GET" action="{{ route('client.barbers.index') }}">
-                <div style="position:relative;">
+        {{-- Search & Filter --}}
+        <div style="max-width:640px;margin:0 auto 28px;" x-data="{ search: '{{ request('search') }}' }">
+            <form method="GET" action="{{ route('client.barbers.index') }}" style="display:flex;gap:10px;align-items:center;">
+                <div style="position:relative;flex:1;">
                     <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--v-muted);font-size:18px;">search</span>
                     <input type="text" name="search" x-model="search" placeholder="Tìm thợ cắt..."
                         class="v-input" style="padding-left:40px;height:40px;font-size:13px;" />
                 </div>
+                @if($branches->count() > 0)
+                <select name="branch_id" onchange="this.form.submit()"
+                    class="v-input" style="height:40px;font-size:13px;max-width:200px;cursor:pointer;">
+                    <option value="">Tất cả chi nhánh</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}" {{ request('branch_id') == $branch->id ? 'selected' : '' }}>
+                            {{ $branch->name }}
+                        </option>
+                    @endforeach
+                </select>
+                @endif
             </form>
         </div>
 

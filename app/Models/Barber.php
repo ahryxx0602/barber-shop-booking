@@ -8,6 +8,7 @@ class Barber extends Model
 {
     protected $fillable = [
         'user_id',
+        'branch_id',
         'bio',
         'experience_years',
         'rating',
@@ -19,6 +20,12 @@ class Barber extends Model
     public function user()
     {
         return $this->belongsTo(User::class);
+    }
+
+    // barbers ─────────── branches (n-1) chi nhánh
+    public function branch()
+    {
+        return $this->belongsTo(Branch::class);
     }
 
     // barbers ─────────── working_schedules (1-n)

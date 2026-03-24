@@ -31,6 +31,7 @@
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Email</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">SĐT</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Kinh nghiệm</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Chi nhánh</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Đánh giá</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Trạng thái</th>
                             <th class="px-6 py-3"></th>
@@ -63,6 +64,15 @@
                                 </td>
                                 <td class="px-6 py-4 text-sm text-gray-900 dark:text-gray-300">
                                     {{ $barber->experience_years }} năm
+                                </td>
+                                <td class="px-6 py-4 text-sm">
+                                    @if ($barber->branch)
+                                        <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400">
+                                            {{ $barber->branch->name }}
+                                        </span>
+                                    @else
+                                        <span class="text-gray-400 dark:text-gray-500 text-xs">Chưa gán</span>
+                                    @endif
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="flex items-center gap-1 text-sm">
@@ -104,7 +114,7 @@
                             </tr>
                         @empty
                             <tr>
-                                <td colspan="8" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
+                                <td colspan="9" class="px-6 py-8 text-center text-sm text-gray-500 dark:text-gray-400">
                                     Chưa có thợ cắt nào. <a href="{{ route('admin.barbers.create') }}" class="text-brand-600 dark:text-brand-400">Thêm ngay</a>
                                 </td>
                             </tr>

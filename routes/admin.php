@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Admin\BarberController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
+use App\Http\Controllers\Admin\BranchController;
 use App\Http\Controllers\Admin\CommissionController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
@@ -20,6 +21,7 @@ Route::middleware(['auth', 'role:admin'])
         Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
         Route::resource('services', ServiceController::class)->except(['show']);
         Route::resource('barbers', BarberController::class)->except(['show']);
+        Route::resource('branches', BranchController::class)->except(['show']);
 
         // Lịch làm việc
         Route::get('schedules', [ScheduleController::class, 'index'])->name('schedules.index');

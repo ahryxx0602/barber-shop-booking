@@ -5,6 +5,7 @@ namespace Database\Seeders;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Storage;
 use Carbon\Carbon;
 
 class UserSeeder extends Seeder
@@ -14,7 +15,7 @@ class UserSeeder extends Seeder
         // ──────────────────────────────────────
         // Admin (giữ nguyên, không thay đổi)
         // ──────────────────────────────────────
-        User::create([
+        $admin = User::create([
             'name'       => 'Admin',
             'email'      => 'admin@barberbook.com',
             'password'   => Hash::make('password'),
@@ -24,9 +25,10 @@ class UserSeeder extends Seeder
             'created_at' => Carbon::parse('2025-01-01 08:00:00'),
             'updated_at' => Carbon::parse('2025-01-01 08:00:00'),
         ]);
+        $this->downloadAvatar($admin, 'Admin');
 
         // ──────────────────────────────────────
-        // Barbers — 5 thợ cắt, ngày tạo rải rác
+        // Barbers Chi nhánh Quận 1 — 5 thợ
         // ──────────────────────────────────────
         $barbers = [
             ['name' => 'Nguyễn Văn Hùng',  'email' => 'hung@barberbook.com',  'phone' => '0900000002', 'date' => '2025-01-15'],
@@ -38,7 +40,7 @@ class UserSeeder extends Seeder
 
         foreach ($barbers as $barber) {
             $date = Carbon::parse($barber['date'] . ' 09:00:00');
-            User::create([
+            $user = User::create([
                 'name'       => $barber['name'],
                 'email'      => $barber['email'],
                 'password'   => Hash::make('password'),
@@ -48,6 +50,59 @@ class UserSeeder extends Seeder
                 'created_at' => $date,
                 'updated_at' => $date,
             ]);
+            $this->downloadAvatar($user, $barber['name']);
+        }
+
+        // ──────────────────────────────────────
+        // Barbers Chi nhánh Quận 3 — 5 thợ
+        // ──────────────────────────────────────
+        $barbersQ3 = [
+            ['name' => 'Võ Minh Tuấn',     'email' => 'tuan.q3@barberbook.com',  'phone' => '0900000101', 'date' => '2025-04-01'],
+            ['name' => 'Huỳnh Đức Thịnh',  'email' => 'thinh.q3@barberbook.com', 'phone' => '0900000102', 'date' => '2025-05-10'],
+            ['name' => 'Nguyễn Tấn Phát',  'email' => 'phat.q3@barberbook.com',  'phone' => '0900000103', 'date' => '2025-06-15'],
+            ['name' => 'Trần Anh Kiệt',    'email' => 'kiet.q3@barberbook.com',  'phone' => '0900000104', 'date' => '2025-07-20'],
+            ['name' => 'Lê Hữu Nghĩa',    'email' => 'nghia.q3@barberbook.com', 'phone' => '0900000105', 'date' => '2025-08-25'],
+        ];
+
+        foreach ($barbersQ3 as $barber) {
+            $date = Carbon::parse($barber['date'] . ' 09:00:00');
+            $user = User::create([
+                'name'       => $barber['name'],
+                'email'      => $barber['email'],
+                'password'   => Hash::make('password'),
+                'role'       => 'barber',
+                'phone'      => $barber['phone'],
+                'is_active'  => true,
+                'created_at' => $date,
+                'updated_at' => $date,
+            ]);
+            $this->downloadAvatar($user, $barber['name']);
+        }
+
+        // ──────────────────────────────────────
+        // Barbers Chi nhánh Thủ Đức — 5 thợ
+        // ──────────────────────────────────────
+        $barbersTD = [
+            ['name' => 'Phan Quốc Đạt',    'email' => 'dat.td@barberbook.com',   'phone' => '0900000201', 'date' => '2025-09-05'],
+            ['name' => 'Đặng Nhật Hào',    'email' => 'hao.td@barberbook.com',   'phone' => '0900000202', 'date' => '2025-10-10'],
+            ['name' => 'Bùi Trọng Nhân',   'email' => 'nhan.td@barberbook.com',  'phone' => '0900000203', 'date' => '2025-11-15'],
+            ['name' => 'Mai Xuân Trường',   'email' => 'truong.td@barberbook.com','phone' => '0900000204', 'date' => '2025-12-20'],
+            ['name' => 'Cao Minh Hiếu',     'email' => 'hieu.td@barberbook.com',  'phone' => '0900000205', 'date' => '2026-01-10'],
+        ];
+
+        foreach ($barbersTD as $barber) {
+            $date = Carbon::parse($barber['date'] . ' 09:00:00');
+            $user = User::create([
+                'name'       => $barber['name'],
+                'email'      => $barber['email'],
+                'password'   => Hash::make('password'),
+                'role'       => 'barber',
+                'phone'      => $barber['phone'],
+                'is_active'  => true,
+                'created_at' => $date,
+                'updated_at' => $date,
+            ]);
+            $this->downloadAvatar($user, $barber['name']);
         }
 
         // ──────────────────────────────────────
@@ -123,7 +178,7 @@ class UserSeeder extends Seeder
 
         foreach ($customers as $index => $customer) {
             $date = Carbon::parse($customer['date'] . ' ' . rand(7, 20) . ':' . str_pad(rand(0, 59), 2, '0', STR_PAD_LEFT) . ':00');
-            User::create([
+            $user = User::create([
                 'name'       => $customer['name'],
                 'email'      => 'customer' . ($index + 1) . '@barberbook.com',
                 'password'   => Hash::make('password'),
@@ -133,6 +188,42 @@ class UserSeeder extends Seeder
                 'created_at' => $date,
                 'updated_at' => $date,
             ]);
+            $this->downloadAvatar($user, $customer['name']);
+        }
+    }
+
+    /**
+     * Tải avatar từ UI Avatars API và lưu vào storage
+     */
+    private function downloadAvatar(User $user, string $name): void
+    {
+        try {
+            // Màu nền theo role
+            $bgColors = [
+                'admin'    => '1c1713',
+                'barber'   => 'b08968',
+                'customer' => '8a7a6a',
+            ];
+            $bg = $bgColors[$user->role->value] ?? '8a7a6a';
+
+            $url = 'https://ui-avatars.com/api/?'
+                . http_build_query([
+                    'name'       => $name,
+                    'size'       => 200,
+                    'background' => $bg,
+                    'color'      => 'fff',
+                    'format'     => 'png',
+                    'bold'       => 'true',
+                ]);
+
+            $imageContent = @file_get_contents($url);
+            if ($imageContent) {
+                $path = 'avatars/' . $user->id . '.png';
+                Storage::disk('public')->put($path, $imageContent);
+                $user->update(['avatar' => $path]);
+            }
+        } catch (\Exception $e) {
+            // Bỏ qua lỗi tải ảnh, không ảnh hưởng seed
         }
     }
 }

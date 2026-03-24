@@ -28,9 +28,10 @@ class BookingController extends Controller
     public function create(): View
     {
         $services = Service::where('is_active', true)->get();
-        $barbers = Barber::with('user')->where('is_active', true)->get();
+        $barbers = Barber::with('user', 'branch')->where('is_active', true)->get();
+        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
 
-        return view('client.booking.create', compact('services', 'barbers'));
+        return view('client.booking.create', compact('services', 'barbers', 'branches'));
     }
 
     public function getSlots(Request $request): JsonResponse

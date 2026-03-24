@@ -20,13 +20,14 @@ class BarberController extends Controller
 
     public function index(): View
     {
-        $barbers = Barber::with('user')->latest()->paginate(10);
+        $barbers = Barber::with('user', 'branch')->latest()->paginate(10);
         return view('admin.barbers.index', compact('barbers'));
     }
 
     public function create(): View
     {
-        return view('admin.barbers.create');
+        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+        return view('admin.barbers.create', compact('branches'));
     }
 
     public function store(StoreBarberRequest $request): RedirectResponse
@@ -43,7 +44,8 @@ class BarberController extends Controller
     public function edit(Barber $barber): View
     {
         $barber->load('user');
-        return view('admin.barbers.edit', compact('barber'));
+        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+        return view('admin.barbers.edit', compact('barber', 'branches'));
     }
 
     public function update(UpdateBarberRequest $request, Barber $barber): RedirectResponse

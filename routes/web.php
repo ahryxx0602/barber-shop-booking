@@ -19,6 +19,7 @@ Route::get('/', function () {
 Route::name('client.')->group(function () {
     Route::get('/barbers', [ClientBarberController::class, 'index'])->name('barbers.index');
     Route::get('/barbers/{barber}', [ClientBarberController::class, 'show'])->name('barbers.show');
+    Route::get('/branches', [\App\Http\Controllers\Client\BranchController::class, 'index'])->name('branches.index');
     Route::get('/booking/slots', [ClientBookingController::class, 'getSlots'])->name('booking.slots');
 
     // Booking - accessible to both guests and authenticated users

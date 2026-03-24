@@ -33,6 +33,7 @@ class BarberService
 
             return Barber::create([
                 'user_id'          => $user->id,
+                'branch_id'        => $data->branch_id,
                 'bio'              => $data->bio,
                 'experience_years' => $data->experience_years,
                 'is_active'        => $data->is_active,
@@ -68,6 +69,7 @@ class BarberService
             $barber->user->update($userData);
 
             $barber->update([
+                'branch_id'        => $data->branch_id,
                 'bio'              => $data->bio,
                 'experience_years' => $data->experience_years,
                 'is_active'        => $data->is_active,

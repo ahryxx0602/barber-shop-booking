@@ -25,6 +25,7 @@ class UpdateBarberRequest extends FormRequest
             'bio'              => ['nullable', 'string', 'max:1000'],
             'experience_years' => ['required', 'integer', 'min:0', 'max:50'],
             'is_active'        => ['nullable', 'boolean'],
+            'branch_id'        => ['nullable', 'exists:branches,id'],
         ];
     }
 

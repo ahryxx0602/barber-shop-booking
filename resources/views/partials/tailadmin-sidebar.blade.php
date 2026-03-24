@@ -49,7 +49,7 @@
 
         <ul class="flex flex-col gap-4 mb-6">
 
-          <!-- Menu: Dashboard -->
+          <!-- ═══ 1. Dashboard ═══ -->
           <li>
             <a href="{{ route('admin.dashboard') }}" @click="selected = 'Dashboard'" class="menu-item group"
               :class="selected === 'Dashboard' ? 'menu-item-active' : 'menu-item-inactive'">
@@ -61,9 +61,8 @@
               <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Dashboard</span>
             </a>
           </li>
-          <!-- /Dashboard -->
 
-          <!-- Menu: Dịch vụ -->
+          <!-- ═══ 2. Dịch vụ (dropdown) ═══ -->
           <li>
             <a href="#" @click.prevent="selected = (selected === 'DichVu' ? '' : 'DichVu')" class="menu-item group"
               :class="selected === 'DichVu' ? 'menu-item-active' : 'menu-item-inactive'">
@@ -80,7 +79,6 @@
                   stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </a>
-            <!-- Dropdown -->
             <div :class="selected === 'DichVu' ? 'block' : 'hidden'">
               <ul :class="sidebarToggle ? 'lg:hidden' : 'flex'" class="flex flex-col gap-1 mt-2 pl-9">
                 <li>
@@ -97,11 +95,9 @@
                 </li>
               </ul>
             </div>
-            <!-- /Dropdown -->
           </li>
-          <!-- /Dịch vụ -->
 
-          <!-- Menu: Thợ cắt -->
+          <!-- ═══ 3. Thợ cắt & Chi nhánh (dropdown) ═══ -->
           <li>
             <a href="#" @click.prevent="selected = (selected === 'ThoCat' ? '' : 'ThoCat')" class="menu-item group"
               :class="selected === 'ThoCat' ? 'menu-item-active' : 'menu-item-inactive'">
@@ -118,7 +114,6 @@
                   stroke-linecap="round" stroke-linejoin="round" />
               </svg>
             </a>
-            <!-- Dropdown -->
             <div :class="selected === 'ThoCat' ? 'block' : 'hidden'">
               <ul :class="sidebarToggle ? 'lg:hidden' : 'flex'" class="flex flex-col gap-1 mt-2 pl-9">
                 <li>
@@ -133,46 +128,59 @@
                     Thêm thợ
                   </a>
                 </li>
+                <li>
+                  <a href="{{ route('admin.branches.index') }}" class="menu-dropdown-item group"
+                    :class="page === 'branches' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
+                    Chi nhánh
+                  </a>
+                </li>
               </ul>
             </div>
-            <!-- /Dropdown -->
           </li>
-          <!-- /Thợ cắt -->
 
-          <!-- Menu: Lịch làm việc -->
+          <!-- ═══ 4. Lịch & Nghỉ phép (dropdown) ═══ -->
           <li>
-            <a href="{{ route('admin.schedules.index') }}" @click="selected = 'LichLam'" class="menu-item group"
-              :class="selected === 'LichLam' ? 'menu-item-active' : 'menu-item-inactive'">
-              <svg :class="selected === 'LichLam' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
+            @php $pendingLeaveCount = \App\Models\BarberLeave::where('status', 'pending')->count(); @endphp
+            <a href="#" @click.prevent="selected = (selected === 'LichNghi' ? '' : 'LichNghi')" class="menu-item group"
+              :class="selected === 'LichNghi' ? 'menu-item-active' : 'menu-item-inactive'">
+              <svg :class="selected === 'LichNghi' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
                 height="24" viewBox="0 0 24 24" fill="none">
                 <path fill-rule="evenodd" clip-rule="evenodd"
                   d="M6.75 2.5C6.75 2.08579 7.08578 1.75 7.5 1.75C7.91421 1.75 8.25 2.08579 8.25 2.5V3.25H15.75V2.5C15.75 2.08579 16.0858 1.75 16.5 1.75C16.9142 1.75 17.25 2.08579 17.25 2.5V3.25H19C20.2426 3.25 21.25 4.25736 21.25 5.5V19.5C21.25 20.7426 20.2426 21.75 19 21.75H5C3.75736 21.75 2.75 20.7426 2.75 19.5V5.5C2.75 4.25736 3.75736 3.25 5 3.25H6.75V2.5ZM15.75 4.75V5.5C15.75 5.91422 16.0858 6.25 16.5 6.25C16.9142 6.25 17.25 5.91422 17.25 5.5V4.75H19C19.4142 4.75 19.75 5.08579 19.75 5.5V8.25H4.25V5.5C4.25 5.08579 4.58579 4.75 5 4.75H6.75V5.5C6.75 5.91422 7.08578 6.25 7.5 6.25C7.91421 6.25 8.25 5.91422 8.25 5.5V4.75H15.75ZM4.25 9.75V19.5C4.25 19.9142 4.58579 20.25 5 20.25H19C19.4142 20.25 19.75 19.9142 19.75 19.5V9.75H4.25Z" />
               </svg>
-              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Lịch làm việc</span>
-            </a>
-          </li>
-          <!-- /Lịch làm việc -->
-
-          <!-- Menu: Ngày nghỉ -->
-          <li>
-            <a href="{{ route('admin.leaves.index') }}" @click="selected = 'NgayNghi'" class="menu-item group"
-              :class="selected === 'NgayNghi' ? 'menu-item-active' : 'menu-item-inactive'">
-              <svg :class="selected === 'NgayNghi' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
-                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                <path d="M12 9v2m0 4h.01" />
-              </svg>
-              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Ngày nghỉ</span>
-              @php $pendingLeaveCount = \App\Models\BarberLeave::where('status', 'pending')->count(); @endphp
+              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Lịch & Nghỉ</span>
               @if($pendingLeaveCount > 0)
                 <span class="ml-auto inline-flex items-center justify-center w-5 h-5 text-xs font-bold bg-yellow-500 text-white rounded-full" :class="sidebarToggle ? 'lg:hidden' : ''">{{ $pendingLeaveCount }}</span>
               @endif
+              <svg class="menu-item-arrow"
+                :class="[selected === 'LichNghi' ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive', sidebarToggle ? 'lg:hidden' : '']"
+                width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M4.79175 7.39584L10.0001 12.6042L15.2084 7.39585" stroke="" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
             </a>
+            <div :class="selected === 'LichNghi' ? 'block' : 'hidden'">
+              <ul :class="sidebarToggle ? 'lg:hidden' : 'flex'" class="flex flex-col gap-1 mt-2 pl-9">
+                <li>
+                  <a href="{{ route('admin.schedules.index') }}" class="menu-dropdown-item group"
+                    :class="page === 'schedules' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
+                    Lịch làm việc
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ route('admin.leaves.index') }}" class="menu-dropdown-item group"
+                    :class="page === 'leaves' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
+                    Ngày nghỉ
+                    @if($pendingLeaveCount > 0)
+                      <span class="ml-auto inline-flex items-center justify-center w-4 h-4 text-[10px] font-bold bg-yellow-500 text-white rounded-full">{{ $pendingLeaveCount }}</span>
+                    @endif
+                  </a>
+                </li>
+              </ul>
+            </div>
           </li>
-          <!-- /Ngày nghỉ -->
 
-          <!-- Menu: Booking -->
+          <!-- ═══ 5. Booking ═══ -->
           <li>
             <a href="{{ route('admin.bookings.index') }}" @click="selected = 'Booking'" class="menu-item group"
               :class="selected === 'Booking' ? 'menu-item-active' : 'menu-item-inactive'">
@@ -184,83 +192,84 @@
               <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Booking</span>
             </a>
           </li>
-          <!-- /Booking -->
 
-          <!-- Menu: Mã giảm giá -->
+          <!-- ═══ 6. Tài chính (dropdown: Mã giảm giá + Hoa hồng) ═══ -->
           <li>
-            <a href="{{ route('admin.coupons.index') }}" @click="selected = 'Coupon'" class="menu-item group"
-              :class="selected === 'Coupon' ? 'menu-item-active' : 'menu-item-inactive'">
-              <svg :class="selected === 'Coupon' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
-                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"></path>
-                <line x1="7" y1="7" x2="7.01" y2="7"></line>
-              </svg>
-              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Mã giảm giá</span>
-            </a>
-          </li>
-          <!-- /Mã giảm giá -->
-
-          <!-- Menu: Hoa hồng -->
-          <li>
-            <a href="{{ route('admin.commissions.index') }}" @click="selected = 'HoaHong'" class="menu-item group"
-              :class="selected === 'HoaHong' ? 'menu-item-active' : 'menu-item-inactive'">
-              <svg :class="selected === 'HoaHong' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
+            <a href="#" @click.prevent="selected = (selected === 'TaiChinh' ? '' : 'TaiChinh')" class="menu-item group"
+              :class="selected === 'TaiChinh' ? 'menu-item-active' : 'menu-item-inactive'">
+              <svg :class="selected === 'TaiChinh' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
                 height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                 stroke-linecap="round" stroke-linejoin="round">
                 <line x1="12" y1="1" x2="12" y2="23"></line>
                 <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
               </svg>
-              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Hoa hồng</span>
-            </a>
-          </li>
-          <!-- /Hoa hồng -->
-
-          <!-- Menu: Người dùng -->
-          <li>
-            <a href="{{ route('admin.users.index') }}" @click="selected = 'NguoiDung'" class="menu-item group"
-              :class="selected === 'NguoiDung' ? 'menu-item-active' : 'menu-item-inactive'">
-              <svg :class="selected === 'NguoiDung' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
-                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-                <circle cx="9" cy="7" r="4" />
-                <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-                <path d="M16 3.13a4 4 0 0 1 0 7.75" />
+              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Tài chính</span>
+              <svg class="menu-item-arrow"
+                :class="[selected === 'TaiChinh' ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive', sidebarToggle ? 'lg:hidden' : '']"
+                width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M4.79175 7.39584L10.0001 12.6042L15.2084 7.39585" stroke="" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round" />
               </svg>
-              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Người dùng</span>
             </a>
+            <div :class="selected === 'TaiChinh' ? 'block' : 'hidden'">
+              <ul :class="sidebarToggle ? 'lg:hidden' : 'flex'" class="flex flex-col gap-1 mt-2 pl-9">
+                <li>
+                  <a href="{{ route('admin.coupons.index') }}" class="menu-dropdown-item group"
+                    :class="page === 'coupons' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
+                    Mã giảm giá
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ route('admin.commissions.index') }}" class="menu-dropdown-item group"
+                    :class="page === 'commissions' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
+                    Hoa hồng
+                  </a>
+                </li>
+              </ul>
+            </div>
           </li>
-          <!-- /Người dùng -->
 
-          <!-- Menu: Báo cáo -->
+          <!-- ═══ 7. Quản trị (dropdown: Người dùng + Báo cáo + Hệ thống) ═══ -->
           <li>
-            <a href="{{ route('admin.reports.index') }}" @click="selected = 'BaoCao'" class="menu-item group"
-              :class="selected === 'BaoCao' ? 'menu-item-active' : 'menu-item-inactive'">
-              <svg :class="selected === 'BaoCao' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
-                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
-                stroke-linecap="round" stroke-linejoin="round">
-                <path d="M18 20V10M12 20V4M6 20v-6" />
-              </svg>
-              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Báo cáo</span>
-            </a>
-          </li>
-          <!-- /Báo cáo -->
-
-          <!-- Menu: Hệ thống -->
-          <li>
-            <a href="{{ route('admin.system.logs') }}" @click="selected = 'HeThong'" class="menu-item group"
-              :class="selected === 'HeThong' ? 'menu-item-active' : 'menu-item-inactive'">
-              <svg :class="selected === 'HeThong' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
+            <a href="#" @click.prevent="selected = (selected === 'QuanTri' ? '' : 'QuanTri')" class="menu-item group"
+              :class="selected === 'QuanTri' ? 'menu-item-active' : 'menu-item-inactive'">
+              <svg :class="selected === 'QuanTri' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
                 height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
                 stroke-linecap="round" stroke-linejoin="round">
                 <path d="M12.22 2h-.44a2 2 0 0 0-2 2v.18a2 2 0 0 1-1 1.73l-.43.25a2 2 0 0 1-2 0l-.15-.08a2 2 0 0 0-2.73.73l-.22.38a2 2 0 0 0 .73 2.73l.15.1a2 2 0 0 1 1 1.72v.51a2 2 0 0 1-1 1.74l-.15.09a2 2 0 0 0-.73 2.73l.22.38a2 2 0 0 0 2.73.73l.15-.08a2 2 0 0 1 2 0l.43.25a2 2 0 0 1 1 1.73V20a2 2 0 0 0 2 2h.44a2 2 0 0 0 2-2v-.18a2 2 0 0 1 1-1.73l.43-.25a2 2 0 0 1 2 0l.15.08a2 2 0 0 0 2.73-.73l.22-.39a2 2 0 0 0-.73-2.73l-.15-.08a2 2 0 0 1-1-1.74v-.5a2 2 0 0 1 1-1.74l.15-.09a2 2 0 0 0 .73-2.73l-.22-.38a2 2 0 0 0-2.73-.73l-.15.08a2 2 0 0 1-2 0l-.43-.25a2 2 0 0 1-1-1.73V4a2 2 0 0 0-2-2z" />
                 <circle cx="12" cy="12" r="3" />
               </svg>
-              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Hệ thống</span>
+              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Quản trị</span>
+              <svg class="menu-item-arrow"
+                :class="[selected === 'QuanTri' ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive', sidebarToggle ? 'lg:hidden' : '']"
+                width="20" height="20" viewBox="0 0 20 20" fill="none">
+                <path d="M4.79175 7.39584L10.0001 12.6042L15.2084 7.39585" stroke="" stroke-width="1.5"
+                  stroke-linecap="round" stroke-linejoin="round" />
+              </svg>
             </a>
+            <div :class="selected === 'QuanTri' ? 'block' : 'hidden'">
+              <ul :class="sidebarToggle ? 'lg:hidden' : 'flex'" class="flex flex-col gap-1 mt-2 pl-9">
+                <li>
+                  <a href="{{ route('admin.users.index') }}" class="menu-dropdown-item group"
+                    :class="page === 'users' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
+                    Người dùng
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ route('admin.reports.index') }}" class="menu-dropdown-item group"
+                    :class="page === 'reports' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
+                    Báo cáo
+                  </a>
+                </li>
+                <li>
+                  <a href="{{ route('admin.system.logs') }}" class="menu-dropdown-item group"
+                    :class="page === 'system' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
+                    Hệ thống
+                  </a>
+                </li>
+              </ul>
+            </div>
           </li>
-          <!-- /Hệ thống -->
 
         </ul>
       </div>
