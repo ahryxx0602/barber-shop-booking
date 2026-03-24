@@ -8,9 +8,9 @@
 ## Trạng thái hiện tại
 
 ```
-Giai đoạn đang làm : 11 — Nâng cao trải nghiệm khách hàng (Exp P1)
-Bước đang làm      : Hoàn thành toàn bộ Giai đoạn 11
-Cập nhật lần cuối  : 23/03/2026
+Giai đoạn đang làm : 12 — Tối ưu vận hành cho Barber (Exp P2)
+Bước đang làm      : 12.1 Lịch trực quan (Calendar View) — Hoàn thành
+Cập nhật lần cuối  : 24/03/2026
 ```
 
 ---
@@ -37,7 +37,7 @@ Cập nhật lần cuối  : 23/03/2026
 | 9 | Kiểm thử & Hoàn thiện | ✅ Hoàn thành |
 | 10 | Post-Review Improvements | ✅ Hoàn thành |
 | 11 | Nâng cao trải nghiệm khách hàng (Exp P1) | ✅ Hoàn thành |
-| 12 | Tối ưu vận hành cho Barber (Exp P2) | ⬜ Chưa bắt đầu |
+| 12 | Tối ưu vận hành cho Barber (Exp P2) | 🔄 Đang làm |
 | 13 | Mở rộng quản trị Admin (Exp P3) | ⬜ Chưa bắt đầu |
 
 ---
@@ -232,7 +232,7 @@ Cập nhật lần cuối  : 23/03/2026
 - [x] 11.6 Bugfixes & UI Polish (Real-time notifications, Graceful invalid coupon fallback, Vintage Emails HTML, AJAX Favorite toggles, Double Email events fix)
 
 ### Giai đoạn 12 — Tối ưu vận hành cho Barber (Exp P2)
-- [ ] 12.1 Lịch trực quan (Calendar View với FullCalendar.js)
+- [x] 12.1 Lịch trực quan (Calendar View với FullCalendar.js)
 - [ ] 12.2 Quản lý ngày nghỉ đột xuất (BarberLeave)
 - [ ] 12.3 Ghi chú khách hàng riêng (BarberNote)
 - [ ] 12.4 Thống kê cá nhân hiển thị trên Dashboard Barber

@@ -6,6 +6,20 @@
 @section('title', 'Tất cả lịch hẹn')
 
 @section('content')
+    {{-- Tab chuyển đổi chế độ xem --}}
+    <div class="flex items-center gap-1 mb-6 bg-gray-100 dark:bg-gray-800 rounded-lg p-1 w-fit">
+        <a href="{{ route('barber.bookings.index', request()->only('week')) }}"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium bg-white dark:bg-gray-700 text-gray-800 dark:text-white shadow-sm">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 10h16M4 14h16M4 18h16"/></svg>
+            Danh sách
+        </a>
+        <a href="{{ route('barber.bookings.calendar') }}"
+            class="inline-flex items-center gap-1.5 px-4 py-2 rounded-md text-sm font-medium text-gray-500 dark:text-gray-400 hover:text-gray-700 dark:hover:text-gray-300 transition-colors">
+            <svg class="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/></svg>
+            Lịch trực quan
+        </a>
+    </div>
+
     {{-- Header with week navigation --}}
     <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
         <div>

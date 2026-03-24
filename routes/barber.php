@@ -16,6 +16,8 @@ Route::middleware(['auth', 'role:barber,admin'])
         Route::put('/schedule', [ScheduleController::class, 'update'])->name('schedule.update');
 
         // Quan ly booking
+        Route::get('/bookings/calendar', [BarberBookingController::class, 'calendar'])->name('bookings.calendar');
+        Route::get('/bookings/events', [BarberBookingController::class, 'events'])->name('bookings.events');
         Route::get('/bookings', [BarberBookingController::class, 'index'])->name('bookings.index');
         Route::patch('/bookings/{booking}/confirm', [BarberBookingController::class, 'confirm'])->name('bookings.confirm');
         Route::patch('/bookings/{booking}/reject', [BarberBookingController::class, 'reject'])->name('bookings.reject');

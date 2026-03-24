@@ -96,4 +96,82 @@ class BookingController extends Controller
 
         return back()->with('success', 'Đã hoàn thành lịch hẹn.');
     }
+
+    /**
+     * Trang lịch trực quan (Calendar View) cho thợ cắt
+     */
+    public function calendar(): View
+    {
+        return view('barber.bookings.calendar');
+    }
+
+    /**
+     * API trả về danh sách events cho FullCalendar (JSON)
+     * Params: start, end (ISO date strings từ FullCalendar)
+     */
+    public function events(Request $request): \Illuminate\Http\JsonResponse
+    {
+        $barber = $request->user()->barber;
+
+        $query = Booking::where('barber_id', $barber->id)
+            ->with(['customer', 'services']);
+
+        // FullCalendar gửi start/end param dạng ISO string
+        if ($request->filled('start')) {
+            $query->where('booking_date', '>=', Carbon::parse($request->input('start'))->toDateString());
+        }
+        if ($request->filled('end')) {
+            $query->where('booking_date', '<=', Carbon::parse($request->input('end'))->toDateString());
+        }
+
+        $bookings = $query->orderBy('booking_date')->orderBy('start_time')->get();
+
+        // Map sang format FullCalendar events
+        $events = $bookings->map(function (Booking $booking) {
+            // Kết hợp booking_date + start_time / end_time thành datetime
+            $dateStr = $booking->booking_date->format('Y-m-d');
+            $start = Carbon::parse($dateStr . ' ' . $booking->start_time);
+            $end = Carbon::parse($dateStr . ' ' . $booking->end_time);
+
+            // Nếu end_time qua nửa đêm (end < start), giữ event trong cùng ngày
+            if ($end->lte($start)) {
+                $end = Carbon::parse($dateStr . ' 23:59:00');
+            }
+
+            // Gán màu theo trạng thái
+            $colorMap = [
+                BookingStatus::Pending->value     => ['bg' => '#f59e0b', 'border' => '#d97706'],
+                BookingStatus::Confirmed->value   => ['bg' => '#3b82f6', 'border' => '#2563eb'],
+                BookingStatus::InProgress->value  => ['bg' => '#8b5cf6', 'border' => '#7c3aed'],
+                BookingStatus::Completed->value   => ['bg' => '#10b981', 'border' => '#059669'],
+                BookingStatus::Cancelled->value   => ['bg' => '#ef4444', 'border' => '#dc2626'],
+            ];
+
+            $colors = $colorMap[$booking->status->value] ?? ['bg' => '#6b7280', 'border' => '#4b5563'];
+
+            return [
+                'id'              => $booking->id,
+                'title'           => $booking->customer->name,
+                'start'           => $start->format('Y-m-d\TH:i:s'),
+                'end'             => $end->format('Y-m-d\TH:i:s'),
+                'backgroundColor' => $colors['bg'],
+                'borderColor'     => $colors['border'],
+                'textColor'       => '#ffffff',
+                'extendedProps'   => [
+                    'booking_code' => $booking->booking_code,
+                    'customer'     => $booking->customer->name,
+                    'phone'        => $booking->customer->phone ?? '',
+                    'services'     => $booking->services->pluck('name')->join(', '),
+                    'status'       => $booking->status->value,
+                    'status_label' => $booking->status->label(),
+                    'total_price'  => number_format($booking->total_price, 0, ',', '.') . 'đ',
+                    'note'         => $booking->note ?? '',
+                    'start_time'   => Carbon::parse($booking->start_time)->format('H:i'),
+                    'end_time'     => Carbon::parse($booking->end_time)->format('H:i'),
+                ],
+            ];
+        });
+
+        return response()->json($events);
+    }
 }
