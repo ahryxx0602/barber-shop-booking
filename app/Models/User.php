@@ -58,6 +58,18 @@ class User extends Authenticatable
         return $this->belongsToMany(Barber::class, 'favorite_barbers')->withTimestamps();
     }
 
+    // users ──────────── orders (1-n) đơn hàng sản phẩm
+    public function orders()
+    {
+        return $this->hasMany(Order::class, 'customer_id');
+    }
+
+    // users ──────────── shipping_addresses (1-n) địa chỉ giao hàng
+    public function shippingAddresses()
+    {
+        return $this->hasMany(ShippingAddress::class);
+    }
+
     /**
      * The attributes that should be hidden for serialization.
      *

@@ -9,7 +9,7 @@
 
 ```
 Giai đoạn đang làm : 13 — Mở rộng quản trị Admin (Exp P3)
-Bước đang làm      : 13.1 — Quản lý tỷ lệ hoa hồng (đang triển khai)
+Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅)
 Cập nhật lần cuối  : 24/03/2026
 ```
 
@@ -37,8 +37,8 @@ Cập nhật lần cuối  : 24/03/2026
 | 9 | Kiểm thử & Hoàn thiện | ✅ Hoàn thành |
 | 10 | Post-Review Improvements | ✅ Hoàn thành |
 | 11 | Nâng cao trải nghiệm khách hàng (Exp P1) | ✅ Hoàn thành |
-| 12 | Tối ưu vận hành cho Barber (Exp P2) | 🔄 Đang làm |
-| 13 | Mở rộng quản trị Admin (Exp P3) | ⬜ Chưa bắt đầu |
+| 12 | Tối ưu vận hành cho Barber (Exp P2) | ✅ Hoàn thành |
+| 13 | Mở rộng quản trị Admin (Exp P3) | 🔄 Đang làm |
 
 ---
 
@@ -278,8 +278,88 @@ Cập nhật lần cuối  : 24/03/2026
 **Barber — đã xong:**
 - [x] Trang xem lịch sử hoa hồng cá nhân (barber xem chi tiết từng lần được tính)
 - [x] Biểu đồ hoa hồng theo thời gian (bar chart 6 tháng gần nhất)
-- [ ] 13.2 Quản lý chi nhánh (Multi-Branch) & gán Barber
-- [ ] 13.3 Quản lý sản phẩm bán kèm (Product, OrderItem)
+- [x] 13.2 Quản lý chi nhánh (Multi-Branch) & gán Barber
+
+#### Chi tiết subtasks 13.2:
+
+**Admin — Quản lý chi nhánh:**
+- [x] Trang danh sách chi nhánh: stats cards (tổng, active, barbers, doanh thu tháng)
+- [x] CRUD chi nhánh (tạo/sửa/xóa) với upload ảnh
+- [x] Cột doanh thu tháng per branch (JOIN barbers→bookings)
+- [x] Filter theo tháng (input[type=month]) với fallback khi rỗng
+- [x] Fix layout vỡ bảng chi nhánh
+
+**Admin — Dashboard Integration:**
+- [x] Section "Hiệu suất chi nhánh" trên dashboard (cards + progress bars gradient)
+- [x] Hiển thị: ảnh, tên, số thợ, bookings, doanh thu + progress bar so sánh
+
+**Admin — Sidebar tối ưu:**
+- [x] Bỏ mục "Thêm" thừa trong dropdowns (Thợ cắt, Dịch vụ)
+- [x] Chuyển "Dịch vụ" từ dropdown thành link trực tiếp
+
+**Admin — Filter chi nhánh:**
+- [x] Filter theo chi nhánh ở trang Danh sách thợ
+- [x] Filter theo chi nhánh ở trang Lịch làm việc
+- [x] Filter theo chi nhánh ở trang Booking (hiển thị thợ theo nhóm chi nhánh)
+
+**Client UI:**
+- [x] Fix dropdown chi nhánh bị mất chữ ở trang /barbers (padding/height conflict)
+
+**Bug Fix — TimeSlotService:**
+- [x] `slots:generate` giờ check `BarberLeave` approved:
+  - Nghỉ full_day → skip cả ngày
+  - Nghỉ partial → skip slot trùng giờ nghỉ
+  - Pre-load leaves 1 lần để tránh N+1
+
+**README:**
+- [x] Thêm bước 7: Queue Worker (`php artisan queue:work`) + hướng dẫn cấu hình email
+- [x] Bảng Schedule Commands (slots:generate, bookings:expire, logs:cleanup)
+- [x] Lệnh `php artisan schedule:work` cho dev chạy realtime
+
+- [/] 13.3 Quản lý sản phẩm bán kèm (Module E-commerce)
+
+#### Chi tiết Phase 1 — Database & Models (13.3):
+
+**Migrations — đã xong:**
+- [x] Migration `create_products_table` (name, slug, description, price, image, stock_quantity, sku, category, is_active)
+- [x] Migration `create_shipping_addresses_table` (user_id FK, recipient_name, phone, address, ward, district, city, lat/lng, is_default)
+- [x] Migration `create_orders_table` (order_code, customer_id FK, shipping_address_id FK, subtotal, tax, shipping_fee, total_amount, status, note, cancel)
+- [x] Migration `create_order_items_table` (order_id FK, product_id FK, quantity, unit_price, total_price)
+- [x] Migration `create_order_payments_table` (order_id FK, amount, method, status, transaction_id, paid_at)
+
+**Enums — đã xong:**
+- [x] `ProductCategory` (HairCare, Styling, Tools, Accessories, Other) + `label()`
+- [x] `OrderStatus` (Pending, Confirmed, Shipping, Delivered, Cancelled) + `label()`, `color()`, `canTransitionTo()`
+- [x] `OrderPaymentMethod` (Cod, VNPay, Momo) + `label()`
+
+**Models — đã xong:**
+- [x] `Product` model (fillable, casts, scope `active()`, `byCategory()`, rel `orderItems()`)
+- [x] `Order` model (fillable, casts OrderStatus, rel `customer()`, `items()`, `shippingAddress()`, `payment()`)
+- [x] `OrderItem` model (fillable, casts, rel `order()`, `product()`)
+- [x] `ShippingAddress` model (fillable, casts, rel `user()`, `orders()`)
+- [x] `OrderPayment` model (fillable, casts OrderPaymentMethod + PaymentStatus, rel `order()`)
+- [x] Cập nhật `User` model: thêm `orders()` hasMany + `shippingAddresses()` hasMany
+
+**Chạy migrate:** ✅ Thành công (5 bảng mới đã tạo)
+
+#### Chi tiết Phase 2 — Services & DTOs (13.3):
+
+**DTOs — đã xong:**
+- [x] `CreateProductData` (readonly class, fromRequest factory) — tạo sản phẩm
+- [x] `UpdateProductData` (readonly class, fromRequest factory) — cập nhật sản phẩm
+- [x] `CreateOrderData` (readonly class, fromRequest + fromArray) — đặt đơn hàng
+- [x] `ShippingAddressData` (readonly class, fromRequest + fromArray) — địa chỉ giao hàng
+
+**Services — đã xong:**
+- [x] `ProductService` — CRUD + auto slug + image upload + stock management (lockForUpdate)
+- [x] `ShippingService` — Google Maps Distance Matrix API + fallback + feeFromDistance configurable
+- [x] `OrderService` — full transaction flow: validate stock → tính subtotal/tax/shipping → tạo Order+Items+Payment → giảm stock → FSM guards (confirm/ship/deliver/cancel)
+
+**Config — đã xong:**
+- [x] Thêm `google_maps.api_key` vào `config/services.php`
+- [x] Thêm `shipping` config (base_fee, per_km_fee, max_fee, free_above, shop coordinates)
+
+**Phase 3–8:** Chưa bắt đầu
 - [ ] 13.4 Audit Log nâng cao (Ghi lại mọi thay đổi Model)
 - [ ] 13.5 Dashboard Analytics nâng cao (Heatmap, So sánh kỳ)
 
@@ -294,5 +374,7 @@ Giai đoạn đang làm : Hoàn thành
 Bước đang làm      : Hoàn thành toàn bộ dự án
 Cập nhật lần cuối  : 23/03/2026
 ```
+
+- **24/03/2026**: 13.3 Phase 1 hoàn thành — Tạo 5 migrations (`products`, `shipping_addresses`, `orders`, `order_items`, `order_payments`), 3 enums (`ProductCategory`, `OrderStatus`, `OrderPaymentMethod`), 5 models (`Product`, `Order`, `OrderItem`, `ShippingAddress`, `OrderPayment`). Cập nhật `User` model thêm 2 relationships (`orders()`, `shippingAddresses()`). `OrderPayment` reuse `PaymentStatus` enum từ booking, dùng `OrderPaymentMethod` riêng (thêm COD). `OrderStatus` có FSM guard `canTransitionTo()` giống `BookingStatus`.
 
 Khi hoàn thành cả giai đoạn, đổi `⬜ Chưa bắt đầu` thành `✅ Hoàn thành` trong bảng tổng quan.

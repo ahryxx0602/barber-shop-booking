@@ -62,4 +62,32 @@ return [
         'endpoint'     => env('MOMO_ENDPOINT', 'https://test-payment.momo.vn/v2/gateway/api/create'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Google Maps API — Tính phí vận chuyển
+    |--------------------------------------------------------------------------
+    */
+    'google_maps' => [
+        'api_key' => env('GOOGLE_MAPS_API_KEY'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Shipping — Cấu hình phí vận chuyển
+    |--------------------------------------------------------------------------
+    | base_fee: phí cơ bản (VNĐ)
+    | per_km_fee: phí mỗi km (VNĐ)
+    | max_fee: phí tối đa (VNĐ)
+    | free_above: miễn phí khi đơn >= X (VNĐ), 0 = không miễn phí
+    | shop_latitude/longitude: tọa độ cửa hàng gốc
+    */
+    'shipping' => [
+        'base_fee'       => env('SHIPPING_BASE_FEE', 15000),
+        'per_km_fee'     => env('SHIPPING_PER_KM_FEE', 5000),
+        'max_fee'        => env('SHIPPING_MAX_FEE', 100000),
+        'free_above'     => env('SHIPPING_FREE_ABOVE', 500000),
+        'shop_latitude'  => env('SHOP_LATITUDE', 10.762622),
+        'shop_longitude' => env('SHOP_LONGITUDE', 106.660172),
+    ],
+
 ];
