@@ -22,18 +22,21 @@
                 <div style="position:relative;flex:1;">
                     <span class="material-symbols-outlined" style="position:absolute;left:12px;top:50%;transform:translateY(-50%);color:var(--v-muted);font-size:18px;">search</span>
                     <input type="text" name="search" x-model="search" placeholder="Tìm thợ cắt..."
-                        class="v-input" style="padding-left:40px;height:40px;font-size:13px;" />
+                        class="v-input" style="padding:8px 16px 8px 40px;font-size:14px;" />
                 </div>
                 @if($branches->count() > 0)
-                <select name="branch_id" onchange="this.form.submit()"
-                    class="v-input" style="height:40px;font-size:13px;max-width:200px;cursor:pointer;">
-                    <option value="">Tất cả chi nhánh</option>
-                    @foreach($branches as $branch)
-                        <option value="{{ $branch->id }}" {{ request('branch_id') == $branch->id ? 'selected' : '' }}>
-                            {{ $branch->name }}
-                        </option>
-                    @endforeach
-                </select>
+                <div style="position:relative;min-width:200px;">
+                    <select name="branch_id" onchange="this.form.submit()"
+                        class="v-input" style="padding:8px 32px 8px 16px;font-size:14px;width:100%;cursor:pointer;appearance:none;-webkit-appearance:none;">
+                        <option value="">Tất cả chi nhánh</option>
+                        @foreach($branches as $branch)
+                            <option value="{{ $branch->id }}" {{ request('branch_id') == $branch->id ? 'selected' : '' }}>
+                                {{ $branch->name }}
+                            </option>
+                        @endforeach
+                    </select>
+                    <span style="position:absolute;right:10px;top:50%;transform:translateY(-50%);pointer-events:none;color:var(--v-muted);font-size:14px;">▾</span>
+                </div>
                 @endif
             </form>
         </div>

@@ -87,12 +87,64 @@ Hệ thống đặt lịch cắt tóc trực tuyến (Barbershop) được xây 
    npm run dev
    ```
 
-## ⏰ Cronjob (Schedule)
-Hệ thống có tự động sinh Time Slots theo lịch làm việc của thợ.
-Cần thiết lập cronjob chạy command sau mỗi ngày (hoặc có thể chạy thủ công để test):
+7. **Chạy Queue Worker (bắt buộc — xử lý email thông báo):**
+   ```bash
+   # Mở 1 terminal riêng, chạy lệnh sau:
+   php artisan queue:work
+   ```
+   > ⚠️ Queue Worker cần chạy liên tục để gửi email xác nhận booking, thông báo huỷ lịch, v.v.
+   > Nếu không chạy, email sẽ nằm trong hàng đợi và **không được gửi đi**.
+
+   **Cấu hình email (development):**
+   - Mặc định `.env` dùng `MAIL_MAILER=log` → email ghi vào `storage/logs/laravel.log`
+   - Để xem email thực tế, có thể dùng [Mailtrap](https://mailtrap.io/) hoặc [Mailpit](https://github.com/axllent/mailpit):
+     ```env
+     MAIL_MAILER=smtp
+     MAIL_HOST=sandbox.smtp.mailtrap.io
+     MAIL_PORT=2525
+     MAIL_USERNAME=your_username
+     MAIL_PASSWORD=your_password
+     ```
+
+## ⏰ Cronjob & Schedule Commands
+
+Hệ thống có các tác vụ tự động chạy theo lịch trình:
+
+| Command | Tần suất | Mô tả |
+|---------|----------|-------|
+| `slots:generate` | Hằng ngày 00:30 | Tự động sinh Time Slots cho 7 ngày tới |
+| `bookings:expire` | Mỗi 5 phút | Tự động huỷ booking pending quá 30 phút |
+| `logs:cleanup` | Chủ nhật 02:00 | Dọn dẹp log cũ hơn 30 ngày |
+
+**Chạy thủ công để test:**
 ```bash
+# Sinh time slots ngay lập tức
 php artisan slots:generate
+
+# Huỷ booking hết hạn
+php artisan bookings:expire
+
+# Dọn log cũ
+php artisan logs:cleanup
+
+# Chạy tất cả scheduled commands đang đến hạn
+php artisan schedule:run
 ```
+
+**Cài đặt Cronjob (Production):**
+```bash
+# Thêm vào crontab (chạy `crontab -e`):
+* * * * * cd /path-to-project && php artisan schedule:run >> /dev/null 2>&1
+```
+
+**Chạy Schedule Realtime (Development):**
+```bash
+# Mở 1 terminal riêng, chạy lệnh sau — Laravel sẽ tự gọi schedule:run mỗi phút:
+php artisan schedule:work
+```
+> ✅ `schedule:work` chạy liên tục trên terminal, tự động trigger tất cả scheduled commands theo đúng tần suất. Không cần cài crontab khi dev.
+
+> Laravel Schedule sẽ tự động gọi đúng command theo tần suất đã cấu hình trong `routes/console.php`.
 
 ## 📸 Giao diện thiết kế (Design System)
 Dự án sử dụng file `index.css` với các CSS Custom Properties để duy trì tính nhất quán về màu sắc và typography theo phong cách cổ điển (Classic/Vintage):
