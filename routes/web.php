@@ -22,6 +22,7 @@ Route::name('client.')->group(function () {
     Route::get('/booking/slots', [ClientBookingController::class, 'getSlots'])->name('booking.slots');
 
     // Booking - accessible to both guests and authenticated users
+    Route::post('/booking/apply-coupon', [ClientBookingController::class, 'applyCoupon'])->name('booking.apply-coupon');
     Route::get('/booking/create', [ClientBookingController::class, 'create'])->name('booking.create');
     Route::post('/booking', [ClientBookingController::class, 'store'])->middleware('throttle:5,1')->name('booking.store');
     Route::get('/booking/{booking}/confirmation', [ClientBookingController::class, 'confirmation'])->name('booking.confirmation');
@@ -41,6 +42,7 @@ Route::name('client.')->group(function () {
         Route::get('/profile/edit', [ClientProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ClientProfileController::class, 'update'])->name('profile.update');
         Route::get('/profile/loyalty', [ClientProfileController::class, 'loyalty'])->name('profile.loyalty');
+        Route::get('/profile/favorites', [ClientProfileController::class, 'favorites'])->name('profile.favorites');
         Route::patch('/booking/{booking}/cancel', [ClientBookingController::class, 'cancel'])->name('booking.cancel');
         Route::post('/reviews', [ClientReviewController::class, 'store'])->name('reviews.store');
         Route::post('/barbers/{barber}/favorite', [ClientFavoriteBarberController::class, 'toggle'])->name('barbers.favorite');
@@ -68,6 +70,20 @@ Route::middleware('auth')->group(function () {
         auth()->user()->notifications()->where('is_read', false)->update(['is_read' => true]);
         return back();
     })->name('notifications.read-all');
+
+    Route::get('/notifications/poll', function () {
+        $unreadNotifications = auth()->user()->notifications()
+            ->where('is_read', false)
+            ->orderByDesc('created_at')
+            ->limit(10)
+            ->get();
+        $unreadCount = auth()->user()->notifications()->where('is_read', false)->count();
+
+        return response()->json([
+            'count' => $unreadCount,
+            'html' => view('partials.notification-items', compact('unreadNotifications'))->render()
+        ]);
+    })->name('notifications.poll');
 });
 
 require __DIR__ . '/auth.php';

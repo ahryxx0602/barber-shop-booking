@@ -14,18 +14,20 @@ use Illuminate\Support\Str;
 class PaymentService
 {
     /**
-     * Tạo bản ghi Payment mới với status Pending.
+     * Tạo bản ghi Payment mới với status Pending, hoặc cập nhật nếu đã tồn tại.
      */
     public function createPendingPayment(Booking $booking, PaymentMethod $method): Payment
     {
-        return Payment::create([
-            'booking_id'     => $booking->id,
-            'amount'         => $booking->total_price,
-            'method'         => $method,
-            'status'         => PaymentStatus::Pending,
-            'transaction_id' => null,
-            'paid_at'        => null,
-        ]);
+        return Payment::updateOrCreate(
+            ['booking_id' => $booking->id],
+            [
+                'amount'         => $booking->total_price,
+                'method'         => $method,
+                'status'         => PaymentStatus::Pending,
+                'transaction_id' => null,
+                'paid_at'        => null,
+            ]
+        );
     }
 
     // ========================================================================

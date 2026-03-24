@@ -19,6 +19,8 @@ class StoreBookingRequest extends FormRequest
             'barber_id' => ['required', 'exists:barbers,id'],
             'time_slot_id' => ['required', 'exists:time_slots,id'],
             'note' => ['nullable', 'string', 'max:500'],
+            'coupon_code' => ['nullable', 'string', 'max:50'],
+            'recurring_frequency' => ['nullable', 'string', 'in:none,weekly,biweekly,monthly'],
         ];
 
         if (!$this->user()) {
@@ -36,7 +38,7 @@ class StoreBookingRequest extends FormRequest
             if ($this->time_slot_id) {
                 $slot = \App\Models\TimeSlot::find($this->time_slot_id);
                 if ($slot) {
-                    $slotDateTime = \Carbon\Carbon::parse($slot->slot_date . ' ' . $slot->start_time);
+                    $slotDateTime = \Carbon\Carbon::parse($slot->slot_date->format('Y-m-d') . ' ' . $slot->start_time);
                     if ($slotDateTime->isPast()) {
                         $validator->errors()->add('time_slot_id', 'Giờ hẹn này đã qua, vui lòng chọn giờ khác.');
                     }

@@ -15,7 +15,8 @@ class PaymentController extends Controller
 {
     public function __construct(
         protected PaymentService $paymentService,
-    ) {}
+    ) {
+    }
 
     /**
      * Hiển thị trang chọn phương thức thanh toán.
@@ -48,19 +49,21 @@ class PaymentController extends Controller
 
         $method = PaymentMethod::from($request->payment_method);
 
-        // Tạo bản ghi Payment (hoặc cập nhật nếu đã có pending)
-        $payment = $booking->payment;
-        if (!$payment || $payment->status !== PaymentStatus::Pending) {
-            $payment = $this->paymentService->createPendingPayment($booking, $method);
-        } else {
-            $payment->update(['method' => $method]);
+        // Chặn thanh toán lại nếu đã hoàn tất
+        if ($booking->payment && $booking->payment->status === PaymentStatus::Paid) {
+            return redirect()
+                ->route('client.booking.confirmation', $booking)
+                ->with('error', 'Booking này đã được thanh toán thành công!');
         }
+
+        // Tạo bản ghi Payment (hoặc cập nhật phục hồi trạng thái Pending nếu đã tồn tại)
+        $payment = $this->paymentService->createPendingPayment($booking, $method);
 
         // Phân luồng theo phương thức
         return match ($method) {
-            PaymentMethod::Cash  => $this->handleCash($booking),
+            PaymentMethod::Cash => $this->handleCash($booking),
             PaymentMethod::VNPay => $this->handleVNPay($payment, $request),
-            PaymentMethod::Momo  => $this->handleMomo($payment),
+            PaymentMethod::Momo => $this->handleMomo($payment),
         };
     }
 

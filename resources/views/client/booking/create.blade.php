@@ -304,7 +304,16 @@
                             {{-- Mã giảm giá --}}
                             <div>
                                 <label style="display:block;font-size:11px;font-weight:600;color:var(--v-muted);margin-bottom:4px;letter-spacing:1px;text-transform:uppercase;">Mã giảm giá</label>
-                                <input type="text" name="coupon_code" placeholder="Nhập mã (nếu có)" class="v-input" style="padding:10px 14px;font-size:13px;font-family:monospace;text-transform:uppercase;" value="{{ old('coupon_code') }}">
+                                <div style="display:flex;gap:8px;">
+                                    <input type="text" name="coupon_code" x-model="couponCode" placeholder="Nhập mã (nếu có)" class="v-input" style="padding:10px 14px;font-size:13px;font-family:monospace;text-transform:uppercase;flex:1;">
+                                    <button type="button" @click="applyCoupon" :disabled="loadingCoupon || !couponCode" class="v-btn-outline v-btn-sm" style="height:auto;padding:0 16px;">
+                                        <span x-show="!loadingCoupon">Áp dụng</span>
+                                        <span x-show="loadingCoupon" class="material-symbols-outlined" style="font-size:16px;animation:spin 1s linear infinite;">autorenew</span>
+                                    </button>
+                                </div>
+                                <div x-show="couponMessage" style="margin-top:6px;font-size:12px;font-weight:500;"
+                                     :style="couponError ? 'color:#dc2626;' : 'color:#15803d;'"
+                                     x-text="couponMessage"></div>
                             </div>
 
                             {{-- Đặt lịch lặp lại --}}
@@ -333,7 +342,10 @@
                         <span style="width:1px;height:12px;background:var(--v-rule);"></span>
                         <span x-text="totalDuration + ' phút'">0 phút</span>
                     </div>
-                    <span style="font-family:var(--font-serif);font-weight:700;font-size:20px;color:var(--v-ink);" x-text="formatPrice(totalPrice)">0đ</span>
+                    <div style="display:flex;flex-direction:column;align-items:flex-end;">
+                        <span x-show="discountAmount > 0" style="font-size:12px;color:var(--v-muted);text-decoration:line-through;margin-bottom:2px;" x-text="formatPrice(totalPrice)">0đ</span>
+                        <span style="font-family:var(--font-serif);font-weight:700;font-size:20px;color:var(--v-ink);" x-text="formatPrice(Math.max(0, totalPrice - discountAmount))">0đ</span>
+                    </div>
                 </div>
                 <button type="submit" :disabled="!canSubmit" class="v-btn-primary"
                     style="width:100%;justify-content:center;height:48px;"
@@ -383,6 +395,11 @@ function bookingWizard() {
         guestName: '{{ old("guest_name", "") }}',
         guestPhone: '{{ old("guest_phone", "") }}',
         guestEmail: '{{ old("guest_email", "") }}',
+        couponCode: '{{ old("coupon_code", "") }}',
+        discountAmount: 0,
+        couponMessage: '',
+        couponError: false,
+        loadingCoupon: false,
         barberNames: {
             @foreach($barbers as $barber)
                 {{ $barber->id }}: '{{ $barber->user->name }}',
@@ -393,6 +410,51 @@ function bookingWizard() {
             if (this.selectedBarber) {
                 this.currentStep = 3;
             }
+            if (this.couponCode) {
+                // Try applying if already populated by old input
+                // wait for it to be rendered first 
+            }
+        },
+
+        async applyCoupon() {
+            if (!this.couponCode) return;
+            if (this.totalPrice === 0) {
+                this.couponMessage = 'Vui lòng chọn dịch vụ trước khi áp dụng mã.';
+                this.couponError = true;
+                return;
+            }
+            this.loadingCoupon = true;
+            this.couponMessage = '';
+            this.couponError = false;
+            try {
+                const res = await fetch(`{{ route('client.booking.apply-coupon') }}`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Accept': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        coupon_code: this.couponCode,
+                        total_price: this.totalPrice
+                    })
+                });
+                const data = await res.json();
+                if (data.valid) {
+                    this.discountAmount = data.discount_amount;
+                    this.couponMessage = data.message + ` (Giảm ${this.formatPrice(data.discount_amount)})`;
+                    this.couponError = false;
+                } else {
+                    this.discountAmount = 0;
+                    this.couponMessage = data.message || 'Mã giảm giá không hợp lệ.';
+                    this.couponError = true;
+                }
+            } catch (e) {
+                this.couponMessage = 'Lỗi kết nối hoặc mã giảm giá sai.';
+                this.couponError = true;
+                this.discountAmount = 0;
+            }
+            this.loadingCoupon = false;
         },
 
         toggleService(id, price, duration) {
@@ -408,6 +470,12 @@ function bookingWizard() {
             }
             this.totalPrice = Object.values(this.servicePrices).reduce((a, b) => a + b, 0);
             this.totalDuration = Object.values(this.serviceDurations).reduce((a, b) => a + b, 0);
+            if (this.couponCode && Object.keys(this.servicePrices).length > 0) {
+                this.applyCoupon();
+            } else if (Object.keys(this.servicePrices).length === 0) {
+                this.discountAmount = 0;
+                this.couponMessage = '';
+            }
         },
 
         selectBarber(id) {

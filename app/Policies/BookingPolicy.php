@@ -42,7 +42,7 @@ class BookingPolicy
             return false;
         }
 
-        $appointmentTime = \Carbon\Carbon::parse($booking->booking_date . ' ' . $booking->start_time);
+        $appointmentTime = \Carbon\Carbon::parse($booking->booking_date->format('Y-m-d') . ' ' . $booking->start_time);
 
         return now()->diffInMinutes($appointmentTime, false) >= 120;
     }
