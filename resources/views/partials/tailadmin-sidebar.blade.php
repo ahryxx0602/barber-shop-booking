@@ -62,9 +62,9 @@
             </a>
           </li>
 
-          <!-- ═══ 2. Dịch vụ (dropdown) ═══ -->
+          <!-- ═══ 2. Dịch vụ ═══ -->
           <li>
-            <a href="#" @click.prevent="selected = (selected === 'DichVu' ? '' : 'DichVu')" class="menu-item group"
+            <a href="{{ route('admin.services.index') }}" @click="selected = 'DichVu'" class="menu-item group"
               :class="selected === 'DichVu' ? 'menu-item-active' : 'menu-item-inactive'">
               <svg :class="selected === 'DichVu' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
                 height="24" viewBox="0 0 24 24" fill="none">
@@ -72,29 +72,7 @@
                   d="M3.25 5.5C3.25 4.25736 4.25736 3.25 5.5 3.25H18.5C19.7426 3.25 20.75 4.25736 20.75 5.5V18.5C20.75 19.7426 19.7426 20.75 18.5 20.75H5.5C4.25736 20.75 3.25 19.7426 3.25 18.5V5.5ZM5.5 4.75C5.08579 4.75 4.75 5.08579 4.75 5.5V8.58325L19.25 8.58325V5.5C19.25 5.08579 18.9142 4.75 18.5 4.75H5.5ZM19.25 10.0833H15.416V13.9165H19.25V10.0833ZM13.916 10.0833L10.083 10.0833V13.9165L13.916 13.9165V10.0833ZM8.58301 10.0833H4.75V13.9165H8.58301V10.0833ZM4.75 18.5V15.4165H8.58301V19.25H5.5C5.08579 19.25 4.75 18.9142 4.75 18.5ZM10.083 19.25V15.4165L13.916 15.4165V19.25H10.083ZM15.416 19.25V15.4165H19.25V18.5C19.25 18.9142 18.9142 19.25 18.5 19.25H15.416Z" />
               </svg>
               <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Dịch vụ</span>
-              <svg class="menu-item-arrow"
-                :class="[selected === 'DichVu' ? 'menu-item-arrow-active' : 'menu-item-arrow-inactive', sidebarToggle ? 'lg:hidden' : '']"
-                width="20" height="20" viewBox="0 0 20 20" fill="none">
-                <path d="M4.79175 7.39584L10.0001 12.6042L15.2084 7.39585" stroke="" stroke-width="1.5"
-                  stroke-linecap="round" stroke-linejoin="round" />
-              </svg>
             </a>
-            <div :class="selected === 'DichVu' ? 'block' : 'hidden'">
-              <ul :class="sidebarToggle ? 'lg:hidden' : 'flex'" class="flex flex-col gap-1 mt-2 pl-9">
-                <li>
-                  <a href="{{ route('admin.services.index') }}" class="menu-dropdown-item group"
-                    :class="page === 'services' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
-                    Danh sách dịch vụ
-                  </a>
-                </li>
-                <li>
-                  <a href="{{ route('admin.services.create') }}" class="menu-dropdown-item group"
-                    :class="page === 'servicesCreate' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
-                    Thêm dịch vụ
-                  </a>
-                </li>
-              </ul>
-            </div>
           </li>
 
           <!-- ═══ 3. Thợ cắt & Chi nhánh (dropdown) ═══ -->
@@ -120,12 +98,6 @@
                   <a href="{{ route('admin.barbers.index') }}" class="menu-dropdown-item group"
                     :class="page === 'barbers' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
                     Danh sách thợ
-                  </a>
-                </li>
-                <li>
-                  <a href="{{ route('admin.barbers.create') }}" class="menu-dropdown-item group"
-                    :class="page === 'barbersCreate' ? 'menu-dropdown-item-active' : 'menu-dropdown-item-inactive'">
-                    Thêm thợ
                   </a>
                 </li>
                 <li>

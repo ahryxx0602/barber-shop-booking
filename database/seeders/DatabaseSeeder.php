@@ -17,6 +17,7 @@ class DatabaseSeeder extends Seeder
     {
         $this->call([
             UserSeeder::class,
+            BranchSeeder::class,   // Phải chạy trước BarberSeeder
             BarberSeeder::class,
             ServiceSeeder::class,
             BookingSeeder::class,

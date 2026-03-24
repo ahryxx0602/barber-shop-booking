@@ -10,6 +10,7 @@ use App\Http\Requests\Admin\UpdateBranchRequest;
 use App\Models\Branch;
 use App\Services\BranchService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BranchController extends Controller
@@ -18,17 +19,44 @@ class BranchController extends Controller
         protected BranchService $branchService,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $branches = Branch::withCount('barbers')->latest()->paginate(10);
+        // Xử lý tháng filter (fallback về tháng hiện tại nếu rỗng/không hợp lệ)
+        $monthInput = $request->input('month');
+        try {
+            $selectedMonth = $monthInput ? $monthInput : now()->format('Y-m');
+            $filterDate = \Carbon\Carbon::createFromFormat('Y-m', $selectedMonth);
+        } catch (\Exception $e) {
+            $selectedMonth = now()->format('Y-m');
+            $filterDate = now();
+        }
+
+        $branches = Branch::withCount('barbers')
+            ->latest()
+            ->paginate(10);
+
+        // Tính revenue cho mỗi branch theo tháng đã chọn
+        $branchIds = $branches->pluck('id');
+        $revenues = \DB::table('bookings')
+            ->join('barbers', 'bookings.barber_id', '=', 'barbers.id')
+            ->whereIn('barbers.branch_id', $branchIds)
+            ->whereIn('bookings.status', ['completed', 'confirmed', 'in_progress'])
+            ->whereMonth('bookings.booking_date', $filterDate->month)
+            ->whereYear('bookings.booking_date', $filterDate->year)
+            ->groupBy('barbers.branch_id')
+            ->select('barbers.branch_id', \DB::raw('SUM(bookings.total_price) as revenue'))
+            ->pluck('revenue', 'branch_id');
+
+        $totalRevenue = $revenues->sum();
 
         $stats = [
             'total'         => Branch::count(),
             'active'        => Branch::where('is_active', true)->count(),
             'total_barbers' => \App\Models\Barber::whereNotNull('branch_id')->count(),
+            'total_revenue' => $totalRevenue,
         ];
 
-        return view('admin.branches.index', compact('branches', 'stats'));
+        return view('admin.branches.index', compact('branches', 'stats', 'revenues', 'selectedMonth'));
     }
 
     public function create(): View

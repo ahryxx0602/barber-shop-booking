@@ -17,10 +17,13 @@ class ScheduleController extends Controller
         protected ScheduleService $scheduleService,
     ) {}
 
-    public function index(): View
+    public function index(Request $request): View
     {
-        $barbersData = $this->scheduleService->getAllBarbersScheduleData();
-        return view('admin.schedules.index', compact('barbersData'));
+        $branchId = $request->input('branch_id') ? (int) $request->input('branch_id') : null;
+        $barbersData = $this->scheduleService->getAllBarbersScheduleData($branchId);
+        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.schedules.index', compact('barbersData', 'branches', 'branchId'));
     }
 
     public function edit(Barber $barber): View

@@ -3,9 +3,25 @@
 @section('title', 'Báo cáo tổng quan')
 
 @section('content')
-    <div class="mb-6">
-        <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Báo cáo tổng quan</h2>
-        <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Thống kê tháng {{ $overview['month'] }}</p>
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div>
+            <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Báo cáo tổng quan</h2>
+            <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">
+                Thống kê tháng {{ $overview['month'] }}
+                @if($branchId)
+                    · <span class="text-green-600 dark:text-green-400 font-medium">{{ $branches->firstWhere('id', $branchId)?->name }}</span>
+                @endif
+            </p>
+        </div>
+        <form method="GET" action="{{ route('admin.reports.index') }}">
+            <select name="branch_id" onchange="this.form.submit()"
+                class="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-green-500 focus:border-green-500 min-w-[180px]">
+                <option value="">Tất cả chi nhánh</option>
+                @foreach($branches as $branch)
+                    <option value="{{ $branch->id }}" {{ $branchId == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
+                @endforeach
+            </select>
+        </form>
     </div>
 
     {{-- Stat Cards --}}
@@ -194,7 +210,12 @@
                             {{-- Info --}}
                             <div class="flex-1 min-w-0">
                                 <p class="text-sm font-medium text-gray-800 dark:text-white truncate">{{ $barber['name'] }}</p>
-                                <p class="text-xs text-gray-400 dark:text-gray-500">{{ $barber['bookings'] }} booking · ⭐ {{ number_format($barber['rating'], 1) }}</p>
+                                <p class="text-xs text-gray-400 dark:text-gray-500">
+                                    {{ $barber['bookings'] }} booking · ⭐ {{ number_format($barber['rating'], 1) }}
+                                    @if($barber['branch'])
+                                        · <span class="text-green-500">{{ $barber['branch'] }}</span>
+                                    @endif
+                                </p>
                             </div>
 
                             {{-- Revenue --}}
@@ -421,6 +442,8 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         try {
+            const branchId = '{{ $branchId ?? '' }}';
+            if (branchId) params.append('branch_id', branchId);
             const response = await fetch(`{{ route('admin.reports.chartData') }}?${params}`);
             const result = await response.json();
             const chartType = currentMode === 'yearly' ? 'bar' : 'line';

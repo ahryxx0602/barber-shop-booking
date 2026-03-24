@@ -15,9 +15,9 @@ class ReportService
 {
     /**
      * Lấy thống kê tổng quan theo tháng.
-     * Trả về tổng booking, doanh thu, khách mới + % so sánh tháng trước.
+     * Hỗ trợ filter theo branch_id (qua barber).
      */
-    public function getMonthlyOverview(?Carbon $date = null): array
+    public function getMonthlyOverview(?Carbon $date = null, ?int $branchId = null): array
     {
         $date = $date ?? now();
 
@@ -26,9 +26,14 @@ class ReportService
         $prevMonthStart = $date->copy()->subMonth()->startOfMonth();
         $prevMonthEnd = $date->copy()->subMonth()->endOfMonth();
 
+        // Base query builder cho booking (có thể filter theo branch)
+        $bookingQuery = fn () => $branchId
+            ? Booking::whereHas('barber', fn ($q) => $q->where('branch_id', $branchId))
+            : Booking::query();
+
         // Tổng booking
-        $currentBookings = Booking::whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count();
-        $prevBookings = Booking::whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count();
+        $currentBookings = $bookingQuery()->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count();
+        $prevBookings = $bookingQuery()->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count();
 
         // Doanh thu (chỉ tính booking confirmed, in_progress, completed)
         $revenueStatuses = [
@@ -37,15 +42,17 @@ class ReportService
             BookingStatus::Completed,
         ];
 
-        $currentRevenue = Booking::whereIn('status', $revenueStatuses)
+        $currentRevenue = $bookingQuery()
+            ->whereIn('status', $revenueStatuses)
             ->whereBetween('booking_date', [$currentMonthStart, $currentMonthEnd])
             ->sum('total_price');
 
-        $prevRevenue = Booking::whereIn('status', $revenueStatuses)
+        $prevRevenue = $bookingQuery()
+            ->whereIn('status', $revenueStatuses)
             ->whereBetween('booking_date', [$prevMonthStart, $prevMonthEnd])
             ->sum('total_price');
 
-        // Khách hàng mới
+        // Khách hàng mới (không filter theo branch vì khách không thuộc branch)
         $currentNewCustomers = User::where('role', UserRole::Customer)
             ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
             ->count();
@@ -72,11 +79,9 @@ class ReportService
     }
 
     /**
-     * Lấy doanh thu theo ngày.
-     * - Không truyền $month/$year → 30 ngày gần nhất.
-     * - Truyền $month + $year → các ngày trong tháng đó.
+     * Lấy doanh thu theo ngày. Hỗ trợ filter branch.
      */
-    public function getDailyRevenue(?int $month = null, ?int $year = null): array
+    public function getDailyRevenue(?int $month = null, ?int $year = null, ?int $branchId = null): array
     {
         if ($month && $year) {
             $startDate = Carbon::create($year, $month, 1)->startOfDay();
@@ -92,15 +97,19 @@ class ReportService
             BookingStatus::Completed,
         ];
 
-        // Query doanh thu group by ngày
-        $revenues = Booking::whereIn('status', $revenueStatuses)
-            ->whereBetween('booking_date', [$startDate, $endDate])
+        $query = Booking::whereIn('status', $revenueStatuses)
+            ->whereBetween('booking_date', [$startDate, $endDate]);
+
+        if ($branchId) {
+            $query->whereHas('barber', fn ($q) => $q->where('branch_id', $branchId));
+        }
+
+        $revenues = $query
             ->selectRaw('DATE(booking_date) as date, SUM(total_price) as total')
             ->groupBy('date')
             ->orderBy('date')
             ->pluck('total', 'date');
 
-        // Fill ngày trống bằng 0
         $labels = [];
         $data = [];
         $current = $startDate->copy();
@@ -116,10 +125,9 @@ class ReportService
     }
 
     /**
-     * Lấy doanh thu theo từng tháng trong năm.
-     * Trả về ['labels' => ['T1', 'T2', ...], 'data' => [...]]
+     * Lấy doanh thu theo từng tháng trong năm. Hỗ trợ filter branch.
      */
-    public function getMonthlyRevenue(int $year): array
+    public function getMonthlyRevenue(int $year, ?int $branchId = null): array
     {
         $revenueStatuses = [
             BookingStatus::Confirmed,
@@ -127,8 +135,14 @@ class ReportService
             BookingStatus::Completed,
         ];
 
-        $revenues = Booking::whereIn('status', $revenueStatuses)
-            ->whereYear('booking_date', $year)
+        $query = Booking::whereIn('status', $revenueStatuses)
+            ->whereYear('booking_date', $year);
+
+        if ($branchId) {
+            $query->whereHas('barber', fn ($q) => $q->where('branch_id', $branchId));
+        }
+
+        $revenues = $query
             ->selectRaw('MONTH(booking_date) as month, SUM(total_price) as total')
             ->groupBy('month')
             ->orderBy('month')
@@ -146,7 +160,7 @@ class ReportService
     }
 
     /**
-     * Lấy danh sách các năm có booking để hiển thị dropdown.
+     * Lấy danh sách các năm có booking.
      */
     public function getAvailableYears(): array
     {
@@ -155,7 +169,6 @@ class ReportService
             ->pluck('year')
             ->toArray();
 
-        // Đảm bảo luôn có năm hiện tại
         $currentYear = (int) now()->format('Y');
         if (!in_array($currentYear, $years)) {
             array_unshift($years, $currentYear);
@@ -165,9 +178,9 @@ class ReportService
     }
 
     /**
-     * Top thợ theo doanh thu (tháng hiện tại).
+     * Top thợ theo doanh thu (tháng hiện tại). Hỗ trợ filter branch.
      */
-    public function getTopBarbers(int $limit = 5): array
+    public function getTopBarbers(int $limit = 5, ?int $branchId = null): array
     {
         $startOfMonth = now()->startOfMonth();
         $endOfMonth = now()->endOfMonth();
@@ -178,7 +191,7 @@ class ReportService
             BookingStatus::Completed,
         ];
 
-        return Barber::select('barbers.*')
+        $query = Barber::select('barbers.*')
             ->selectRaw('COALESCE(SUM(bookings.total_price), 0) as total_revenue')
             ->selectRaw('COUNT(bookings.id) as total_bookings')
             ->leftJoin('bookings', function ($join) use ($startOfMonth, $endOfMonth, $revenueStatuses) {
@@ -186,7 +199,13 @@ class ReportService
                     ->whereBetween('bookings.booking_date', [$startOfMonth, $endOfMonth])
                     ->whereIn('bookings.status', $revenueStatuses);
             })
-            ->with('user:id,name,avatar')
+            ->with('user:id,name,avatar', 'branch:id,name');
+
+        if ($branchId) {
+            $query->where('barbers.branch_id', $branchId);
+        }
+
+        return $query
             ->groupBy('barbers.id')
             ->orderByDesc('total_revenue')
             ->limit($limit)
@@ -194,6 +213,7 @@ class ReportService
             ->map(fn ($barber) => [
                 'name' => $barber->user->name,
                 'avatar' => $barber->user->avatar,
+                'branch' => $barber->branch?->name,
                 'revenue' => (float) $barber->total_revenue,
                 'bookings' => (int) $barber->total_bookings,
                 'rating' => (float) $barber->rating,
@@ -202,21 +222,28 @@ class ReportService
     }
 
     /**
-     * Top dịch vụ theo số lần đặt (tháng hiện tại).
+     * Top dịch vụ theo số lần đặt (tháng hiện tại). Hỗ trợ filter branch.
      */
-    public function getTopServices(int $limit = 5): array
+    public function getTopServices(int $limit = 5, ?int $branchId = null): array
     {
         $startOfMonth = now()->startOfMonth();
         $endOfMonth = now()->endOfMonth();
 
-        return Service::select('services.id', 'services.name', 'services.price', 'services.image')
+        $query = Service::select('services.id', 'services.name', 'services.price', 'services.image')
             ->selectRaw('COUNT(booking_services.id) as times_booked')
             ->selectRaw('COALESCE(SUM(booking_services.price_snapshot), 0) as total_revenue')
             ->leftJoin('booking_services', 'services.id', '=', 'booking_services.service_id')
             ->leftJoin('bookings', function ($join) use ($startOfMonth, $endOfMonth) {
                 $join->on('booking_services.booking_id', '=', 'bookings.id')
                     ->whereBetween('bookings.booking_date', [$startOfMonth, $endOfMonth]);
-            })
+            });
+
+        if ($branchId) {
+            $query->leftJoin('barbers', 'bookings.barber_id', '=', 'barbers.id')
+                ->where('barbers.branch_id', $branchId);
+        }
+
+        return $query
             ->groupBy('services.id', 'services.name', 'services.price', 'services.image')
             ->orderByDesc('times_booked')
             ->limit($limit)

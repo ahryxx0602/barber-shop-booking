@@ -6,9 +6,11 @@ use App\Enums\BookingStatus;
 use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Models\User;
-use App\Services\ReportService;
-use Illuminate\View\View;
+ use App\Models\Branch;
+ use App\Models\User;
+ use App\Services\ReportService;
+ use Illuminate\Support\Facades\DB;
+ use Illuminate\View\View;
 
 class DashboardController extends Controller
 {
@@ -57,10 +59,41 @@ class DashboardController extends Controller
         // Top thợ cắt tháng này
         $topBarbers = $this->reportService->getTopBarbers(3);
 
+        // Doanh thu theo chi nhánh (tháng này)
+        $branchStats = Branch::where('is_active', true)
+            ->withCount('barbers')
+            ->get()
+            ->map(function ($branch) {
+                $revenue = DB::table('bookings')
+                    ->join('barbers', 'bookings.barber_id', '=', 'barbers.id')
+                    ->where('barbers.branch_id', $branch->id)
+                    ->whereIn('bookings.status', ['completed', 'confirmed', 'in_progress'])
+                    ->whereMonth('bookings.booking_date', now()->month)
+                    ->whereYear('bookings.booking_date', now()->year)
+                    ->sum('bookings.total_price');
+
+                $bookingCount = DB::table('bookings')
+                    ->join('barbers', 'bookings.barber_id', '=', 'barbers.id')
+                    ->where('barbers.branch_id', $branch->id)
+                    ->whereMonth('bookings.booking_date', now()->month)
+                    ->whereYear('bookings.booking_date', now()->year)
+                    ->count();
+
+                return [
+                    'id'       => $branch->id,
+                    'name'     => $branch->name,
+                    'image'    => $branch->image,
+                    'barbers'  => $branch->barbers_count,
+                    'revenue'  => $revenue,
+                    'bookings' => $bookingCount,
+                ];
+            });
+
         return view('admin.dashboard', compact(
             'totalUsers', 'totalBarbers', 'totalCustomers',
             'todayBookings', 'pendingBookings',
-            'overview', 'revenueChart', 'recentBookings', 'topBarbers'
+            'overview', 'revenueChart', 'recentBookings', 'topBarbers',
+            'branchStats'
         ));
     }
 }

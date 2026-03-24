@@ -18,10 +18,25 @@ class BarberController extends Controller
         protected BarberService $barberService,
     ) {}
 
-    public function index(): View
+    public function index(\Illuminate\Http\Request $request): View
     {
-        $barbers = Barber::with('user', 'branch')->latest()->paginate(10);
-        return view('admin.barbers.index', compact('barbers'));
+        $query = Barber::with('user', 'branch');
+
+        // Filter theo chi nhánh
+        if ($request->filled('branch_id')) {
+            $query->where('branch_id', $request->input('branch_id'));
+        }
+
+        // Tìm theo tên thợ
+        if ($request->filled('search')) {
+            $search = $request->input('search');
+            $query->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$search}%"));
+        }
+
+        $barbers = $query->latest()->paginate(10)->withQueryString();
+        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+
+        return view('admin.barbers.index', compact('barbers', 'branches'));
     }
 
     public function create(): View

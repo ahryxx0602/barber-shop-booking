@@ -229,6 +229,49 @@
         @endif
     </div>
 
+    {{-- Hiệu suất chi nhánh --}}
+    @if($branchStats->count() > 0)
+    <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 mt-6">
+        <div class="px-6 py-4 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between">
+            <h3 class="text-base font-semibold text-gray-800 dark:text-white">Hiệu suất chi nhánh (tháng {{ now()->month }})</h3>
+            <a href="{{ route('admin.branches.index') }}"
+               class="text-sm text-brand-600 dark:text-brand-400 hover:underline">Quản lý →</a>
+        </div>
+        <div class="p-6 grid grid-cols-1 md:grid-cols-{{ min($branchStats->count(), 3) }} gap-4">
+            @php $maxRevenue = $branchStats->max('revenue') ?: 1; @endphp
+            @foreach($branchStats as $bs)
+                <div class="border border-gray-200 dark:border-gray-700 rounded-xl p-4 hover:border-brand-300 dark:hover:border-brand-600 transition-colors">
+                    <div class="flex items-center gap-3 mb-3">
+                        @if($bs['image'])
+                            <img src="{{ asset('storage/' . $bs['image']) }}" class="w-10 h-10 rounded-lg object-cover flex-shrink-0" alt="">
+                        @else
+                            <div class="w-10 h-10 rounded-lg bg-brand-100 dark:bg-brand-900 flex items-center justify-center flex-shrink-0">
+                                <svg class="w-5 h-5 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24" stroke-width="1.5">
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M15 10.5a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 10.5c0 7.142-7.5 11.25-7.5 11.25S4.5 17.642 4.5 10.5a7.5 7.5 0 1 1 15 0Z" />
+                                </svg>
+                            </div>
+                        @endif
+                        <div class="min-w-0">
+                            <p class="text-sm font-semibold text-gray-800 dark:text-white truncate">{{ $bs['name'] }}</p>
+                            <p class="text-xs text-gray-500 dark:text-gray-400">{{ $bs['barbers'] }} thợ · {{ $bs['bookings'] }} booking</p>
+                        </div>
+                    </div>
+                    <div>
+                        <div class="flex items-center justify-between mb-1.5">
+                            <span class="text-xs text-gray-500 dark:text-gray-400">Doanh thu</span>
+                            <span class="text-sm font-bold text-green-600 dark:text-green-400">{{ number_format($bs['revenue'], 0, ',', '.') }}₫</span>
+                        </div>
+                        <div class="w-full bg-gray-200 dark:bg-gray-700 rounded-full h-2">
+                            <div class="bg-gradient-to-r from-brand-500 to-green-500 h-2 rounded-full transition-all" style="width: {{ ($bs['revenue'] / $maxRevenue) * 100 }}%"></div>
+                        </div>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    </div>
+    @endif
+
     {{-- Quick Links --}}
     <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <a href="{{ route('admin.bookings.index') }}"

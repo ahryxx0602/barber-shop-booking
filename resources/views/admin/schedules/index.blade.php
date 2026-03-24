@@ -3,20 +3,27 @@
 @section('title', 'Lịch làm việc')
 
 @section('content')
-    <div class="mb-6 flex items-center justify-between">
-        <div>
-            <div class="flex items-center gap-3">
-                <div class="p-2.5 bg-brand-100 dark:bg-brand-900/30 rounded-xl">
-                    <svg class="w-6 h-6 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
-                    </svg>
-                </div>
-                <div>
-                    <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Lịch làm việc các thợ</h2>
-                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Xem và quản lý lịch làm việc hàng tuần của tất cả thợ cắt.</p>
-                </div>
+    <div class="mb-6 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+        <div class="flex items-center gap-3">
+            <div class="p-2.5 bg-brand-100 dark:bg-brand-900/30 rounded-xl">
+                <svg class="w-6 h-6 text-brand-600 dark:text-brand-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                </svg>
+            </div>
+            <div>
+                <h2 class="text-2xl font-bold text-gray-800 dark:text-white">Lịch làm việc các thợ</h2>
+                <p class="text-sm text-gray-500 dark:text-gray-400 mt-0.5">Xem và quản lý lịch làm việc hàng tuần của tất cả thợ cắt.</p>
             </div>
         </div>
+        <form method="GET" action="{{ route('admin.schedules.index') }}">
+            <select name="branch_id" onchange="this.form.submit()"
+                class="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-brand-500 focus:border-brand-500 min-w-[180px]">
+                <option value="">Tất cả chi nhánh</option>
+                @foreach($branches as $branch)
+                    <option value="{{ $branch->id }}" {{ $branchId == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
+                @endforeach
+            </select>
+        </form>
     </div>
 
     @if (session('success'))
@@ -48,16 +55,21 @@
                                 <td class="px-4 py-4">
                                     <div class="flex items-center gap-3">
                                         @if ($item['barber']->user->avatar)
-                                            <img src="{{ Storage::url($item['barber']->user->avatar) }}"
-                                                 class="w-9 h-9 object-cover rounded-full" alt="">
+                                            <img src="{{ asset('storage/' . $item['barber']->user->avatar) }}"
+                                                 class="w-9 h-9 object-cover rounded-full flex-shrink-0" alt="">
                                         @else
-                                            <div class="w-9 h-9 bg-brand-100 dark:bg-brand-900/30 rounded-full flex items-center justify-center text-brand-600 dark:text-brand-400 text-sm font-semibold">
-                                                {{ strtoupper(substr($item['barber']->user->name, 0, 1)) }}
+                                            <div class="w-9 h-9 bg-brand-100 dark:bg-brand-900/30 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <span class="text-brand-600 dark:text-brand-400 text-sm font-semibold">{{ strtoupper(mb_substr($item['barber']->user->name, 0, 1)) }}</span>
                                             </div>
                                         @endif
-                                        <div>
-                                            <div class="text-sm font-medium text-gray-900 dark:text-white">{{ $item['barber']->user->name }}</div>
-                                            <div class="text-xs text-gray-500 dark:text-gray-400">{{ $item['barber']->experience_years }} năm KN</div>
+                                        <div class="min-w-0">
+                                            <div class="text-sm font-medium text-gray-900 dark:text-white truncate">{{ $item['barber']->user->name }}</div>
+                                            <div class="text-xs text-gray-500 dark:text-gray-400">
+                                                {{ $item['barber']->experience_years }} năm KN
+                                                @if($item['barber']->branch)
+                                                    · <span class="text-brand-500">{{ $item['barber']->branch->name }}</span>
+                                                @endif
+                                            </div>
                                         </div>
                                     </div>
                                 </td>

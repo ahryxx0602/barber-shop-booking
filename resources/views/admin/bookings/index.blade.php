@@ -12,39 +12,61 @@
         <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Xem lịch hẹn của từng thợ theo tuần</p>
     </div>
 
-    {{-- Barber Selector + Week Navigation --}}
-    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6">
-        {{-- Barber Tabs --}}
-        <div class="flex flex-wrap gap-2">
-            @foreach($barbers as $barber)
-                <a href="{{ route('admin.bookings.index', ['barber_id' => $barber->id, 'week' => request('week')]) }}"
-                    class="inline-flex items-center gap-2 px-3 py-1.5 rounded-lg text-sm font-medium transition-colors border
-                        {{ $selectedBarberId == $barber->id
-                            ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-500'
-                            : 'border-gray-200 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-700' }}">
-                    <span class="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold
-                        {{ $selectedBarberId == $barber->id ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300' }}">
-                        {{ mb_substr($barber->user->name, 0, 1) }}
-                    </span>
-                    {{ $barber->user->name }}
+    {{-- Branch Filter + Barber Selector + Week Navigation --}}
+    <div class="flex flex-col gap-4 mb-6">
+        {{-- Row 1: Branch filter + Week nav --}}
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+            <form method="GET" action="{{ route('admin.bookings.index') }}" class="flex items-center gap-2">
+                <select name="branch_id" onchange="this.form.submit()"
+                    class="text-sm border border-gray-200 dark:border-gray-600 rounded-lg px-3 py-2 bg-white dark:bg-gray-700 text-gray-700 dark:text-gray-300 focus:ring-2 focus:ring-blue-500 focus:border-blue-500 min-w-[180px]">
+                    <option value="">Tất cả chi nhánh</option>
+                    @foreach($branches as $branch)
+                        <option value="{{ $branch->id }}" {{ $selectedBranchId == $branch->id ? 'selected' : '' }}>{{ $branch->name }}</option>
+                    @endforeach
+                </select>
+            </form>
+
+            {{-- Week Navigation --}}
+            <div class="flex items-center gap-1.5 flex-shrink-0">
+                <a href="{{ route('admin.bookings.index', ['barber_id' => $selectedBarberId, 'branch_id' => $selectedBranchId, 'week' => $prevWeek]) }}"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
                 </a>
-            @endforeach
+                <a href="{{ route('admin.bookings.index', ['barber_id' => $selectedBarberId, 'branch_id' => $selectedBranchId]) }}"
+                    class="inline-flex items-center px-3 h-8 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 transition-colors">
+                    Tuần này
+                </a>
+                <a href="{{ route('admin.bookings.index', ['barber_id' => $selectedBarberId, 'branch_id' => $selectedBranchId, 'week' => $nextWeek]) }}"
+                    class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
+                    <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
+                </a>
+            </div>
         </div>
 
-        {{-- Week Navigation --}}
-        <div class="flex items-center gap-1.5 flex-shrink-0">
-            <a href="{{ route('admin.bookings.index', ['barber_id' => $selectedBarberId, 'week' => $prevWeek]) }}"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"/></svg>
-            </a>
-            <a href="{{ route('admin.bookings.index', ['barber_id' => $selectedBarberId]) }}"
-                class="inline-flex items-center px-3 h-8 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 text-xs font-medium text-gray-700 dark:text-gray-300 transition-colors">
-                Tuần này
-            </a>
-            <a href="{{ route('admin.bookings.index', ['barber_id' => $selectedBarberId, 'week' => $nextWeek]) }}"
-                class="inline-flex items-center justify-center w-8 h-8 rounded-lg border border-gray-300 dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors">
-                <svg class="w-4 h-4 text-gray-600 dark:text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5l7 7-7 7"/></svg>
-            </a>
+        {{-- Row 2: Barber tabs grouped by branch --}}
+        <div class="space-y-2">
+            @foreach($barbersByBranch as $branchName => $branchBarbers)
+                <div class="flex flex-wrap items-center gap-2">
+                    <span class="text-[10px] font-semibold uppercase tracking-wider text-gray-400 dark:text-gray-500 w-full sm:w-auto sm:min-w-[100px] flex-shrink-0">{{ $branchName }}</span>
+                    @foreach($branchBarbers as $barber)
+                        <a href="{{ route('admin.bookings.index', ['barber_id' => $barber->id, 'branch_id' => $selectedBranchId, 'week' => request('week')]) }}"
+                            class="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg text-xs font-medium transition-colors border
+                                {{ $selectedBarberId == $barber->id
+                                    ? 'border-blue-500 bg-blue-50 text-blue-700 dark:bg-blue-900/20 dark:text-blue-300 dark:border-blue-500'
+                                    : 'border-gray-200 bg-white dark:bg-gray-800 text-gray-600 dark:text-gray-300 hover:bg-gray-50 dark:hover:bg-gray-700 dark:border-gray-700' }}">
+                            @if($barber->user->avatar)
+                                <img src="{{ asset('storage/' . $barber->user->avatar) }}" class="w-5 h-5 rounded-full object-cover">
+                            @else
+                                <span class="w-5 h-5 rounded-full flex items-center justify-center text-[9px] font-bold
+                                    {{ $selectedBarberId == $barber->id ? 'bg-blue-600 text-white' : 'bg-gray-200 dark:bg-gray-600 text-gray-600 dark:text-gray-300' }}">
+                                    {{ mb_substr($barber->user->name, 0, 1) }}
+                                </span>
+                            @endif
+                            {{ $barber->user->name }}
+                        </a>
+                    @endforeach
+                </div>
+            @endforeach
         </div>
     </div>
 

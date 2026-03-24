@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Barber;
 use App\Models\Booking;
+use App\Models\Branch;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -14,7 +15,16 @@ class BookingController extends Controller
 {
     public function index(Request $request): View
     {
-        $barbers = Barber::with('user')->where('is_active', true)->orderBy('id')->get();
+        $branches = Branch::where('is_active', true)->orderBy('name')->get();
+        $selectedBranchId = $request->input('branch_id');
+
+        // Lấy barbers, filter theo branch nếu có
+        $barbersQuery = Barber::with('user', 'branch')->where('is_active', true)->orderBy('id');
+        if ($selectedBranchId) {
+            $barbersQuery->where('branch_id', $selectedBranchId);
+        }
+        $barbers = $barbersQuery->get();
+
         $selectedBarberId = $request->input('barber_id', $barbers->first()?->id);
 
         $weekStart = $request->input('week')
@@ -57,8 +67,12 @@ class BookingController extends Controller
         $prevWeek = $weekStart->copy()->subWeek()->toDateString();
         $nextWeek = $weekStart->copy()->addWeek()->toDateString();
 
+        // Nhóm barbers theo chi nhánh để hiển thị
+        $barbersByBranch = $barbers->groupBy(fn ($b) => $b->branch?->name ?? 'Chưa gán');
+
         return view('admin.bookings.index', compact(
-            'barbers', 'selectedBarberId', 'selectedBarber',
+            'barbers', 'barbersByBranch', 'branches', 'selectedBranchId',
+            'selectedBarberId', 'selectedBarber',
             'days', 'weekStart', 'weekEnd', 'stats', 'prevWeek', 'nextWeek'
         ));
     }

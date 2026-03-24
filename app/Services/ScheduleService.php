@@ -61,9 +61,15 @@ class ScheduleService
     /**
      * Chuẩn bị dữ liệu tổng quan schedule cho tất cả barbers (Admin index).
      */
-    public function getAllBarbersScheduleData(): array
+    public function getAllBarbersScheduleData(?int $branchId = null): array
     {
-        $barbers = Barber::with(['user', 'workingSchedules'])->latest()->get();
+        $query = Barber::with(['user', 'workingSchedules', 'branch'])->latest();
+
+        if ($branchId) {
+            $query->where('branch_id', $branchId);
+        }
+
+        $barbers = $query->get();
 
         $barbersData = [];
         foreach ($barbers as $barber) {
