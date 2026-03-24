@@ -25,7 +25,7 @@
     @endif
 
     {{-- ========== THỐNG KÊ CÁ NHÂN (THÁNG) ========== --}}
-    <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 mb-6">
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-4 mb-6">
         {{-- Doanh thu tháng --}}
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
             <div class="flex items-center justify-between mb-2">
@@ -75,6 +75,19 @@
             </div>
             <p class="text-xl font-bold text-gray-800 dark:text-white">{{ number_format($personalStats['rating'], 1) }}</p>
             <p class="text-xs text-gray-400 mt-1">{{ $personalStats['total_reviews'] }} đánh giá</p>
+        </div>
+
+        {{-- Hoa hồng tháng --}}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-emerald-200 dark:border-emerald-800 p-4">
+            <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Hoa hồng tháng</span>
+                <svg class="w-5 h-5 text-emerald-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                    <line x1="12" y1="1" x2="12" y2="23"></line>
+                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+                </svg>
+            </div>
+            <p class="text-xl font-bold text-emerald-600 dark:text-emerald-400">{{ number_format($personalStats['monthly_commission'], 0, ',', '.') }}đ</p>
+            <p class="text-xs text-gray-400 mt-1">Tỷ lệ: {{ $personalStats['commission_rate'] }}% · {{ $personalStats['commission_count'] }} booking</p>
         </div>
     </div>
 

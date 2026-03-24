@@ -6,6 +6,7 @@ use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Models\BarberLeave;
+use App\Models\Commission;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -111,16 +112,28 @@ class DashboardController extends Controller
             ->limit(3)
             ->get();
 
+        // Hoa hồng tháng hiện tại
+        $commissionStats = Commission::where('barber_id', $barber->id)
+            ->whereBetween('created_at', [$monthStart, $monthEnd])
+            ->selectRaw('
+                COALESCE(SUM(commission_amount), 0) as total_commission,
+                COUNT(*) as commission_count
+            ')
+            ->first();
+
         $personalStats = [
-            'monthly_revenue'   => (float) $monthlyStats->total_revenue,
-            'revenue_change'    => $revenueChange,
-            'monthly_bookings'  => (int) $monthlyStats->total_bookings,
-            'completed_count'   => (int) $monthlyStats->completed_count,
-            'completion_rate'   => $completionRate,
-            'rating'            => $barberRating,
-            'total_reviews'     => $totalReviews,
-            'chart_labels'      => $chartLabels,
-            'chart_data'        => $chartData,
+            'monthly_revenue'      => (float) $monthlyStats->total_revenue,
+            'revenue_change'       => $revenueChange,
+            'monthly_bookings'     => (int) $monthlyStats->total_bookings,
+            'completed_count'      => (int) $monthlyStats->completed_count,
+            'completion_rate'      => $completionRate,
+            'rating'               => $barberRating,
+            'total_reviews'        => $totalReviews,
+            'chart_labels'         => $chartLabels,
+            'chart_data'           => $chartData,
+            'commission_rate'      => (float) $barber->commission_rate,
+            'monthly_commission'   => (float) $commissionStats->total_commission,
+            'commission_count'     => (int) $commissionStats->commission_count,
         ];
 
         return view('barber.dashboard', compact(

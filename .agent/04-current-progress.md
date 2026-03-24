@@ -8,8 +8,8 @@
 ## Trạng thái hiện tại
 
 ```
-Giai đoạn đang làm : 12 — Tối ưu vận hành cho Barber (Exp P2)
-Bước đang làm      : 12.2, 12.4 — Hoàn thành
+Giai đoạn đang làm : 13 — Mở rộng quản trị Admin (Exp P3)
+Bước đang làm      : 13.1 — Quản lý tỷ lệ hoa hồng (đang triển khai)
 Cập nhật lần cuối  : 24/03/2026
 ```
 
@@ -239,6 +239,45 @@ Cập nhật lần cuối  : 24/03/2026
 
 ### Giai đoạn 13 — Mở rộng quản trị Admin (Exp P3)
 - [ ] 13.1 Quản lý tỷ lệ hoa hồng (Commission) và tự động tính toán
+
+#### Chi tiết subtasks 13.1:
+
+**Cách tính hoa hồng:**
+- Công thức: `Hoa hồng = Giá trị booking (total_price) × Tỷ lệ hoa hồng (%) của thợ`
+- Hoa hồng được tự động tính khi booking chuyển sang trạng thái **Hoàn thành** (event `BookingCompleted`)
+- Mỗi booking chỉ tính hoa hồng **1 lần** (idempotent check qua `booking_id` unique)
+- Tỷ lệ mặc định: 20% (đặt trong migration, admin có thể thay đổi từng thợ hoặc hàng loạt)
+
+**Backend — đã xong:**
+- [x] Migration tạo bảng `commissions` (barber_id, booking_id, booking_amount, commission_rate, commission_amount)
+- [x] Migration thêm cột `commission_rate` vào bảng `barbers` (default 20%)
+- [x] Model `Commission` với relationships (belongsTo Barber, Booking) + casts
+- [x] Model `Barber` thêm `commission_rate` vào fillable + relationship `commissions()`
+- [x] `CommissionService` — business logic:
+  - `calculateForBooking()`: tự động tính, có idempotent check
+  - `updateRate()` / `bulkUpdateRate()`: cập nhật tỷ lệ từng thợ hoặc hàng loạt
+  - `getSummaryByBarber()` / `getHistory()` / `getMonthlyOverview()`: thống kê & báo cáo
+- [x] Listener `CalculateCommissionOnCompleted` — trigger tự động khi `BookingCompleted`
+
+**Admin UI — đã xong:**
+- [x] `Admin\CommissionController` (index, updateRate AJAX, bulkUpdateRate AJAX)
+- [x] Routes admin: GET commissions, PATCH rate/{barber}, PATCH bulk-rate
+- [x] View `admin/commissions/index.blade.php`:
+  - 4 stat cards tổng quan (tổng hoa hồng, doanh thu, số booking, tỷ lệ TB)
+  - Form cập nhật hàng loạt (chọn tất cả hoặc từng thợ)
+  - Bảng tỷ lệ theo thợ (inline edit AJAX với nút save)
+  - Bảng lịch sử hoa hồng chi tiết (có bộ lọc barber, ngày)
+  - Modal confirm đẹp (backdrop blur, animation) thay thế confirm() native
+  - Toast notification cho kết quả thành công/lỗi
+- [x] Menu "Hoa hồng" trên sidebar admin (icon dollar sign)
+
+**Barber Dashboard — đã xong:**
+- [x] Thêm card "Hoa hồng tháng" trên dashboard barber (tổng hoa hồng, tỷ lệ, số booking)
+- [x] Query thống kê hoa hồng tháng hiện tại trong `Barber\DashboardController`
+
+**Barber — đã xong:**
+- [x] Trang xem lịch sử hoa hồng cá nhân (barber xem chi tiết từng lần được tính)
+- [x] Biểu đồ hoa hồng theo thời gian (bar chart 6 tháng gần nhất)
 - [ ] 13.2 Quản lý chi nhánh (Multi-Branch) & gán Barber
 - [ ] 13.3 Quản lý sản phẩm bán kèm (Product, OrderItem)
 - [ ] 13.4 Audit Log nâng cao (Ghi lại mọi thay đổi Model)

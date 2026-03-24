@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Barber\BookingController as BarberBookingController;
+use App\Http\Controllers\Barber\CommissionController as BarberCommissionController;
 use App\Http\Controllers\Barber\DashboardController as BarberDashboardController;
 use App\Http\Controllers\Barber\LeaveController;
 use App\Http\Controllers\Barber\ScheduleController;
@@ -20,6 +21,9 @@ Route::middleware(['auth', 'role:barber,admin'])
         Route::get('/leaves', [LeaveController::class, 'index'])->name('leaves.index');
         Route::post('/leaves', [LeaveController::class, 'store'])->name('leaves.store');
         Route::delete('/leaves/{leave}', [LeaveController::class, 'destroy'])->name('leaves.destroy');
+
+        // Hoa hồng cá nhân
+        Route::get('/commissions', [BarberCommissionController::class, 'index'])->name('commissions.index');
 
         // Quan ly booking
         Route::get('/bookings/calendar', [BarberBookingController::class, 'calendar'])->name('bookings.calendar');
