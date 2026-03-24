@@ -153,6 +153,25 @@
           </li>
           <!-- /Lịch làm việc -->
 
+          <!-- Menu: Ngày nghỉ -->
+          <li>
+            <a href="{{ route('admin.leaves.index') }}" @click="selected = 'NgayNghi'" class="menu-item group"
+              :class="selected === 'NgayNghi' ? 'menu-item-active' : 'menu-item-inactive'">
+              <svg :class="selected === 'NgayNghi' ? 'menu-item-icon-active' : 'menu-item-icon-inactive'" width="24"
+                height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5"
+                stroke-linecap="round" stroke-linejoin="round">
+                <path d="M18.364 5.636l-3.536 3.536m0 5.656l3.536 3.536M9.172 9.172L5.636 5.636m3.536 9.192l-3.536 3.536M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                <path d="M12 9v2m0 4h.01" />
+              </svg>
+              <span class="menu-item-text" :class="sidebarToggle ? 'lg:hidden' : ''">Ngày nghỉ</span>
+              @php $pendingLeaveCount = \App\Models\BarberLeave::where('status', 'pending')->count(); @endphp
+              @if($pendingLeaveCount > 0)
+                <span class="ml-auto inline-flex items-center justify-center w-5 h-5 text-xs font-bold bg-yellow-500 text-white rounded-full" :class="sidebarToggle ? 'lg:hidden' : ''">{{ $pendingLeaveCount }}</span>
+              @endif
+            </a>
+          </li>
+          <!-- /Ngày nghỉ -->
+
           <!-- Menu: Booking -->
           <li>
             <a href="{{ route('admin.bookings.index') }}" @click="selected = 'Booking'" class="menu-item group"

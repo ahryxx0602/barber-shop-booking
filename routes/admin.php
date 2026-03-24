@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\BarberController;
 use App\Http\Controllers\Admin\BookingController as AdminBookingController;
 use App\Http\Controllers\Admin\CouponController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
+use App\Http\Controllers\Admin\LeaveController as AdminLeaveController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\ServiceController;
@@ -30,6 +31,11 @@ Route::middleware(['auth', 'role:admin'])
         // Người dùng
         Route::resource('users', UserController::class)->only(['index', 'show', 'edit', 'update']);
         Route::patch('users/{user}/toggle-active', [UserController::class, 'toggleActive'])->name('users.toggleActive');
+
+        // Quản lý ngày nghỉ
+        Route::get('leaves', [AdminLeaveController::class, 'index'])->name('leaves.index');
+        Route::patch('leaves/{leave}/approve', [AdminLeaveController::class, 'approve'])->name('leaves.approve');
+        Route::patch('leaves/{leave}/reject', [AdminLeaveController::class, 'reject'])->name('leaves.reject');
 
         // Mã giảm giá
         Route::resource('coupons', CouponController::class)->except(['show']);

@@ -43,4 +43,10 @@ class Barber extends Model
     {
         return $this->hasMany(Review::class);
     }
+
+    // barbers ─────────── barber_leaves (1-n)
+    public function leaves()
+    {
+        return $this->hasMany(BarberLeave::class);
+    }
 }

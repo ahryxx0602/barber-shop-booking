@@ -9,7 +9,7 @@
 
 ```
 Giai đoạn đang làm : 12 — Tối ưu vận hành cho Barber (Exp P2)
-Bước đang làm      : 12.1 Lịch trực quan (Calendar View) — Hoàn thành
+Bước đang làm      : 12.2, 12.4 — Hoàn thành
 Cập nhật lần cuối  : 24/03/2026
 ```
 
@@ -233,9 +233,9 @@ Cập nhật lần cuối  : 24/03/2026
 
 ### Giai đoạn 12 — Tối ưu vận hành cho Barber (Exp P2)
 - [x] 12.1 Lịch trực quan (Calendar View với FullCalendar.js)
-- [ ] 12.2 Quản lý ngày nghỉ đột xuất (BarberLeave)
-- [ ] 12.3 Ghi chú khách hàng riêng (BarberNote)
-- [ ] 12.4 Thống kê cá nhân hiển thị trên Dashboard Barber
+- [x] 12.2 Quản lý ngày nghỉ đột xuất (BarberLeave) — có luồng duyệt Admin
+- ~~12.3 Ghi chú khách hàng riêng (BarberNote)~~ — Bỏ
+- [x] 12.4 Thống kê cá nhân hiển thị trên Dashboard Barber
 
 ### Giai đoạn 13 — Mở rộng quản trị Admin (Exp P3)
 - [ ] 13.1 Quản lý tỷ lệ hoa hồng (Commission) và tự động tính toán
