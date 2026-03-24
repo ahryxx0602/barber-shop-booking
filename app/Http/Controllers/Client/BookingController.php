@@ -44,7 +44,9 @@ class BookingController extends Controller
             ->where('slot_date', $request->date)
             ->where('status', TimeSlotStatus::Available)
             ->when($request->date === now()->toDateString(), function ($query) {
-                $query->where('start_time', '>', now()->format('H:i:s'));
+                // Chỉ hiển thị slot cách ít nhất 1 tiếng so với giờ hiện tại
+                $minTime = now()->addHour()->format('H:i:s');
+                $query->where('start_time', '>=', $minTime);
             })
             ->orderBy('start_time')
             ->get()

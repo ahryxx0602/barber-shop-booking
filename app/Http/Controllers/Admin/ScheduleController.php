@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Admin;
 
 use App\DTOs\UpdateScheduleData;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\UpdateScheduleRequest;
 use App\Models\Barber;
 use App\Services\ScheduleService;
 use Illuminate\Http\RedirectResponse;
@@ -34,18 +35,9 @@ class ScheduleController extends Controller
         ]);
     }
 
-    public function update(Request $request, Barber $barber): RedirectResponse
+    public function update(UpdateScheduleRequest $request, Barber $barber): RedirectResponse
     {
-        // Tối ưu N+1 Query (Issue #4): Eager load 'user' để dùng cho flash message bên dưới
         $barber->load('user');
-
-        $request->validate([
-            'schedules'               => ['required', 'array', 'size:7'],
-            'schedules.*.day_of_week' => ['required', 'integer', 'between:0,6'],
-            'schedules.*.is_working'  => ['sometimes', 'boolean'],
-            'schedules.*.start_time'  => ['required_if:schedules.*.is_working,1', 'nullable', 'date_format:H:i'],
-            'schedules.*.end_time'    => ['required_if:schedules.*.is_working,1', 'nullable', 'date_format:H:i', 'after:schedules.*.start_time'],
-        ]);
 
         $this->scheduleService->updateSchedule(
             $barber,

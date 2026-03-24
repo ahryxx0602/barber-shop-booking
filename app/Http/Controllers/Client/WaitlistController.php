@@ -3,18 +3,15 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Client\StoreWaitlistRequest;
 use App\Services\WaitlistService;
 use Illuminate\Http\Request;
 
 class WaitlistController extends Controller
 {
-    public function store(Request $request, WaitlistService $waitlistService)
+    public function store(StoreWaitlistRequest $request, WaitlistService $waitlistService)
     {
-        $validated = $request->validate([
-            'barber_id' => 'required|exists:barbers,id',
-            'desired_date' => 'required|date|after:today',
-            'desired_time' => 'nullable|date_format:H:i',
-        ]);
+        $validated = $request->validated();
 
         $waitlistService->register(
             $request->user(),

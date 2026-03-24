@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Client\UpdateProfileRequest;
 use App\Services\LoyaltyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -35,14 +36,9 @@ class ProfileController extends Controller
         ]);
     }
 
-    public function update(Request $request): RedirectResponse
+    public function update(UpdateProfileRequest $request): RedirectResponse
     {
-        $validated = $request->validate([
-            'name' => ['required', 'string', 'max:255'],
-            'email' => ['required', 'string', 'email', 'max:255', 'unique:users,email,' . $request->user()->id],
-            'phone' => ['nullable', 'string', 'max:20'],
-            'avatar' => ['nullable', 'image', 'mimes:jpg,jpeg,png,webp', 'max:2048'],
-        ]);
+        $validated = $request->validated();
 
         $user = $request->user();
         $user->fill(collect($validated)->except('avatar')->toArray());

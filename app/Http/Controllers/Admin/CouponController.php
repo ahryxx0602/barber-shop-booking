@@ -4,8 +4,9 @@ namespace App\Http\Controllers\Admin;
 
 use App\Enums\CouponType;
 use App\Http\Controllers\Controller;
+use App\Http\Requests\Admin\StoreCouponRequest;
+use App\Http\Requests\Admin\UpdateCouponRequest;
 use App\Models\Coupon;
-use Illuminate\Http\Request;
 
 class CouponController extends Controller
 {
@@ -21,18 +22,9 @@ class CouponController extends Controller
         return view('admin.coupons.create', compact('types'));
     }
 
-    public function store(Request $request)
+    public function store(StoreCouponRequest $request)
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:coupons,code',
-            'type' => 'required|in:fixed,percent',
-            'value' => 'required|numeric|min:0',
-            'min_amount' => 'nullable|numeric|min:0',
-            'max_discount' => 'nullable|numeric|min:0',
-            'expiry_date' => 'nullable|date|after:today',
-            'usage_limit' => 'nullable|integer|min:1',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['code'] = strtoupper(trim($validated['code']));
         $validated['is_active'] = $request->has('is_active');
@@ -48,18 +40,9 @@ class CouponController extends Controller
         return view('admin.coupons.edit', compact('coupon', 'types'));
     }
 
-    public function update(Request $request, Coupon $coupon)
+    public function update(UpdateCouponRequest $request, Coupon $coupon)
     {
-        $validated = $request->validate([
-            'code' => 'required|string|max:50|unique:coupons,code,' . $coupon->id,
-            'type' => 'required|in:fixed,percent',
-            'value' => 'required|numeric|min:0',
-            'min_amount' => 'nullable|numeric|min:0',
-            'max_discount' => 'nullable|numeric|min:0',
-            'expiry_date' => 'nullable|date',
-            'usage_limit' => 'nullable|integer|min:1',
-            'is_active' => 'boolean',
-        ]);
+        $validated = $request->validated();
 
         $validated['code'] = strtoupper(trim($validated['code']));
         $validated['is_active'] = $request->has('is_active');
