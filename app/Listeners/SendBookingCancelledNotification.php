@@ -16,12 +16,22 @@ class SendBookingCancelledNotification
         $customerMessage = "Lịch hẹn #{$booking->booking_code} đã bị huỷ. "
                          . "Lý do: {$booking->cancel_reason}.";
 
-        SendBookingNotificationJob::dispatch($booking->customer_id, $customerMessage);
+        SendBookingNotificationJob::dispatch(
+            $booking->customer_id, 
+            $customerMessage,
+            'Lịch hẹn đã bị huỷ',
+            'booking_cancelled'
+        );
 
         // Thông báo cho thợ cắt
         $barberMessage = "Lịch hẹn #{$booking->booking_code} ngày {$booking->booking_date->format('d/m/Y')} "
                        . "lúc {$booking->start_time} đã bị huỷ.";
 
-        SendBookingNotificationJob::dispatch($booking->barber->user_id, $barberMessage);
+        SendBookingNotificationJob::dispatch(
+            $booking->barber->user_id, 
+            $barberMessage,
+            'Lịch hẹn bị huỷ',
+            'booking_cancelled'
+        );
     }
 }

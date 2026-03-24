@@ -18,12 +18,16 @@ class SendBookingNotificationJob implements ShouldQueue
     public function __construct(
         private int $userId,
         private string $message,
+        private string $title = 'Thông báo hệ thống',
+        private string $type = 'system',
     ) {}
 
     public function handle(): void
     {
         Notification::create([
             'user_id' => $this->userId,
+            'type' => $this->type,
+            'title' => $this->title,
             'message' => $this->message,
         ]);
     }
