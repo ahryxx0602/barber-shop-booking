@@ -4,12 +4,14 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\DTOs\CreateOrderData;
+use App\Enums\CouponAppliesTo;
 use App\Enums\OrderPaymentMethod;
 use App\Enums\OrderStatus;
 use App\Enums\ProductCategory;
 use App\Models\Order;
 use App\Models\Product;
 use App\Services\OrderService;
+use App\Services\CouponService;
 use App\Services\ShippingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -19,6 +21,7 @@ class ShopController extends Controller
     public function __construct(
         protected OrderService $orderService,
         protected ShippingService $shippingService,
+        protected CouponService $couponService,
     ) {}
 
     /**
@@ -401,15 +404,92 @@ class ShopController extends Controller
             ]);
 
             $result = $this->orderService->create($orderData);
+            $order = $result['order'];
+
+            // Áp dụng coupon nếu có
+            if ($request->filled('product_coupon_code')) {
+                try {
+                    $coupon = $this->couponService->validate(
+                        $request->product_coupon_code,
+                        (float) $order->subtotal,
+                        CouponAppliesTo::Product
+                    );
+                    $discount = $this->couponService->calculateDiscount($coupon, (float) $order->subtotal);
+                    $order->update([
+                        'product_coupon_code' => $coupon->code,
+                        'product_discount' => $discount,
+                        'total_price' => max(0, $order->total_price - $discount),
+                    ]);
+                    $this->couponService->markUsed($coupon);
+                } catch (\InvalidArgumentException $e) {
+                    // Coupon không hợp lệ → bỏ qua, không block đơn hàng
+                }
+            }
+
+            if ($request->filled('shipping_coupon_code')) {
+                try {
+                    $coupon = $this->couponService->validate(
+                        $request->shipping_coupon_code,
+                        (float) $order->shipping_fee,
+                        CouponAppliesTo::Shipping
+                    );
+                    $discount = $this->couponService->calculateDiscount($coupon, (float) $order->shipping_fee);
+                    $order->update([
+                        'shipping_coupon_code' => $coupon->code,
+                        'shipping_discount' => $discount,
+                        'total_price' => max(0, $order->total_price - $discount),
+                    ]);
+                    $this->couponService->markUsed($coupon);
+                } catch (\InvalidArgumentException $e) {
+                    // Coupon không hợp lệ → bỏ qua
+                }
+            }
 
             // Xóa giỏ hàng sau khi đặt thành công
             session()->forget('cart');
 
-            // Phase 6 sẽ xử lý redirect cho VNPay/MoMo
-            // Hiện tại tất cả → trang thành công
-            return redirect()->route('client.shop.order-success', $result['order']->id);
+            return redirect()->route('client.shop.order-success', $order->id);
         } catch (\InvalidArgumentException $e) {
             return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * API validate mã giảm giá (AJAX).
+     */
+    public function applyCoupon(Request $request): JsonResponse
+    {
+        $request->validate([
+            'code'       => 'required|string|max:50',
+            'applies_to' => 'required|in:product,shipping',
+        ]);
+
+        $appliesTo = CouponAppliesTo::from($request->applies_to);
+
+        // Tính subtotal hoặc shipping fee tùy loại
+        if ($appliesTo === CouponAppliesTo::Product) {
+            $amount = $this->calculateSubtotal();
+        } else {
+            $amount = (float) $request->input('shipping_fee', 0);
+        }
+
+        try {
+            $coupon = $this->couponService->validate($request->code, $amount, $appliesTo);
+            $discount = $this->couponService->calculateDiscount($coupon, $amount);
+
+            return response()->json([
+                'success'  => true,
+                'code'     => $coupon->code,
+                'type'     => $coupon->type->value,
+                'value'    => $coupon->value,
+                'discount' => $discount,
+                'message'  => 'Áp dụng mã thành công! Giảm ' . number_format($discount, 0, ',', '.') . 'đ',
+            ]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
         }
     }
 

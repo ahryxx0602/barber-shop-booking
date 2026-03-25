@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\Enums\CouponAppliesTo;
 use App\Enums\CouponType;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCouponRequest;
@@ -19,7 +20,8 @@ class CouponController extends Controller
     public function create()
     {
         $types = CouponType::cases();
-        return view('admin.coupons.create', compact('types'));
+        $appliesToOptions = CouponAppliesTo::cases();
+        return view('admin.coupons.create', compact('types', 'appliesToOptions'));
     }
 
     public function store(StoreCouponRequest $request)
@@ -37,7 +39,8 @@ class CouponController extends Controller
     public function edit(Coupon $coupon)
     {
         $types = CouponType::cases();
-        return view('admin.coupons.edit', compact('coupon', 'types'));
+        $appliesToOptions = CouponAppliesTo::cases();
+        return view('admin.coupons.edit', compact('coupon', 'types', 'appliesToOptions'));
     }
 
     public function update(UpdateCouponRequest $request, Coupon $coupon)

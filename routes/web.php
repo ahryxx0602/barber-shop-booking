@@ -64,6 +64,7 @@ Route::name('client.')->group(function () {
         // Checkout & Orders (cần đăng nhập)
         Route::get('/checkout', [ClientShopController::class, 'checkout'])->name('checkout');
         Route::post('/checkout/shipping-fee', [ClientShopController::class, 'getShippingFee'])->name('checkout.shipping-fee');
+        Route::post('/checkout/apply-coupon', [ClientShopController::class, 'applyCoupon'])->name('checkout.apply-coupon');
         Route::post('/checkout/place-order', [ClientShopController::class, 'placeOrder'])->name('order.place');
         Route::get('/order-success/{order}', [ClientShopController::class, 'orderSuccess'])->name('shop.order-success');
         Route::get('/orders', [ClientShopController::class, 'orders'])->name('orders.index');

@@ -252,6 +252,68 @@
                             </div>
                         </div>
 
+                        {{-- Mã giảm giá --}}
+                        <div style="margin-bottom:12px;">
+                            {{-- Coupon sản phẩm --}}
+                            <div style="margin-bottom:8px;">
+                                <label style="font-size:11px;font-weight:600;color:var(--v-muted);text-transform:uppercase;letter-spacing:0.5px;">Mã giảm giá sản phẩm</label>
+                                <div style="display:flex;gap:6px;margin-top:4px;">
+                                    <input type="text" x-model="productCouponInput" placeholder="Nhập mã..." :disabled="productCouponApplied"
+                                        style="flex:1;padding:6px 10px;border:1px solid var(--v-rule);font-size:12px;text-transform:uppercase;font-family:var(--font-display);" />
+                                    <template x-if="!productCouponApplied">
+                                        <button type="button" @click="applyCoupon('product')" :disabled="productCouponLoading || !productCouponInput"
+                                            style="padding:6px 12px;background:var(--v-ink);color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                                            <span x-show="!productCouponLoading">Áp dụng</span>
+                                            <span x-show="productCouponLoading">...</span>
+                                        </button>
+                                    </template>
+                                    <template x-if="productCouponApplied">
+                                        <button type="button" @click="removeCoupon('product')"
+                                            style="padding:6px 12px;background:#dc2626;color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;">✕</button>
+                                    </template>
+                                </div>
+                                <p x-show="productCouponMsg" x-text="productCouponMsg"
+                                    :style="productCouponApplied ? 'color:#16a34a' : 'color:#dc2626'"
+                                    style="font-size:11px;margin-top:3px;"></p>
+                            </div>
+                            {{-- Coupon ship --}}
+                            <div>
+                                <label style="font-size:11px;font-weight:600;color:var(--v-muted);text-transform:uppercase;letter-spacing:0.5px;">Mã giảm phí ship</label>
+                                <div style="display:flex;gap:6px;margin-top:4px;">
+                                    <input type="text" x-model="shippingCouponInput" placeholder="Nhập mã..." :disabled="shippingCouponApplied"
+                                        style="flex:1;padding:6px 10px;border:1px solid var(--v-rule);font-size:12px;text-transform:uppercase;font-family:var(--font-display);" />
+                                    <template x-if="!shippingCouponApplied">
+                                        <button type="button" @click="applyCoupon('shipping')" :disabled="shippingCouponLoading || !shippingCouponInput"
+                                            style="padding:6px 12px;background:var(--v-ink);color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">
+                                            <span x-show="!shippingCouponLoading">Áp dụng</span>
+                                            <span x-show="shippingCouponLoading">...</span>
+                                        </button>
+                                    </template>
+                                    <template x-if="shippingCouponApplied">
+                                        <button type="button" @click="removeCoupon('shipping')"
+                                            style="padding:6px 12px;background:#dc2626;color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;">✕</button>
+                                    </template>
+                                </div>
+                                <p x-show="shippingCouponMsg" x-text="shippingCouponMsg"
+                                    :style="shippingCouponApplied ? 'color:#16a34a' : 'color:#dc2626'"
+                                    style="font-size:11px;margin-top:3px;"></p>
+                            </div>
+                        </div>
+
+                        {{-- Discount display --}}
+                        <template x-if="productDiscount > 0">
+                            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+                                <span style="color:#16a34a;">Giảm giá SP</span>
+                                <span style="color:#16a34a;font-weight:600;">-<span x-text="new Intl.NumberFormat('vi-VN').format(productDiscount)"></span>₫</span>
+                            </div>
+                        </template>
+                        <template x-if="shippingDiscount > 0">
+                            <div style="display:flex;justify-content:space-between;font-size:13px;margin-bottom:4px;">
+                                <span style="color:#16a34a;">Giảm phí ship</span>
+                                <span style="color:#16a34a;font-weight:600;">-<span x-text="new Intl.NumberFormat('vi-VN').format(shippingDiscount)"></span>₫</span>
+                            </div>
+                        </template>
+
                         {{-- Tổng --}}
                         <div style="border-top:2px solid var(--v-ink);padding-top:12px;display:flex;justify-content:space-between;align-items:center;margin-bottom:24px;">
                             <span style="font-family:var(--font-serif);font-size:16px;font-weight:700;">Tổng cộng</span>
@@ -275,6 +337,10 @@
                                 @endforeach
                             </div>
                         </div>
+
+                        {{-- Hidden coupon fields --}}
+                        <input type="hidden" name="product_coupon_code" :value="productCouponApplied || ''">
+                        <input type="hidden" name="shipping_coupon_code" :value="shippingCouponApplied || ''">
 
                         {{-- Nút đặt hàng --}}
                         <button type="submit" class="v-btn-primary" style="width:100%;"
@@ -320,6 +386,18 @@ function checkoutForm() {
         autocompleteActive: false,
         calculatingShip: false,
         shippingCalculated: false,
+
+        // Coupon state
+        productCouponInput: '',
+        productCouponApplied: null,
+        productDiscount: 0,
+        productCouponMsg: '',
+        productCouponLoading: false,
+        shippingCouponInput: '',
+        shippingCouponApplied: null,
+        shippingDiscount: 0,
+        shippingCouponMsg: '',
+        shippingCouponLoading: false,
 
         // Searchable combobox data
         provinces: [],
@@ -372,8 +450,8 @@ function checkoutForm() {
         },
 
         get totalText() {
-            const total = this.subtotal + this.taxAmount + this.shippingFee;
-            return new Intl.NumberFormat('vi-VN').format(total) + '₫';
+            const total = this.subtotal + this.taxAmount + this.shippingFee - this.productDiscount - this.shippingDiscount;
+            return new Intl.NumberFormat('vi-VN').format(Math.max(0, total)) + '₫';
         },
 
         init() {
@@ -661,6 +739,62 @@ function checkoutForm() {
                 }
             })
             .catch(() => { alert('Lỗi kết nối.'); });
+        },
+
+        // ═══ Coupon ═══
+        applyCoupon(type) {
+            const isProduct = type === 'product';
+            const code = isProduct ? this.productCouponInput : this.shippingCouponInput;
+            if (!code) return;
+
+            if (isProduct) { this.productCouponLoading = true; this.productCouponMsg = ''; }
+            else { this.shippingCouponLoading = true; this.shippingCouponMsg = ''; }
+
+            fetch('{{ route("client.checkout.apply-coupon") }}', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': '{{ csrf_token() }}', 'Accept': 'application/json' },
+                body: JSON.stringify({ code: code, applies_to: type, shipping_fee: this.shippingFee })
+            })
+            .then(res => res.json().then(data => ({ ok: res.ok, data })))
+            .then(({ ok, data }) => {
+                if (isProduct) {
+                    this.productCouponLoading = false;
+                    if (ok && data.success) {
+                        this.productCouponApplied = data.code;
+                        this.productDiscount = data.discount;
+                        this.productCouponMsg = data.message;
+                    } else {
+                        this.productCouponMsg = data.message || 'Mã không hợp lệ.';
+                    }
+                } else {
+                    this.shippingCouponLoading = false;
+                    if (ok && data.success) {
+                        this.shippingCouponApplied = data.code;
+                        this.shippingDiscount = data.discount;
+                        this.shippingCouponMsg = data.message;
+                    } else {
+                        this.shippingCouponMsg = data.message || 'Mã không hợp lệ.';
+                    }
+                }
+            })
+            .catch(() => {
+                if (isProduct) { this.productCouponLoading = false; this.productCouponMsg = 'Lỗi kết nối.'; }
+                else { this.shippingCouponLoading = false; this.shippingCouponMsg = 'Lỗi kết nối.'; }
+            });
+        },
+
+        removeCoupon(type) {
+            if (type === 'product') {
+                this.productCouponApplied = null;
+                this.productDiscount = 0;
+                this.productCouponMsg = '';
+                this.productCouponInput = '';
+            } else {
+                this.shippingCouponApplied = null;
+                this.shippingDiscount = 0;
+                this.shippingCouponMsg = '';
+                this.shippingCouponInput = '';
+            }
         }
     };
 }

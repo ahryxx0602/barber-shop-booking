@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Enums\CouponAppliesTo;
 use App\Enums\CouponType;
 use App\Models\Coupon;
 
@@ -12,7 +13,7 @@ class CouponService
      *
      * @throws \InvalidArgumentException
      */
-    public function validate(string $code, float $totalPrice): Coupon
+    public function validate(string $code, float $totalPrice, ?CouponAppliesTo $appliesTo = null): Coupon
     {
         $coupon = Coupon::where('code', strtoupper(trim($code)))->first();
 
@@ -22,6 +23,12 @@ class CouponService
 
         if (!$coupon->isValid()) {
             throw new \InvalidArgumentException('Mã giảm giá đã hết hiệu lực hoặc hết lượt sử dụng.');
+        }
+
+        // Kiểm tra loại áp dụng
+        if ($appliesTo !== null && $coupon->applies_to !== $appliesTo) {
+            $label = $coupon->applies_to->label();
+            throw new \InvalidArgumentException("Mã này chỉ áp dụng cho: {$label}.");
         }
 
         if ($totalPrice < $coupon->min_amount) {

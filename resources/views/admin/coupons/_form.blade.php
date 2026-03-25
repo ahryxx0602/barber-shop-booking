@@ -20,6 +20,18 @@
         </select>
     </div>
 
+    {{-- Áp dụng cho --}}
+    <div>
+        <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Áp dụng cho</label>
+        <select name="applies_to" class="w-full rounded-lg border-gray-300 dark:border-gray-600 dark:bg-gray-700 dark:text-white text-sm">
+            @foreach($appliesToOptions as $option)
+                <option value="{{ $option->value }}" {{ old('applies_to', $coupon->applies_to->value ?? 'product') === $option->value ? 'selected' : '' }}>
+                    {{ $option->label() }}
+                </option>
+            @endforeach
+        </select>
+    </div>
+
     {{-- Giá trị --}}
     <div>
         <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-1">Giá trị (VND hoặc %)</label>
