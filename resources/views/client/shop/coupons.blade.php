@@ -12,6 +12,50 @@
             <p style="font-size:13px;color:var(--v-muted);margin-top:4px;">Nhập mã khi thanh toán để được giảm giá</p>
         </div>
 
+        @guest
+        {{-- Guest: hiện preview bị blur + overlay đăng nhập --}}
+        <div style="position:relative;">
+            <div style="filter:blur(6px);pointer-events:none;user-select:none;opacity:0.5;">
+                <div class="coupon-grid" style="display:grid;gap:16px;grid-template-columns:1fr 1fr;">
+                    @for($i = 0; $i < 4; $i++)
+                    <div style="background:#fff;border:1px dashed var(--v-rule);overflow:hidden;">
+                        <div style="background:var(--v-ink);color:#fff;padding:12px 16px;text-align:center;">
+                            <div style="font-size:28px;font-weight:800;font-family:var(--font-display);line-height:1;">??%</div>
+                            <div style="font-size:11px;margin-top:4px;opacity:0.8;">Giảm giá</div>
+                        </div>
+                        <div style="padding:12px 16px;">
+                            <div style="font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:2px;color:var(--v-copper);margin-bottom:6px;">XXXXXX</div>
+                            <div style="font-size:12px;color:var(--v-muted);">Đơn tối thiểu: ???đ</div>
+                        </div>
+                    </div>
+                    @endfor
+                </div>
+            </div>
+
+            {{-- Overlay yêu cầu đăng nhập --}}
+            <div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;">
+                <div style="background:var(--v-cream);padding:32px 28px;text-align:center;box-shadow:6px 6px 0 var(--v-copper);border:1px solid var(--v-rule);max-width:400px;width:90%;">
+                    <span class="material-symbols-outlined" style="font-size:48px;color:var(--v-copper);display:block;margin-bottom:16px;">lock</span>
+                    <h3 style="font-family:var(--font-serif);font-size:1.25rem;font-weight:700;color:var(--v-ink);margin-bottom:8px;">
+                        Vui lòng đăng nhập
+                    </h3>
+                    <p style="font-size:13px;color:var(--v-muted);line-height:1.6;margin-bottom:24px;">
+                        Bạn cần đăng nhập để xem các mã giảm giá hiện có.
+                    </p>
+                    <div style="display:flex;gap:10px;justify-content:center;">
+                        <a href="{{ route('login') }}" class="v-btn-primary" style="flex:1;max-width:160px;font-size:10px;text-decoration:none;display:flex;align-items:center;justify-content:center;height:40px;">
+                            <span class="material-symbols-outlined" style="font-size:14px;margin-right:6px;">login</span>
+                            Đăng nhập
+                        </a>
+                        <a href="{{ route('register') }}" class="v-btn-secondary" style="flex:1;max-width:160px;font-size:10px;text-decoration:none;display:flex;align-items:center;justify-content:center;height:40px;">
+                            Đăng ký
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        @else
+        {{-- Authenticated user: hiện danh sách coupon bình thường --}}
         @if($coupons->isEmpty())
             <div style="text-align:center;padding:40px;color:var(--v-muted);">
                 <span class="material-symbols-outlined" style="font-size:48px;opacity:0.3;">local_offer</span>
@@ -117,6 +161,7 @@
                 @endforeach
             </div>
         @endif
+        @endguest
 
         <div style="text-align:center;margin-top:24px;">
             <a href="{{ route('client.shop.index') }}" class="v-btn-secondary" style="font-size:13px;">
@@ -127,3 +172,4 @@
     </div>
 </section>
 @endsection
+

@@ -92,11 +92,19 @@
                                 style="width:36px;height:100%;border:none;background:var(--v-surface);color:var(--v-ink);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;">+</button>
                         </div>
                         {{-- Nút thêm --}}
+                        @auth
                         <button @click="addToCartDetail({{ $product->id }}, quantity, $el)" type="button"
                             class="v-btn-primary" style="flex:1;min-width:160px;height:38px;font-size:9px;">
                             <span class="material-symbols-outlined" style="font-size:14px;margin-right:6px;">add_shopping_cart</span>
                             Thêm vào giỏ hàng
                         </button>
+                        @else
+                        <button onclick="openAuthModal('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.')" type="button"
+                            class="v-btn-primary" style="flex:1;min-width:160px;height:38px;font-size:9px;">
+                            <span class="material-symbols-outlined" style="font-size:14px;margin-right:6px;">add_shopping_cart</span>
+                            Thêm vào giỏ hàng
+                        </button>
+                        @endauth
                     </div>
                 </div>
                 @else
@@ -139,6 +147,11 @@
         @endif
     </div>
 </section>
+
+{{-- Login Modal cho guest --}}
+@guest
+    @include('components.auth-required-modal')
+@endguest
 
 {{-- Toast --}}
 <div id="shop-toast" style="display:none;position:fixed;bottom:24px;right:24px;z-index:1000;padding:14px 24px;background:var(--v-ink);color:var(--v-cream);font-size:13px;font-weight:500;box-shadow:4px 4px 0 var(--v-copper);max-width:320px;transition:opacity 0.3s,transform 0.3s;opacity:0;transform:translateY(10px);"></div>

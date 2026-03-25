@@ -107,11 +107,19 @@
                     {{-- Nút Thêm giỏ hàng --}}
                     @if($product->stock_quantity > 0)
                     <div style="padding:0 16px 16px;">
+                        @auth
                         <button onclick="addToCart({{ $product->id }}, this)" type="button"
                             class="v-btn-primary v-btn-sm" style="width:100%;font-size:9px;">
                             <span class="material-symbols-outlined" style="font-size:14px;margin-right:6px;">add_shopping_cart</span>
                             Thêm giỏ hàng
                         </button>
+                        @else
+                        <button onclick="openAuthModal('Bạn cần đăng nhập để thêm sản phẩm vào giỏ hàng.')" type="button"
+                            class="v-btn-primary v-btn-sm" style="width:100%;font-size:9px;">
+                            <span class="material-symbols-outlined" style="font-size:14px;margin-right:6px;">add_shopping_cart</span>
+                            Thêm giỏ hàng
+                        </button>
+                        @endauth
                     </div>
                     @else
                     <div style="padding:0 16px 16px;">
@@ -131,6 +139,11 @@
         @endif
     </div>
 </section>
+
+{{-- Login Modal cho guest --}}
+@guest
+    @include('components.auth-required-modal')
+@endguest
 
 {{-- Toast Notification --}}
 <div id="shop-toast" style="display:none;position:fixed;bottom:24px;right:24px;z-index:1000;padding:14px 24px;background:var(--v-ink);color:var(--v-cream);font-size:13px;font-weight:500;box-shadow:4px 4px 0 var(--v-copper);max-width:320px;transition:opacity 0.3s,transform 0.3s;opacity:0;transform:translateY(10px);">
