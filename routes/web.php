@@ -7,6 +7,8 @@ use App\Http\Controllers\Client\FavoriteBarberController as ClientFavoriteBarber
 use App\Http\Controllers\Client\PaymentController as ClientPaymentController;
 use App\Http\Controllers\Client\ProfileController as ClientProfileController;
 use App\Http\Controllers\Client\ReviewController as ClientReviewController;
+use App\Http\Controllers\Client\OrderController as ClientOrderController;
+use App\Http\Controllers\Client\OrderPaymentController as ClientOrderPaymentController;
 use App\Http\Controllers\Client\ShippingAddressController as ClientShippingAddressController;
 use App\Http\Controllers\Client\ShopController as ClientShopController;
 use App\Http\Controllers\Client\WaitlistController as ClientWaitlistController;
@@ -46,6 +48,10 @@ Route::name('client.')->group(function () {
     Route::post('/payment/vnpay/ipn', [ClientPaymentController::class, 'vnpayIPN'])->withoutMiddleware(['csrf'])->name('payment.vnpay.ipn');
     Route::get('/payment/momo/return', [ClientPaymentController::class, 'momoReturn'])->name('payment.momo.return');
 
+    // Order Payment — callback routes
+    Route::get('/order-payment/vnpay/return', [ClientOrderPaymentController::class, 'vnpayReturn'])->name('order-payment.vnpay.return');
+    Route::get('/order-payment/momo/return', [ClientOrderPaymentController::class, 'momoReturn'])->name('order-payment.momo.return');
+
     // Payment — chọn phương thức & thanh toán online (VNPay / Momo Sandbox)
     Route::get('/payment/{booking}', [ClientPaymentController::class, 'show'])->name('payment.show');
     Route::post('/payment/{booking}', [ClientPaymentController::class, 'process'])->middleware('throttle:5,1')->name('payment.process');
@@ -66,11 +72,11 @@ Route::name('client.')->group(function () {
         Route::get('/checkout', [ClientShopController::class, 'checkout'])->name('checkout');
         Route::post('/checkout/shipping-fee', [ClientShopController::class, 'getShippingFee'])->name('checkout.shipping-fee');
         Route::post('/checkout/apply-coupon', [ClientShopController::class, 'applyCoupon'])->name('checkout.apply-coupon');
-        Route::post('/checkout/place-order', [ClientShopController::class, 'placeOrder'])->name('order.place');
-        Route::get('/order-success/{order}', [ClientShopController::class, 'orderSuccess'])->name('shop.order-success');
-        Route::get('/orders', [ClientShopController::class, 'orders'])->name('orders.index');
-        Route::get('/orders/{order}', [ClientShopController::class, 'orderShow'])->name('orders.show');
-        Route::patch('/orders/{order}/cancel', [ClientShopController::class, 'cancelOrder'])->name('orders.cancel');
+        Route::post('/checkout/place-order', [ClientOrderController::class, 'placeOrder'])->name('order.place');
+        Route::get('/order-success/{order}', [ClientOrderController::class, 'orderSuccess'])->name('shop.order-success');
+        Route::get('/orders', [ClientOrderController::class, 'index'])->name('orders.index');
+        Route::get('/orders/{order}', [ClientOrderController::class, 'show'])->name('orders.show');
+        Route::patch('/orders/{order}/cancel', [ClientOrderController::class, 'cancel'])->name('orders.cancel');
 
         // Shipping Addresses (AJAX)
         Route::post('/addresses', [ClientShippingAddressController::class, 'store'])->name('addresses.store');

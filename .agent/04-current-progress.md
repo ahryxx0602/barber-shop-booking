@@ -9,7 +9,7 @@
 
 ```
 Giai đoạn đang làm : 13 — Mở rộng quản trị Admin (Exp P3)
-Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅)
+Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Coupon ✅, Phase 6 ✅)
 Cập nhật lần cuối  : 25/03/2026
 ```
 
@@ -352,12 +352,28 @@ Cập nhật lần cuối  : 25/03/2026
 
 **Services — đã xong:**
 - [x] `ProductService` — CRUD + auto slug + image upload + stock management (lockForUpdate)
-- [x] `ShippingService` — Google Maps Distance Matrix API + fallback + feeFromDistance configurable
+- [x] `ShippingService` — Haversine formula (miễn phí) + fallback Google Maps Distance Matrix + feeFromDistance (free ≤20km, base 10k + 2k/km, cap 50k)
 - [x] `OrderService` — full transaction flow: validate stock → tính subtotal/tax/shipping → tạo Order+Items+Payment → giảm stock → FSM guards (confirm/ship/deliver/cancel)
 
 **Config — đã xong:**
-- [x] Thêm `google_maps.api_key` vào `config/services.php`
-- [x] Thêm `shipping` config (base_fee, per_km_fee, max_fee, free_above, shop coordinates)
+- [x] Thêm `shipping` config (free_within_km, base_fee, per_km_fee, max_fee, free_above, shop coordinates)
+
+**Phase 5 — Phí vận chuyển Haversine + Nominatim (đã xong):**
+- [x] `.env` + `.env.example` config: `SHOP_LATITUDE/LONGITUDE`, `SHIPPING_FREE_WITHIN_KM`, `SHIPPING_BASE_FEE`, `SHIPPING_PER_KM_FEE`, `SHIPPING_MAX_FEE`, `SHIPPING_FREE_ABOVE`
+- [x] `config/services.php`: section `shipping` (shop coordinates, free_within_km, fee tiers)
+- [x] `ShippingService`: `haversineDistance()` (công thức Haversine miễn phí), `getDistance()` (Haversine mặc định, Google Maps fallback), `feeFromDistance()` (free ≤20km), `calculateFee()`, `getShopCoordinates()`
+- [x] `ShopController::getShippingFee()` AJAX endpoint
+- [x] Geocoding dùng Nominatim (OpenStreetMap) + dropdown Tỉnh/Quận/Phường từ provinces.open-api.vn
+- [x] Tài liệu `.agent/Haversine_Distance_Guide.md`
+- ⚠️ **Không dùng Google Maps API** — hoàn toàn miễn phí
+
+**Coupon System (đã xong):**
+- [x] Migration thêm `applies_to` (product/shipping/booking) vào `coupons` + discount tracking vào `orders`
+- [x] `CouponAppliesTo` enum, `CouponService::validate()` hỗ trợ type-aware validation
+- [x] API `ShopController::applyCoupon()` (AJAX real-time) + coupon-aware `placeOrder()`
+- [x] Checkout UI: 2 ô nhập mã (Sản phẩm + Ship), Alpine.js validate, discount display
+- [x] Trang xem mã giảm giá `/coupons` (public): grid cards, badge loại, copy mã, HSD
+- [x] Admin: dropdown "Áp dụng cho" trong form coupon + validation rules
 
 #### Chi tiết Phase 3 — Admin CRUD sản phẩm (13.3):
 
@@ -403,7 +419,14 @@ Cập nhật lần cuối  : 25/03/2026
 - [x] Google Places Autocomplete trên `checkout.blade.php` form thêm địa chỉ — auto-fill ward/district/city/lat/lng
 - [x] Tài liệu `.agent/Google_Maps_API_Guide.md`
 
-**Phase 6–8:** Chưa bắt đầu
+**Phase 6 — Thanh toán đơn hàng (đã xong):**
+- [x] Tạo `PlaceOrderRequest` để validate tạo đơn.
+- [x] Chuyển các logic liên quan đơn hàng từ `ShopController` sang `OrderController`.
+- [x] Tạo `OrderPaymentService` cho VNPay, MoMo redirect và callback.
+- [x] Tạo `OrderPaymentController` để xử lý các callback thanh toán.
+- [x] Cập nhật `routes/web.php`.
+
+**Phase 7–8:** Chưa bắt đầu
 - [ ] 13.4 Audit Log nâng cao (Ghi lại mọi thay đổi Model)
 - [ ] 13.5 Dashboard Analytics nâng cao (Heatmap, So sánh kỳ)
 
@@ -427,5 +450,9 @@ Khi hoàn thành cả giai đoạn, đổi `⬜ Chưa bắt đầu` thành `✅ 
 
 - **24/03/2026**: 13.3 Phase 4 hoàn thành — Client: Shop, Cart, Checkout: (1) `StoreAddressRequest` validation; (2) `ShopController` 13 methods (shop listing, product detail, session cart AJAX, checkout, phí ship AJAX via ShippingService, đặt hàng COD via OrderService, order history, cancel); (3) `ShippingAddressController` 3 methods AJAX (store/setDefault/destroy); (4) Routes: shop+cart public, checkout+orders+addresses auth; (5) 7 views Blade vintage: shop index (grid, filter, toast), show (chi tiết, SL, SP liên quan), cart (responsive table/cards), checkout (2 cột Alpine.js), order-success (SVG animation), orders index/show (timeline, breakdown, hủy đơn); (6) Nav client thêm link Cửa hàng + Cart badge (desktop/mobile) + footer.
 
-- **25/03/2026**: 13.3 Phase 5 hoàn thành — Google Maps API (Phí vận chuyển): (1) `.env` + `.env.example` đã có đủ biến cấu hình (GOOGLE_MAPS_API_KEY, SHOP_LATITUDE/LONGITUDE, SHIPPING_*); (2) `config/services.php` có section `google_maps` + `shipping` (đã làm từ Phase 2); (3) `ShippingService` đầy đủ 4 methods (calculateFee, getDistance qua Distance Matrix API, feeFromDistance, getShopCoordinates) — đã hoàn thành từ Phase 2; (4) `ShopController::getShippingFee()` AJAX endpoint (đã hoàn thành từ Phase 4); (5) Tích hợp Google Places Autocomplete trên form thêm địa chỉ ở `checkout.blade.php` — load Maps JS API async khi có key, khởi tạo Autocomplete (restrict VN, type address), auto-fill ward/district/city/lat/lng khi chọn suggestion, retry polling 500ms cho async script; (6) Viết tài liệu `.agent/Google_Maps_API_Guide.md` hướng dẫn từng bước: tạo GCP project, enable 3 APIs (Distance Matrix, Places, Maps JS), tạo+restrict API key, cấu hình .env, luồng hoạt động, fallback behavior, pricing/free tier, troubleshooting.
+- **25/03/2026**: 13.3 Phase 5 đã chuyển sang Haversine + Nominatim — Không dùng Google Maps API nữa. (1) `ShippingService::haversineDistance()` tính khoảng cách đường chim bay bằng công thức Haversine (miễn phí hoàn toàn); (2) `getDistance()` dùng Haversine mặc định, Google Maps là fallback optional; (3) `feeFromDistance()` sửa lại: ≤20km miễn phí, >20km tính base 10k + 2k/km, cap 50k; (4) Geocoding dùng Nominatim (OpenStreetMap) + dropdown Tỉnh/Quận/Phường từ provinces.open-api.vn; (5) Viết tài liệu `.agent/Haversine_Distance_Guide.md`.
+
+- **25/03/2026**: Coupon System cho Checkout — (1) Migration thêm `applies_to` (product/shipping/booking) vào `coupons` + discount tracking columns vào `orders`; (2) `CouponAppliesTo` enum + `CouponService::validate()` type-aware; (3) API `ShopController::applyCoupon()` AJAX + coupon-aware `placeOrder()`; (4) Checkout UI 2 ô mã (Sản phẩm + Ship) với Alpine.js; (5) Trang `/coupons` (public) hiển danh sách mã giảm giá + link trên header nav; (6) Admin form thêm dropdown "Áp dụng cho" + validation.
+
+- **25/03/2026**: 13.3 Phase 6 hoàn thành — Thanh toán đơn hàng: (1) Tạo `PlaceOrderRequest` validate giỏ hàng bằng hook; (2) Tách method `placeOrder`, `orders`, `orderShow`, `cancelOrder`, `orderSuccess` từ `ShopController` ra `OrderController`; (3) Tạo `OrderPaymentService` kế thừa logic thanh toán VNPay Sandbox, MoMo Sandbox nhưng sửa dụng cho model `OrderPayment`; (4) Xử lý URL callback qua `OrderPaymentController` để redirect trạng thái trả về thành công/thất bại cho Client.
 
