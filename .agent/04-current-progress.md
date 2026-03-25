@@ -9,8 +9,8 @@
 
 ```
 Giai đoạn đang làm : 13 — Mở rộng quản trị Admin (Exp P3)
-Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅)
-Cập nhật lần cuối  : 24/03/2026
+Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅)
+Cập nhật lần cuối  : 25/03/2026
 ```
 
 ---
@@ -395,7 +395,15 @@ Cập nhật lần cuối  : 24/03/2026
 - [x] `client/orders/show.blade.php` — Chi tiết: SP, timeline trạng thái, breakdown, thanh toán, địa chỉ, hủy đơn
 - [x] Cập nhật `layouts/client.blade.php` — Link Cửa hàng + Cart icon badge (desktop/mobile) + Footer link
 
-**Phase 5–8:** Chưa bắt đầu
+**Phase 5 — Google Maps API (đã xong):**
+- [x] `.env` + `.env.example` config: `GOOGLE_MAPS_API_KEY`, `SHOP_*`, `SHIPPING_*`
+- [x] `config/services.php`: section `google_maps` + `shipping` (đã có từ Phase 2)
+- [x] `ShippingService`: `calculateFee()`, `getDistance()` (Distance Matrix API), `feeFromDistance()`, `getShopCoordinates()` (đã có từ Phase 2)
+- [x] `ShopController::getShippingFee()` AJAX endpoint (đã có từ Phase 4)
+- [x] Google Places Autocomplete trên `checkout.blade.php` form thêm địa chỉ — auto-fill ward/district/city/lat/lng
+- [x] Tài liệu `.agent/Google_Maps_API_Guide.md`
+
+**Phase 6–8:** Chưa bắt đầu
 - [ ] 13.4 Audit Log nâng cao (Ghi lại mọi thay đổi Model)
 - [ ] 13.5 Dashboard Analytics nâng cao (Heatmap, So sánh kỳ)
 
@@ -418,4 +426,6 @@ Khi hoàn thành cả giai đoạn, đổi `⬜ Chưa bắt đầu` thành `✅ 
 - **24/03/2026**: 13.3 Phase 3 hoàn thành — Admin CRUD Sản phẩm: (1) Tạo `StoreProductRequest` + `UpdateProductRequest` với validation đầy đủ (name, price, stock, SKU unique, category enum, image max 2MB); (2) Tạo `Admin\ProductController` (index/create/store/edit/update/destroy/toggleActive) dùng ProductService + DTOs theo pattern chuẩn; (3) Routes resource + PATCH toggle; (4) View `index.blade.php` có 3 stats cards (tổng SP, đang bán, hết hàng), filter bar (category + search), bảng đầy đủ (ảnh, tên, SKU, giá, tồn kho warning, danh mục, status, actions toggle/edit/delete); (5) View `create.blade.php` + `edit.blade.php` với form đầy đủ (name, description, price, stock, SKU auto-generate, category select, image drag-drop preview, is_active toggle); (6) Sidebar admin thêm menu "Sản phẩm" (icon Package 3D box) giữa Dịch vụ và Thợ cắt.
 
 - **24/03/2026**: 13.3 Phase 4 hoàn thành — Client: Shop, Cart, Checkout: (1) `StoreAddressRequest` validation; (2) `ShopController` 13 methods (shop listing, product detail, session cart AJAX, checkout, phí ship AJAX via ShippingService, đặt hàng COD via OrderService, order history, cancel); (3) `ShippingAddressController` 3 methods AJAX (store/setDefault/destroy); (4) Routes: shop+cart public, checkout+orders+addresses auth; (5) 7 views Blade vintage: shop index (grid, filter, toast), show (chi tiết, SL, SP liên quan), cart (responsive table/cards), checkout (2 cột Alpine.js), order-success (SVG animation), orders index/show (timeline, breakdown, hủy đơn); (6) Nav client thêm link Cửa hàng + Cart badge (desktop/mobile) + footer.
+
+- **25/03/2026**: 13.3 Phase 5 hoàn thành — Google Maps API (Phí vận chuyển): (1) `.env` + `.env.example` đã có đủ biến cấu hình (GOOGLE_MAPS_API_KEY, SHOP_LATITUDE/LONGITUDE, SHIPPING_*); (2) `config/services.php` có section `google_maps` + `shipping` (đã làm từ Phase 2); (3) `ShippingService` đầy đủ 4 methods (calculateFee, getDistance qua Distance Matrix API, feeFromDistance, getShopCoordinates) — đã hoàn thành từ Phase 2; (4) `ShopController::getShippingFee()` AJAX endpoint (đã hoàn thành từ Phase 4); (5) Tích hợp Google Places Autocomplete trên form thêm địa chỉ ở `checkout.blade.php` — load Maps JS API async khi có key, khởi tạo Autocomplete (restrict VN, type address), auto-fill ward/district/city/lat/lng khi chọn suggestion, retry polling 500ms cho async script; (6) Viết tài liệu `.agent/Google_Maps_API_Guide.md` hướng dẫn từng bước: tạo GCP project, enable 3 APIs (Distance Matrix, Places, Maps JS), tạo+restrict API key, cấu hình .env, luồng hoạt động, fallback behavior, pricing/free tier, troubleshooting.
 

@@ -312,14 +312,38 @@ class ShopController extends Controller
         $address = auth()->user()->shippingAddresses()->findOrFail($request->shipping_address_id);
 
         if (!$address->latitude || !$address->longitude) {
-            // Fallback phí mặc định khi không có tọa độ
-            $fallbackFee = $this->shippingService->feeFromDistance(10.0);
-            return response()->json([
-                'fee'         => $fallbackFee['fee'],
-                'distance_km' => 10.0,
-                'is_free'     => false,
-                'note'        => 'Phí ước tính (chưa có tọa độ)',
-            ]);
+            // Thử geocode bằng Nominatim (OpenStreetMap) — miễn phí
+            $fullAddr = "{$address->address}, {$address->ward}, {$address->district}, {$address->city}, Vietnam";
+            try {
+                $geoRes = \Illuminate\Support\Facades\Http::timeout(5)
+                    ->get('https://nominatim.openstreetmap.org/search', [
+                        'format' => 'json',
+                        'q' => $fullAddr,
+                        'limit' => 1,
+                        'countrycodes' => 'vn',
+                    ]);
+                $geoData = $geoRes->json();
+                if (!empty($geoData[0]['lat']) && !empty($geoData[0]['lon'])) {
+                    $address->update([
+                        'latitude'  => (float) $geoData[0]['lat'],
+                        'longitude' => (float) $geoData[0]['lon'],
+                    ]);
+                    $address->refresh();
+                }
+            } catch (\Exception $e) {
+                // Geocode fail → dùng fallback
+            }
+
+            // Vẫn không có tọa độ → fallback
+            if (!$address->latitude || !$address->longitude) {
+                $fallbackFee = $this->shippingService->feeFromDistance(10.0);
+                return response()->json([
+                    'fee'         => $fallbackFee['fee'],
+                    'distance_km' => 10.0,
+                    'is_free'     => $fallbackFee['is_free'],
+                    'note'        => 'Phí ước tính (chưa xác định tọa độ)',
+                ]);
+            }
         }
 
         $subtotal = $this->calculateSubtotal();

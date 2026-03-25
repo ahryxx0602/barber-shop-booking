@@ -36,66 +36,99 @@ class ShippingService
     }
 
     /**
-     * Lấy khoảng cách (km) giữa 2 tọa độ qua Google Maps Distance Matrix API.
-     * Nếu API fail → fallback 10km.
+     * Lấy khoảng cách (km) giữa 2 tọa độ.
+     * Ưu tiên Google Maps Distance Matrix API (đường đi thực tế).
+     * Fallback: Haversine formula (đường chim bay, miễn phí).
      */
     public function getDistance(string $origin, string $destination): float
     {
         $apiKey = config('services.google_maps.api_key');
 
-        if (empty($apiKey)) {
-            Log::warning('Google Maps API key chưa cấu hình, dùng fallback distance.');
-            return 10.0; // fallback mặc định
-        }
+        // Nếu có Google Maps API key → dùng Distance Matrix (chính xác hơn)
+        if (!empty($apiKey)) {
+            try {
+                $response = Http::timeout(10)->get('https://maps.googleapis.com/maps/api/distancematrix/json', [
+                    'origins'      => $origin,
+                    'destinations' => $destination,
+                    'key'          => $apiKey,
+                    'units'        => 'metric',
+                ]);
 
-        try {
-            $response = Http::timeout(10)->get('https://maps.googleapis.com/maps/api/distancematrix/json', [
-                'origins'      => $origin,
-                'destinations' => $destination,
-                'key'          => $apiKey,
-                'units'        => 'metric',
-            ]);
+                $data = $response->json();
 
-            $data = $response->json();
+                if (
+                    ($data['status'] ?? '') === 'OK' &&
+                    ($data['rows'][0]['elements'][0]['status'] ?? '') === 'OK'
+                ) {
+                    $meters = $data['rows'][0]['elements'][0]['distance']['value'];
+                    return round($meters / 1000, 2);
+                }
 
-            if (
-                ($data['status'] ?? '') === 'OK' &&
-                ($data['rows'][0]['elements'][0]['status'] ?? '') === 'OK'
-            ) {
-                // Distance trả về dạng meters → chuyển sang km
-                $meters = $data['rows'][0]['elements'][0]['distance']['value'];
-                return round($meters / 1000, 2);
+                Log::warning('Google Maps Distance Matrix API response không hợp lệ', [
+                    'status' => $data['status'] ?? 'unknown',
+                ]);
+            } catch (\Exception $e) {
+                Log::error('Google Maps Distance Matrix API error', [
+                    'message' => $e->getMessage(),
+                ]);
             }
-
-            Log::warning('Google Maps Distance Matrix API response không hợp lệ', [
-                'status' => $data['status'] ?? 'unknown',
-                'data'   => $data,
-            ]);
-        } catch (\Exception $e) {
-            Log::error('Google Maps Distance Matrix API error', [
-                'message' => $e->getMessage(),
-            ]);
         }
 
-        // Fallback khi API fail
-        return 10.0;
+        // Fallback: Haversine formula (miễn phí, không cần API)
+        [$lat1, $lng1] = array_map('floatval', explode(',', $origin));
+        [$lat2, $lng2] = array_map('floatval', explode(',', $destination));
+
+        return $this->haversineDistance($lat1, $lng1, $lat2, $lng2);
+    }
+
+    /**
+     * Tính khoảng cách đường chim bay (km) bằng công thức Haversine.
+     * Hoàn toàn miễn phí, không cần API.
+     */
+    public function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $earthRadius = 6371; // km
+
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+
+        $a = sin($dLat / 2) ** 2
+           + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
+           * sin($dLng / 2) ** 2;
+
+        $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+        return round($earthRadius * $c, 2);
     }
 
     /**
      * Quy đổi khoảng cách → phí vận chuyển.
-     * Công thức: fee = base_fee + (distance_km × per_km_fee), cap max_fee.
+     * - Dưới free_within_km (mặc định 20km) → miễn phí
+     * - Trên 20km → fee = base_fee + (km_vượt × per_km_fee), cap max_fee
      *
      * @return array{fee: float, is_free: bool}
      */
     public function feeFromDistance(float $distanceKm): array
     {
-        $baseFee   = (float) config('services.shipping.base_fee', 15000);
-        $perKmFee  = (float) config('services.shipping.per_km_fee', 5000);
-        $maxFee    = (float) config('services.shipping.max_fee', 100000);
+        $freeWithinKm = (float) config('services.shipping.free_within_km', 20);
 
-        $fee = $baseFee + ($distanceKm * $perKmFee);
+        // Miễn phí nếu trong bán kính
+        if ($distanceKm <= $freeWithinKm) {
+            return [
+                'fee'     => 0,
+                'is_free' => true,
+            ];
+        }
+
+        // Tính phí cho phần km vượt quá
+        $baseFee   = (float) config('services.shipping.base_fee', 10000);
+        $perKmFee  = (float) config('services.shipping.per_km_fee', 2000);
+        $maxFee    = (float) config('services.shipping.max_fee', 50000);
+
+        $excessKm = $distanceKm - $freeWithinKm;
+        $fee = $baseFee + ($excessKm * $perKmFee);
         $fee = min($fee, $maxFee);
-        $fee = round($fee, 0); // Làm tròn số nguyên
+        $fee = round($fee, 0);
 
         return [
             'fee'     => $fee,
