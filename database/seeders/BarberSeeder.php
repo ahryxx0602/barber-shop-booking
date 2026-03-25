@@ -13,32 +13,24 @@ class BarberSeeder extends Seeder
     public function run(): void
     {
         $barberUsers = User::where('role', 'barber')->get();
+        if ($barberUsers->isEmpty()) return;
 
-        // Lấy branch IDs theo tên
-        $branchQ1 = Branch::where('name', 'like', '%Quận 1%')->first();
-        $branchQ3 = Branch::where('name', 'like', '%Quận 3%')->first();
-        $branchTD = Branch::where('name', 'like', '%Thủ Đức%')->first();
+        $branches = Branch::all();
+        if ($branches->isEmpty()) return;
 
         $bios = [
-            'Chuyên gia cắt tóc nam với hơn 5 năm kinh nghiệm. Thành thạo các kiểu tóc Hàn Quốc, undercut, fade.',
-            'Thợ cắt tóc chuyên nghiệp, yêu nghề. Giỏi tư vấn kiểu tóc phù hợp khuôn mặt.',
+            'Chuyên gia cắt tóc nam với hơn 5 năm kinh nghiệm. Thành thạo các kiểu tóc Hàn Quốc, under cut.',
+            'Thợ cắt tóc chuyên nghiệp, yêu nghề. Rất giỏi tư vấn kiểu tóc phù hợp khuôn mặt.',
             'Barber trẻ năng động, cập nhật xu hướng tóc mới nhất. Chuyên tóc nam phong cách.',
-            'Thợ cắt kỳ cựu, chuyên cắt tóc cổ điển và cạo râu truyền thống. Tỉ mỉ từng chi tiết.',
-            'Barber chuyên về tóc nghệ thuật và nhuộm tóc nam. Sáng tạo, luôn đổi mới phong cách.',
+            'Thợ cắt kỳ cựu, chuyên cắt tóc cổ điển và cạo râu truyền thống.',
+            'Barber chuyên về tóc nghệ thuật và nhuộm tóc nam sáng tạo.',
         ];
 
-        $experiences = [5, 3, 2, 8, 1];
+        $experiences = [5, 3, 2, 8, 4];
 
         foreach ($barberUsers as $index => $user) {
-            // Gán chi nhánh theo email
-            $branchId = null;
-            if ($branchQ1 && str_contains($user->email, '@barberbook.com') && !str_contains($user->email, '.q3@') && !str_contains($user->email, '.td@')) {
-                $branchId = $branchQ1->id;
-            } elseif ($branchQ3 && str_contains($user->email, '.q3@')) {
-                $branchId = $branchQ3->id;
-            } elseif ($branchTD && str_contains($user->email, '.td@')) {
-                $branchId = $branchTD->id;
-            }
+            // Distribute to branches evenly
+            $branch = $branches[$index % $branches->count()];
 
             $barber = Barber::create([
                 'user_id'          => $user->id,
@@ -46,17 +38,19 @@ class BarberSeeder extends Seeder
                 'experience_years' => $experiences[$index % count($experiences)],
                 'rating'           => 0.00,
                 'is_active'        => true,
-                'branch_id'        => $branchId,
+                'branch_id'        => $branch->id,
             ]);
 
-            // Working schedule: T2-T7 (1-6), nghỉ CN (0)
+            // Initialize WorkingSchedule for 30 days past and 15 days future?
+            // Actually WorkingSchedule in this system is usually weekly schema: day_of_week Enum!
+            // Wait, let's see BarberSeeder's old implementation, it uses week days (0-6).
             for ($day = 0; $day <= 6; $day++) {
                 WorkingSchedule::create([
                     'barber_id'   => $barber->id,
                     'day_of_week' => $day,
                     'start_time'  => '08:00:00',
-                    'end_time'    => '18:00:00',
-                    'is_day_off'  => $day === 0, // Nghỉ Chủ Nhật
+                    'end_time'    => '20:00:00', // Expand slightly to allow heatmap testing until 20:00
+                    'is_day_off'  => $day === 0, // Sunday off
                 ]);
             }
         }

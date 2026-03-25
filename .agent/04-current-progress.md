@@ -9,7 +9,7 @@
 
 ```
 Giai đoạn đang làm : 13 — Mở rộng quản trị Admin (Exp P3)
-Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Coupon ✅, Phase 6 ✅, Phase 7 ✅, Email Notification ✅)
+Bước đang làm      : 13.5 — Dashboard Analytics nâng cao (Heatmap, So sánh kỳ) ✅
 Cập nhật lần cuối  : 25/03/2026
 ```
 
@@ -433,8 +433,14 @@ Cập nhật lần cuối  : 25/03/2026
 - [x] View `admin/orders/show.blade.php` hiển thị thông tin chi tiết hóa đơn (khách hàng, giao hàng, thanh toán, bảng tính SP) và cụm nút action để cập nhật trạng thái đơn (Confirmed, Shipping, Delivered, Cancelled) kèm modal xác nhận hủy.
 - [x] Cập nhật sidebar Admin `tailadmin-sidebar.blade.php` với nút Đơn hàng báo số liệu đơn Pending.
 
-**Phase 8:** Chưa bắt đầu
-- [ ] 13.5 Dashboard Analytics nâng cao (Heatmap, So sánh kỳ)
+**Phase 8 — Dashboard, Báo cáo, Seeder (đã xong):**
+- [x] Tích hợp section "Thống kê E-commerce" vào Admin Dashboard.
+- [x] Tích hợp tab biểu đồ doanh thu E-commerce vào Admin Reports.
+- [x] Tạo `ProductSeeder` và `OrderSeeder`, fix lỗi SQL liên quan.
+- [x] Cập nhật Client Profile hiển thị tab Đơn hàng.
+
+**Phase 9:** Hoàn thành
+- [x] 13.5 Dashboard Analytics nâng cao (Heatmap, So sánh kỳ)
 
 ---
 
@@ -466,3 +472,6 @@ Khi hoàn thành cả giai đoạn, đổi `⬜ Chưa bắt đầu` thành `✅ 
 
 - **25/03/2026**: 13.3 Bổ sung Email Notification — Tự động gửi email qua `OrderStatusUpdatedMail` khi khách hàng chuyển các giai đoạn: Tạo, Xác nhận, Giao hàng, Hoàn thành, Hủy. Được gọi trong `OrderService` qua Queue mượt mà. Đã hoàn thành test.
 
+- **25/03/2026**: 13.3 Phase 8 hoàn thành — Dashboard, Báo cáo, Seeder: (1) Cập nhật Dashboard admin thêm stats sản phẩm và top sản phẩm bán chạy; (2) Tích hợp biểu đồ doanh thu E-commerce vào trang Reports dùng Alpine.js tabs; (3) Cập nhật Client Profile thêm tab Lịch sử Đơn hàng; (4) Tạo ProductSeeder và OrderSeeder tự động sinh dữ liệu để test biểu đồ.
+
+- **25/03/2026**: Phase 9 hoàn thành — 13.5 Dashboard Analytics nâng cao: (1) Thêm 2 phương thức `getBookingHeatmapData()` và `getProductHeatmapData()` vào `ReportService` sử dụng SQL Group By `DAYOFWEEK` và `HOUR`; (2) Cập nhật `Admin\ReportController@index` nhận dữ liệu heatmap; (3) Tích hợp thư viện `ApexCharts` vào `admin/reports/index.blade.php` hiển thị biểu đồ nhiệt (Heatmap) thể hiện mật độ thao tác người dùng cho cả 2 tab Booking và E-commerce; (4) Tùy chỉnh chi tiết giao diện Heatmap (z-index tooltip, màu sắc theo chế độ Dark/Light mode).

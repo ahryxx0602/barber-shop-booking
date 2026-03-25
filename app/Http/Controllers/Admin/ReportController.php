@@ -29,9 +29,14 @@ class ReportController extends Controller
         $productDailyRevenue = $this->reportService->getProductDailyRevenue();
         $topSellingProducts = $this->reportService->getTopSellingProducts(5);
 
+        // Heatmap Data
+        $bookingHeatmap = $this->reportService->getBookingHeatmapData(branchId: $branchId);
+        $productHeatmap = $this->reportService->getProductHeatmapData();
+
         return view('admin.reports.index', compact(
             'overview', 'dailyRevenue', 'availableYears', 'topBarbers', 'topServices', 'branches', 'branchId',
-            'productOverview', 'productDailyRevenue', 'topSellingProducts'
+            'productOverview', 'productDailyRevenue', 'topSellingProducts',
+            'bookingHeatmap', 'productHeatmap'
         ));
     }
 

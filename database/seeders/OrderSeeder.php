@@ -3,14 +3,15 @@
 namespace Database\Seeders;
 
 use App\Enums\OrderPaymentMethod;
-use App\Enums\OrderPaymentStatus;
 use App\Enums\OrderStatus;
+use App\Enums\PaymentStatus;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ShippingAddress;
 use App\Models\User;
+use Carbon\Carbon;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Str;
 
@@ -18,57 +19,57 @@ class OrderSeeder extends Seeder
 {
     public function run(): void
     {
-        $customers = User::where('role', \App\Enums\UserRole::Customer)->get();
-        if ($customers->isEmpty()) {
-            return;
-        }
+        $customers = User::where('role', 'customer')->get();
+        if ($customers->isEmpty()) return;
 
         $products = Product::all();
-        if ($products->isEmpty()) {
-            return;
-        }
+        if ($products->isEmpty()) return;
 
-        for ($i = 0; $i < 30; $i++) {
+        $now = Carbon::now();
+
+        // 1. PAST ORDERS (150 orders in last 60 days) - Status: Delivered
+        for ($i = 0; $i < 150; $i++) {
             $customer = $customers->random();
-            // Bias towards delivered and confirmed for realistic stats
-            $statusOptions = [OrderStatus::Delivered, OrderStatus::Delivered, OrderStatus::Delivered, OrderStatus::Confirmed, OrderStatus::Shipping, OrderStatus::Pending, OrderStatus::Cancelled];
-            $status = $statusOptions[array_rand($statusOptions)];
-            
-            $orderDate = now()->subDays(rand(0, 45))->subHours(rand(0, 23))->subMinutes(rand(0, 59));
+            $orderDate = $now->copy()->subDays(rand(1, 60))->setHour(rand(7, 22))->setMinute(rand(0, 59));
 
             // Create Shipping Address
-            $address = ShippingAddress::create([
-                'user_id' => $customer->id,
-                'customer_name' => $customer->name,
-                'customer_phone' => $customer->phone ?? '09' . rand(10000000, 99999999),
-                'address' => rand(1, 999) . ' Đường ngẫu nhiên, Phường ' . rand(1, 15) . ', Quận ' . rand(1, 10) . ', TP.HCM',
-                'is_default' => true,
-            ]);
+            $address = ShippingAddress::firstOrCreate(
+                ['user_id' => $customer->id, 'is_default' => true],
+                [
+                    'recipient_name' => $customer->name,
+                    'phone' => $customer->phone ?? '09' . rand(10000000, 99999999),
+                    'address' => rand(1, 999) . ' Đường Nguyễn Trãi',
+                    'ward' => 'Phường ' . rand(1, 15),
+                    'district' => 'Quận ' . rand(1, 10),
+                    'city' => 'TP.HCM',
+                ]
+            );
 
             // Create Order
+            $shippingFee = rand(2, 5) * 10000;
             $order = Order::create([
-                'order_code' => 'ORD' . str_pad($i + 1, 5, '0', STR_PAD_LEFT) . strtoupper(Str::random(3)),
+                'order_code' => 'ORD' . strtoupper(Str::random(8)),
                 'customer_id' => $customer->id,
                 'shipping_address_id' => $address->id,
-                'status' => $status,
-                'total_amount' => 0, // will be updated later
-                'shipping_fee' => 30000,
-                'notes' => rand(0, 1) ? 'Giao giờ hành chính' : null,
+                'status' => OrderStatus::Delivered,
+                'subtotal' => 0,
+                'tax_rate' => 0,
+                'tax_amount' => 0,
+                'shipping_distance_km' => rand(1, 15),
+                'total_amount' => 0,
+                'shipping_fee' => $shippingFee,
+                'note' => rand(0, 1) ? 'Giao giờ hành chính' : null,
                 'created_at' => $orderDate,
-                'updated_at' => $orderDate,
+                'updated_at' => $orderDate->copy()->addDays(rand(1, 3)),
             ]);
 
-            if ($status === OrderStatus::Cancelled) {
-                $order->update(['cancellation_reason' => 'Khách hàng đổi ý hoặc huỷ tự động']);
-            }
-
             // Add Items
-            $itemCount = rand(1, 4);
+            $itemCount = rand(1, 3);
             $totalAmount = 0;
             $selectedProducts = $products->random($itemCount);
 
             foreach ($selectedProducts as $product) {
-                $quantity = rand(1, 3);
+                $quantity = rand(1, 2);
                 $price = $product->price;
                 $subtotal = $price * $quantity;
                 $totalAmount += $subtotal;
@@ -82,28 +83,100 @@ class OrderSeeder extends Seeder
                 ]);
             }
 
-            $totalAmount += $order->shipping_fee;
-            $order->update(['total_amount' => $totalAmount]);
+            $order->update([
+                'subtotal' => $totalAmount,
+                'tax_rate' => 0,
+                'tax_amount' => 0,
+                'shipping_distance_km' => rand(1, 15),
+                'total_amount' => $totalAmount + $shippingFee
+            ]);
 
             // Add Payment
-            $paymentMethod = rand(0, 1) ? OrderPaymentMethod::COD : OrderPaymentMethod::BankTransfer;
-            $paymentStatus = OrderPaymentStatus::Pending;
-            
-            if ($status === OrderStatus::Delivered) {
-                $paymentStatus = OrderPaymentStatus::Paid;
-            } else if ($paymentMethod === OrderPaymentMethod::BankTransfer && $status !== OrderStatus::Pending && $status !== OrderStatus::Cancelled) {
-                $paymentStatus = OrderPaymentStatus::Paid;
-            } else if ($status === OrderStatus::Cancelled) {
-                $paymentStatus = OrderPaymentStatus::Failed;
+            $paymentMethod = collect([OrderPaymentMethod::Cod, OrderPaymentMethod::VNPay, OrderPaymentMethod::Momo])->random();
+            OrderPayment::create([
+                'order_id' => $order->id,
+                'method' => $paymentMethod,
+                'status' => PaymentStatus::Paid,
+                'amount' => $order->total_amount,
+                'transaction_id' => $paymentMethod !== OrderPaymentMethod::Cod ? 'TXN' . rand(100000, 999999) : null,
+                'paid_at' => $orderDate->copy()->addHours(rand(1, 24)),
+                'created_at' => $orderDate,
+                'updated_at' => $orderDate,
+            ]);
+        }
+
+        // 2. FUTURE/CURRENT ORDERS (20 orders) - Status: Pending/Shipping
+        for ($i = 0; $i < 20; $i++) {
+            $customer = $customers->random();
+            $orderDate = $now->copy()->subHours(rand(1, 72))->setMinute(rand(0, 59));
+            $status = rand(0, 1) ? OrderStatus::Pending : OrderStatus::Shipping;
+
+            $address = ShippingAddress::firstOrCreate(
+                ['user_id' => $customer->id, 'is_default' => true],
+                [
+                    'recipient_name' => $customer->name,
+                    'phone' => $customer->phone ?? '09' . rand(10000000, 99999999),
+                    'address' => rand(1, 999) . ' Đường Lê Lợi',
+                    'ward' => 'Phường Bến Nghé',
+                    'district' => 'Quận 1',
+                    'city' => 'TP.HCM',
+                ]
+            );
+
+            $shippingFee = rand(2, 5) * 10000;
+            $order = Order::create([
+                'order_code' => 'ORD' . strtoupper(Str::random(8)),
+                'customer_id' => $customer->id,
+                'shipping_address_id' => $address->id,
+                'status' => $status,
+                'subtotal' => 0,
+                'tax_rate' => 0,
+                'tax_amount' => 0,
+                'shipping_distance_km' => rand(1, 15),
+                'total_amount' => 0,
+                'shipping_fee' => $shippingFee,
+                'note' => rand(0, 3) === 0 ? 'Gọi trước khi giao' : null,
+                'created_at' => $orderDate,
+                'updated_at' => $orderDate,
+            ]);
+
+            $itemCount = rand(1, 3);
+            $totalAmount = 0;
+            $selectedProducts = $products->random($itemCount);
+
+            foreach ($selectedProducts as $product) {
+                $quantity = rand(1, 2);
+                $price = $product->price;
+                $subtotal = $price * $quantity;
+                $totalAmount += $subtotal;
+
+                OrderItem::create([
+                    'order_id' => $order->id,
+                    'product_id' => $product->id,
+                    'quantity' => $quantity,
+                    'unit_price' => $price,
+                    'total_price' => $subtotal,
+                ]);
             }
+
+            $order->update([
+                'subtotal' => $totalAmount,
+                'tax_rate' => 0,
+                'tax_amount' => 0,
+                'shipping_distance_km' => rand(1, 15),
+                'total_amount' => $totalAmount + $shippingFee
+            ]);
+
+            $paymentMethod = collect([OrderPaymentMethod::Cod, OrderPaymentMethod::VNPay, OrderPaymentMethod::Momo])->random();
+            $paymentStatus = $paymentMethod !== OrderPaymentMethod::Cod && rand(0, 1) ? PaymentStatus::Paid : PaymentStatus::Pending;
 
             OrderPayment::create([
                 'order_id' => $order->id,
-                'payment_method' => $paymentMethod,
-                'payment_status' => $paymentStatus,
-                'amount' => $totalAmount,
-                'transaction_id' => $paymentMethod === OrderPaymentMethod::BankTransfer ? 'TXN' . rand(100000, 999999) : null,
-                'paid_at' => $paymentStatus === OrderPaymentStatus::Paid ? $orderDate->copy()->addHours(rand(1, 24)) : null,
+                'method' => $paymentMethod,
+                'status' => $paymentStatus,
+                'amount' => $order->total_amount,
+                'transaction_id' => $paymentStatus === PaymentStatus::Paid ? 'TXN' . rand(100000, 999999) : null,
+                'paid_at' => $paymentStatus === PaymentStatus::Paid ? $orderDate->copy()->addMinutes(rand(10, 60)) : null,
                 'created_at' => $orderDate,
                 'updated_at' => $orderDate,
             ]);

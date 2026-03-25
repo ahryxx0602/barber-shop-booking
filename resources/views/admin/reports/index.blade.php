@@ -25,7 +25,7 @@
     </div>
 
     {{-- Tabs Alpine --}}
-    <div x-data="{ currentTab: 'service' }" @change-tab.window="currentTab = $event.detail; document.getElementById('reportType').value = currentTab; updateTitle(); fetchChartData();">
+    <div x-data="{ currentTab: 'service' }" @change-tab.window="currentTab = $event.detail; document.getElementById('reportType').value = currentTab; updateTitle(); fetchChartData(); setTimeout(() => { window.dispatchEvent(new Event('resize')); }, 50);">
         <div class="flex gap-6 mb-6 border-b border-gray-200 dark:border-gray-700">
             <button @click="$dispatch('change-tab', 'service')" 
                 :class="currentTab === 'service' ? 'border-green-500 text-green-600 dark:text-green-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'" 
@@ -361,6 +361,15 @@
 
     </div>
 
+    {{-- Heatmap Booking (Dịch vụ Tab) --}}
+    <div x-show="currentTab === 'service'" class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Mật độ đặt lịch</h3>
+            <span class="text-xs text-gray-400 dark:text-gray-500">30 ngày gần nhất</span>
+        </div>
+        <div id="bookingHeatmapChart" class="-ml-3 relative z-0"></div>
+    </div>
+
     {{-- Top Sản phẩm (Sản phẩm Tab) --}}
     <div x-show="currentTab === 'product'" x-cloak class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6 lg:col-span-2">
@@ -409,6 +418,15 @@
             @endif
         </div>
     </div>
+
+    {{-- Heatmap E-commerce (Sản phẩm Tab) --}}
+    <div x-show="currentTab === 'product'" x-cloak class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
+        <div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Mật độ đặt hàng</h3>
+            <span class="text-xs text-gray-400 dark:text-gray-500">30 ngày gần nhất</span>
+        </div>
+        <div id="productHeatmapChart" class="-ml-3 relative z-0"></div>
+    </div>
     
     </div> {{-- End Tabs Alpine wrapper --}}
 
@@ -451,15 +469,69 @@
         color: #34d399;
         box-shadow: 0 1px 2px rgba(0,0,0,0.2);
     }
+    .apexcharts-tooltip {
+        color: #111827; 
+    }
+    .dark .apexcharts-tooltip {
+        background: #1f2937 !important;
+        border-color: #374151 !important;
+        color: #f3f4f6 !important;
+    }
+    .dark .apexcharts-tooltip-title {
+        background: #374151 !important;
+        border-bottom: 1px solid #4b5563 !important;
+    }
 </style>
 @endpush
 
 @push('scripts')
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.7/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/apexcharts"></script>
 <script>
 document.addEventListener('DOMContentLoaded', function () {
-    const ctx = document.getElementById('revenueChart').getContext('2d');
+    // --- Heatmap ApexCharts Init ---
     const isDark = document.documentElement.classList.contains('dark');
+    const heatmapOptions = {
+        chart: {
+            height: 350,
+            type: 'heatmap',
+            toolbar: { show: false },
+            background: 'transparent',
+            fontFamily: 'inherit'
+        },
+        dataLabels: { enabled: false },
+        stroke: { width: 1, colors: isDark ? ['#1f2937'] : ['#fff'] },
+        theme: { mode: isDark ? 'dark' : 'light' },
+        xaxis: {
+            labels: { style: { colors: isDark ? '#9ca3af' : '#6b7280' } }
+        },
+        yaxis: {
+            labels: { style: { colors: isDark ? '#9ca3af' : '#6b7280' } }
+        },
+        tooltip: {
+            theme: isDark ? 'dark' : 'light',
+            y: { formatter: function(val) { return val + " lần"; } }
+        }
+    };
+
+    const bookingChart = new ApexCharts(document.querySelector("#bookingHeatmapChart"), {
+        ...heatmapOptions,
+        series: @json($bookingHeatmap),
+        colors: ["#22c55e"],
+        title: { text: '' }
+    });
+    bookingChart.render();
+
+    const productChart = new ApexCharts(document.querySelector("#productHeatmapChart"), {
+        ...heatmapOptions,
+        series: @json($productHeatmap),
+        colors: ["#3b82f6"],
+        title: { text: '' }
+    });
+    productChart.render();
+    // -------------------------------
+
+    const ctx = document.getElementById('revenueChart').getContext('2d');
     const chartTitle = document.getElementById('chartTitle');
     const filterMonth = document.getElementById('filterMonth');
     const filterYear = document.getElementById('filterYear');

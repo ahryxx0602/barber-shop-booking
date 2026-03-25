@@ -425,4 +425,106 @@ class ReportService
 
         return round(($current - $previous) / $previous * 100, 1);
     }
+
+    /**
+     * Dữ liệu bản đồ nhiệt cho Booking.
+     */
+    public function getBookingHeatmapData(?int $branchId = null): array
+    {
+        $startDate = now()->subDays(29)->startOfDay();
+        $endDate = now()->endOfDay();
+
+        $revenueStatuses = [
+            BookingStatus::Confirmed,
+            BookingStatus::InProgress,
+            BookingStatus::Completed,
+        ];
+
+        $query = Booking::join('time_slots', 'bookings.time_slot_id', '=', 'time_slots.id')
+            ->whereIn('bookings.status', $revenueStatuses)
+            ->whereBetween('bookings.booking_date', [$startDate, $endDate]);
+
+        if ($branchId) {
+            // Need to join barbers or use whereHas appropriately
+            $query->whereHas('barber', fn ($q) => $q->where('branch_id', $branchId));
+        }
+
+        $results = $query->selectRaw('DAYOFWEEK(bookings.booking_date) as day_of_week, HOUR(time_slots.start_time) as hour_of_day, COUNT(bookings.id) as total')
+            ->groupBy('day_of_week', 'hour_of_day')
+            ->get();
+
+        return $this->formatHeatmapData($results);
+    }
+
+    /**
+     * Dữ liệu bản đồ nhiệt cho Đơn hàng.
+     */
+    public function getProductHeatmapData(): array
+    {
+        $startDate = now()->subDays(29)->startOfDay();
+        $endDate = now()->endOfDay();
+
+        $revenueStatuses = [
+            \App\Enums\OrderStatus::Confirmed,
+            \App\Enums\OrderStatus::Shipping,
+            \App\Enums\OrderStatus::Delivered,
+        ];
+
+        $results = \App\Models\Order::whereIn('status', $revenueStatuses)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('DAYOFWEEK(created_at) as day_of_week, HOUR(created_at) as hour_of_day, COUNT(id) as total')
+            ->groupBy('day_of_week', 'hour_of_day')
+            ->get();
+
+        return $this->formatHeatmapData($results, true);
+    }
+
+    private function formatHeatmapData($results, bool $isOrder = false): array
+    {
+        $days = [
+            1 => 'Chủ nhật',
+            2 => 'Thứ 2',
+            3 => 'Thứ 3',
+            4 => 'Thứ 4',
+            5 => 'Thứ 5',
+            6 => 'Thứ 6',
+            7 => 'Thứ 7',
+        ];
+
+        // Frame from 8h to 20h for booking, 7h to 22h for order
+        $startHour = $isOrder ? 7 : 8;
+        $endHour = $isOrder ? 22 : 20;
+        $hoursRange = range($startHour, $endHour);
+
+        $data = [];
+        foreach ($days as $dayNum => $dayName) {
+            $dayData = [];
+            foreach ($hoursRange as $h) {
+                $record = $results->first(fn ($r) => $r->day_of_week == $dayNum && $r->hour_of_day == $h);
+                $dayData[] = [
+                    'x' => sprintf('%02d:00', $h),
+                    'y' => $record ? (int)$record->total : 0
+                ];
+            }
+            $data[] = [
+                'name' => $dayName,
+                'data' => $dayData
+            ];
+        }
+
+        // ApexCharts puts the first array item at the top of the Y axis, 
+        // to order from Monday to Sunday, we should reverse or just build it carefully.
+        // Actually top to bottom: T2 -> CN. So let's re-order the $data array
+        $orderedData = [];
+        $orderKeys = [2, 3, 4, 5, 6, 7, 1]; // Monday to Sunday
+        foreach ($orderKeys as $key) {
+            // Find in $data
+            $found = collect($data)->firstWhere('name', $days[$key]);
+            if ($found) {
+                $orderedData[] = $found;
+            }
+        }
+
+        return $orderedData;
+    }
 }
