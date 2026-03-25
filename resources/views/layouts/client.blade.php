@@ -319,6 +319,7 @@
                 <a class="v-nav-link" href="{{ route('client.barbers.index') }}">Thợ cắt</a>
                 <a class="v-nav-link" href="{{ route('client.branches.index') }}">Chi nhánh</a>
                 <a class="v-nav-link" href="{{ route('client.shop.index') }}">Cửa hàng</a>
+                <a class="v-nav-link" href="{{ route('client.coupons') }}">Giảm giá</a>
                 {{-- Cart Icon --}}
                 @php $cartCount = array_sum(array_column(session('cart', []), 'quantity')); @endphp
                 <a href="{{ route('client.cart') }}" style="position:relative;display:inline-flex;align-items:center;color:var(--v-muted);text-decoration:none;transition:color 0.2s;" onmouseover="this.style.color='var(--v-copper)'" onmouseout="this.style.color='var(--v-muted)'">
@@ -352,6 +353,7 @@
                     <a class="v-nav-link" href="{{ route('client.barbers.index') }}">Thợ cắt</a>
                     <a class="v-nav-link" href="{{ route('client.branches.index') }}">Chi nhánh</a>
                     <a class="v-nav-link" href="{{ route('client.shop.index') }}">Cửa hàng</a>
+                    <a class="v-nav-link" href="{{ route('client.coupons') }}">Giảm giá</a>
                     <a class="v-nav-link" href="{{ route('client.cart') }}" style="display:flex;align-items:center;gap:6px;">
                         <span class="material-symbols-outlined" style="font-size:18px;">shopping_cart</span>
                         Giỏ hàng

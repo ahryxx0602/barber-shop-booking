@@ -259,7 +259,7 @@
                                 <label style="font-size:11px;font-weight:600;color:var(--v-muted);text-transform:uppercase;letter-spacing:0.5px;">Mã giảm giá sản phẩm</label>
                                 <div style="display:flex;gap:6px;margin-top:4px;">
                                     <input type="text" x-model="productCouponInput" placeholder="Nhập mã..." :disabled="productCouponApplied"
-                                        style="flex:1;padding:6px 10px;border:1px solid var(--v-rule);font-size:12px;text-transform:uppercase;font-family:var(--font-display);" />
+                                        style="flex:1;padding:8px 12px;border:1px solid var(--v-rule);font-size:13px;text-transform:uppercase;font-weight:600;letter-spacing:1px;" />
                                     <template x-if="!productCouponApplied">
                                         <button type="button" @click="applyCoupon('product')" :disabled="productCouponLoading || !productCouponInput"
                                             style="padding:6px 12px;background:var(--v-ink);color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">
@@ -281,7 +281,7 @@
                                 <label style="font-size:11px;font-weight:600;color:var(--v-muted);text-transform:uppercase;letter-spacing:0.5px;">Mã giảm phí ship</label>
                                 <div style="display:flex;gap:6px;margin-top:4px;">
                                     <input type="text" x-model="shippingCouponInput" placeholder="Nhập mã..." :disabled="shippingCouponApplied"
-                                        style="flex:1;padding:6px 10px;border:1px solid var(--v-rule);font-size:12px;text-transform:uppercase;font-family:var(--font-display);" />
+                                        style="flex:1;padding:8px 12px;border:1px solid var(--v-rule);font-size:13px;text-transform:uppercase;font-weight:600;letter-spacing:1px;" />
                                     <template x-if="!shippingCouponApplied">
                                         <button type="button" @click="applyCoupon('shipping')" :disabled="shippingCouponLoading || !shippingCouponInput"
                                             style="padding:6px 12px;background:var(--v-ink);color:#fff;border:none;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;">

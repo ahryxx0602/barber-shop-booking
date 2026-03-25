@@ -27,6 +27,7 @@ Route::name('client.')->group(function () {
     // Shop — public (ai cũng xem được)
     Route::get('/shop', [ClientShopController::class, 'index'])->name('shop.index');
     Route::get('/shop/{product:slug}', [ClientShopController::class, 'show'])->name('shop.show');
+    Route::get('/coupons', [ClientShopController::class, 'coupons'])->name('coupons');
 
     // Cart — session-based (không cần auth)
     Route::get('/cart', [ClientShopController::class, 'cart'])->name('cart');

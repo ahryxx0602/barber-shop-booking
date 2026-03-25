@@ -25,6 +25,18 @@ class ShopController extends Controller
     ) {}
 
     /**
+     * Trang mã giảm giá — hiển thị coupon active cho client.
+     */
+    public function coupons()
+    {
+        $coupons = \App\Models\Coupon::where('is_active', true)
+            ->orderByDesc('created_at')
+            ->get();
+
+        return view('client.shop.coupons', compact('coupons'));
+    }
+
+    /**
      * Trang cửa hàng — danh sách sản phẩm active.
      */
     public function index(Request $request)
