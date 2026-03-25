@@ -12,7 +12,9 @@ use App\Models\Product;
 use App\Models\ShippingAddress;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
+use App\Mail\OrderStatusUpdatedMail;
 
 class OrderService
 {
@@ -122,6 +124,8 @@ class OrderService
                 'method'      => $data->payment_method->value,
             ]);
 
+            Mail::to($order->customer->email)->queue(new OrderStatusUpdatedMail($order));
+
             // 10. Nếu COD → trả order, nếu online → trả redirect URL (xử lý ở Phase 6)
             $redirectUrl = null;
             if ($data->payment_method !== OrderPaymentMethod::Cod) {
@@ -153,6 +157,8 @@ class OrderService
             'order_code' => $order->order_code,
         ]);
 
+        Mail::to($order->customer->email)->queue(new OrderStatusUpdatedMail($order));
+
         return $order;
     }
 
@@ -172,6 +178,8 @@ class OrderService
         Log::channel('booking')->info('Order shipping', [
             'order_code' => $order->order_code,
         ]);
+
+        Mail::to($order->customer->email)->queue(new OrderStatusUpdatedMail($order));
 
         return $order;
     }
@@ -202,6 +210,8 @@ class OrderService
         Log::channel('booking')->info('Order delivered', [
             'order_code' => $order->order_code,
         ]);
+
+        Mail::to($order->customer->email)->queue(new OrderStatusUpdatedMail($order));
 
         return $order;
     }
@@ -245,6 +255,8 @@ class OrderService
                 'order_code' => $order->order_code,
                 'reason'     => $reason,
             ]);
+
+            Mail::to($order->customer->email)->queue(new OrderStatusUpdatedMail($order));
 
             return $order;
         });
