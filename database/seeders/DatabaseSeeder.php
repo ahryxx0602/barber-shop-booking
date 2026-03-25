@@ -20,9 +20,11 @@ class DatabaseSeeder extends Seeder
             BranchSeeder::class,   // Phải chạy trước BarberSeeder
             BarberSeeder::class,
             ServiceSeeder::class,
+            ProductSeeder::class,
             BookingSeeder::class,
             ReviewSeeder::class,
             PaymentSeeder::class,
+            OrderSeeder::class,
         ]);
     }
 }

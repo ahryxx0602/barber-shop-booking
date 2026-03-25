@@ -272,6 +272,118 @@
     </div>
     @endif
 
+    {{-- THỐNG KÊ SẢN PHẨM --}}
+    <div class="mt-6 mb-6">
+        <div class="flex items-center gap-2 mb-4">
+            <h2 class="text-xl font-bold text-gray-800 dark:text-white">Thống kê E-commerce</h2>
+            <span class="px-2 py-1 text-xs font-semibold bg-brand-100 text-brand-700 rounded-md">Bán lẻ</span>
+        </div>
+
+        {{-- Stats Cards cho Sản Phẩm --}}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+            {{-- Tổng sản phẩm --}}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-indigo-600 dark:text-indigo-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Sản phẩm đang bán</p>
+                        <p class="text-lg font-bold text-gray-800 dark:text-white">{{ $productOverview['products']['total'] }}</p>
+                    </div>
+                </div>
+            </div>
+
+            {{-- Đơn hàng tháng này --}}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-teal-100 dark:bg-teal-900/30 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-teal-600 dark:text-teal-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Đơn hàng tháng này</p>
+                        <p class="text-lg font-bold text-gray-800 dark:text-white">{{ $productOverview['orders']['total'] }}</p>
+                        @if ($productOverview['orders']['change'] != 0)
+                            <span class="text-xs {{ $productOverview['orders']['change'] > 0 ? 'text-green-600' : 'text-red-600' }}">
+                                {{ $productOverview['orders']['change'] > 0 ? '+' : '' }}{{ $productOverview['orders']['change'] }}%
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+
+            {{-- Doanh thu sản phẩm tháng này --}}
+            <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-4">
+                <div class="flex items-center gap-3">
+                    <div class="w-10 h-10 bg-green-100 dark:bg-green-900/30 rounded-lg flex items-center justify-center">
+                        <svg class="w-5 h-5 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                    </div>
+                    <div>
+                        <p class="text-xs font-medium text-gray-500 dark:text-gray-400 uppercase">Doanh thu sản phẩm</p>
+                        <p class="text-lg font-bold text-green-600 dark:text-green-400">{{ number_format($productOverview['revenue']['total'], 0, ',', '.') }}₫</p>
+                        @if ($productOverview['revenue']['change'] != 0)
+                            <span class="text-xs {{ $productOverview['revenue']['change'] > 0 ? 'text-green-600' : 'text-red-600' }}">
+                                {{ $productOverview['revenue']['change'] > 0 ? '+' : '' }}{{ $productOverview['revenue']['change'] }}%
+                            </span>
+                        @endif
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        {{-- Top sản phẩm bán chạy --}}
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-sm border border-gray-200 dark:border-gray-700 p-6">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-base font-semibold text-gray-800 dark:text-white">Top sản phẩm bán chạy tháng này</h3>
+                <a href="{{ route('admin.products.index') }}" class="text-sm text-brand-600 dark:text-brand-400 hover:underline">Quản lý sản phẩm →</a>
+            </div>
+
+            @if (count($topProducts) > 0)
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+                    @foreach ($topProducts as $index => $product)
+                        <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                            {{-- Rank --}}
+                            @php
+                                $rankColors = ['bg-yellow-400 text-yellow-900', 'bg-gray-300 text-gray-700', 'bg-amber-600 text-white'];
+                            @endphp
+                            <div class="flex-shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold {{ $rankColors[$index] ?? 'bg-gray-200 text-gray-600' }}">
+                                {{ $index + 1 }}
+                            </div>
+
+                            {{-- Image --}}
+                            @if ($product['image'])
+                                <img src="{{ Storage::url($product['image']) }}" class="w-10 h-10 rounded-md object-cover flex-shrink-0" alt="{{ $product['name'] }}">
+                            @else
+                                <div class="w-10 h-10 bg-indigo-100 dark:bg-indigo-900 rounded-md flex items-center justify-center text-indigo-700 dark:text-indigo-300 flex-shrink-0">
+                                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                                </div>
+                            @endif
+
+                            {{-- Info --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-white truncate">{{ $product['name'] }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400">Đã bán: <span class="font-semibold text-gray-700 dark:text-gray-300">{{ $product['sold'] }}</span></p>
+                            </div>
+
+                            {{-- Revenue --}}
+                            <div class="text-right flex-shrink-0">
+                                <span class="text-sm font-semibold text-green-600 dark:text-green-400 block">{{ number_format($product['revenue'], 0, ',', '.') }}₫</span>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="text-sm text-gray-500 dark:text-gray-400 text-center py-4">Chưa có sản phẩm nào được bán trong tháng.</p>
+            @endif
+        </div>
+    </div>
+
     {{-- Quick Links --}}
     <div class="mt-6 grid grid-cols-2 md:grid-cols-4 gap-4">
         <a href="{{ route('admin.bookings.index') }}"

@@ -80,7 +80,26 @@
             </div>
         </div>
 
-        {{-- Upcoming Bookings --}}
+        </div>
+
+        {{-- Tabs wrapper Alpine --}}
+        <div x-data="{ currentTab: 'bookings' }">
+            <div style="display:flex;gap:16px;border-bottom:1px solid var(--v-rule);margin-bottom:24px;">
+                <button @click="currentTab = 'bookings'" 
+                    :style="currentTab === 'bookings' ? 'border-bottom:2px solid var(--v-copper);color:var(--v-copper);font-weight:600;' : 'color:var(--v-muted);'"
+                    style="padding:12px 16px;background:none;font-family:var(--font-serif);font-size:16px;cursor:pointer;transition:all 0.2s;">
+                    Lịch đặt ({{ $upcomingBookings->count() + $pastBookings->count() }})
+                </button>
+                <button @click="currentTab = 'orders'" 
+                    :style="currentTab === 'orders' ? 'border-bottom:2px solid var(--v-copper);color:var(--v-copper);font-weight:600;' : 'color:var(--v-muted);'"
+                    style="padding:12px 16px;background:none;border:none;font-family:var(--font-serif);font-size:16px;cursor:pointer;transition:all 0.2s;">
+                    Đơn hàng ({{ $orders->count() }})
+                </button>
+            </div>
+
+            {{-- Tab Bookings --}}
+            <div x-show="currentTab === 'bookings'">
+                {{-- Upcoming Bookings --}}
         <div style="margin-bottom:32px;">
             <div class="v-ornament" style="max-width:360px;margin-bottom:16px;justify-content:flex-start;">
                 Lịch hẹn sắp tới
@@ -265,8 +284,69 @@
                             <span class="material-symbols-outlined" style="font-size:14px;" x-text="showAll ? 'expand_less' : 'expand_more'"></span>
                         </button>
                     @endif
+            @endif
+        </div>
+        </div>
+
+        {{-- Tab Orders --}}
+        <div x-show="currentTab === 'orders'" x-cloak>
+            <div class="v-ornament" style="max-width:360px;margin-bottom:16px;justify-content:flex-start;">
+                Lịch sử mua hàng
+            </div>
+            
+            @if($orders->isEmpty())
+                <div style="border:1px solid var(--v-rule);background:#fff;padding:24px;text-align:center;">
+                    <span class="material-symbols-outlined" style="font-size:32px;color:var(--v-muted);opacity:0.4;display:block;margin-bottom:6px;">shopping_bag</span>
+                    <p style="color:var(--v-muted);font-size:13px;">Chưa có đơn hàng nào.</p>
+                    <a href="{{ route('client.shop.index') }}" class="v-btn-primary v-btn-sm" style="margin-top:12px;gap:6px;display:inline-flex;">
+                        <span class="material-symbols-outlined" style="font-size:14px;">storefront</span>
+                        Mua sắm ngay
+                    </a>
+                </div>
+            @else
+                <div style="border:1px solid var(--v-rule);background:#fff;overflow:hidden;">
+                    {{-- Rows --}}
+                    @foreach($orders as $order)
+                        <div style="border-bottom:1px solid var(--v-rule);padding:16px;">
+                            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-family:monospace;font-size:13px;font-weight:700;color:var(--v-ink);">{{ $order->order_code }}</span>
+                                    <span style="font-size:12px;color:var(--v-muted);">{{ $order->created_at->format('d/m/Y H:i') }}</span>
+                                </div>
+                                <span style="display:inline-flex;padding:2px 8px;font-size:10px;font-weight:700;letter-spacing:1px;text-transform:uppercase;border:1px solid var(--v-rule);
+                                    @if($order->status === \App\Enums\OrderStatus::Delivered) background:rgba(22,163,74,0.06);color:#15803d;border-color:rgba(22,163,74,0.2);
+                                    @elseif($order->status === \App\Enums\OrderStatus::Cancelled) background:rgba(220,38,38,0.06);color:#dc2626;border-color:rgba(220,38,38,0.2);
+                                    @else background:var(--v-surface);color:var(--v-muted);border-color:var(--v-rule);
+                                    @endif">{{ $order->status->label() }}</span>
+                            </div>
+                            
+                            <div style="display:flex;flex-direction:column;gap:8px;background:var(--v-surface);padding:12px;border:1px dashed var(--v-copper);opacity:0.8;">
+                                @foreach($order->items as $item)
+                                    <div style="display:flex;justify-content:space-between;font-size:13px;">
+                                        <span style="color:var(--v-ink);display:flex;align-items:center;gap:6px;">
+                                            @if($item->product && $item->product->image)
+                                                <img src="{{ Storage::url($item->product->image) }}" class="w-6 h-6 rounded object-cover border border-gray-200">
+                                            @endif
+                                            {{ $item->product ? $item->product->name : $item->product_name }} 
+                                            <span style="color:var(--v-muted);font-weight:600;">x{{ $item->quantity }}</span>
+                                        </span>
+                                        <span style="font-family:var(--font-serif);font-weight:600;color:var(--v-ink);">{{ number_format($item->total_price, 0, ',', '.') }}đ</span>
+                                    </div>
+                                @endforeach
+                            </div>
+
+                            <div style="display:flex;justify-content:space-between;align-items:center;margin-top:12px;">
+                                <a href="#" class="v-btn-outline v-btn-sm" style="font-size:11px;padding:4px 8px;">Xem chi tiết</a>
+                                <div style="display:flex;align-items:center;gap:8px;">
+                                    <span style="font-size:12px;color:var(--v-muted);">Tổng cộng:</span>
+                                    <span style="font-family:var(--font-serif);font-size:16px;font-weight:700;color:var(--v-ink);">{{ number_format($order->total_amount, 0, ',', '.') }}đ</span>
+                                </div>
+                            </div>
+                        </div>
+                    @endforeach
                 </div>
             @endif
+        </div>
         </div>
 
         {{-- Logout --}}

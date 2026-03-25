@@ -23,10 +23,16 @@ class ProfileController extends Controller
             ->orderByDesc('start_time')
             ->get();
 
-        $upcomingBookings = $bookings->filter(fn ($b) => $b->booking_date >= now()->toDateString() && !in_array($b->status, [BookingStatus::Cancelled, BookingStatus::Completed]));
-        $pastBookings = $bookings->filter(fn ($b) => $b->booking_date < now()->toDateString() || in_array($b->status, [BookingStatus::Cancelled, BookingStatus::Completed]));
+        $upcomingBookings = $bookings->filter(fn ($b) => $b->booking_date >= now()->toDateString() && !in_array($b->status, [\App\Enums\BookingStatus::Cancelled, \App\Enums\BookingStatus::Completed]));
+        $pastBookings = $bookings->filter(fn ($b) => $b->booking_date < now()->toDateString() || in_array($b->status, [\App\Enums\BookingStatus::Cancelled, \App\Enums\BookingStatus::Completed]));
 
-        return view('client.profile.show', compact('user', 'upcomingBookings', 'pastBookings'));
+        // Lấy lịch sử mua hàng e-commerce
+        $orders = $user->orders()
+            ->with(['items.product'])
+            ->latest()
+            ->get();
+
+        return view('client.profile.show', compact('user', 'upcomingBookings', 'pastBookings', 'orders'));
     }
 
     public function edit(Request $request): View

@@ -44,6 +44,10 @@ class DashboardController extends Controller
         // Doanh thu tháng
         $overview = $this->reportService->getMonthlyOverview();
 
+        // Thống kê sản phẩm
+        $productOverview = $this->reportService->getProductMonthlyOverview();
+        $topProducts = $this->reportService->getTopSellingProducts(5);
+
         // Biểu đồ doanh thu 7 ngày gần nhất
         $revenueChart = $this->reportService->getDailyRevenue();
         // Chỉ lấy 7 ngày gần nhất
@@ -93,7 +97,7 @@ class DashboardController extends Controller
             'totalUsers', 'totalBarbers', 'totalCustomers',
             'todayBookings', 'pendingBookings',
             'overview', 'revenueChart', 'recentBookings', 'topBarbers',
-            'branchStats'
+            'branchStats', 'productOverview', 'topProducts'
         ));
     }
 }

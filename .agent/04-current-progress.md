@@ -9,7 +9,7 @@
 
 ```
 Giai đoạn đang làm : 13 — Mở rộng quản trị Admin (Exp P3)
-Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Coupon ✅, Phase 6 ✅, Phase 7 ✅)
+Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Coupon ✅, Phase 6 ✅, Phase 7 ✅, Email Notification ✅)
 Cập nhật lần cuối  : 25/03/2026
 ```
 
@@ -463,4 +463,6 @@ Khi hoàn thành cả giai đoạn, đổi `⬜ Chưa bắt đầu` thành `✅ 
 - **25/03/2026**: 13.3 Phase 6 hoàn thành — Thanh toán đơn hàng: (1) Tạo `PlaceOrderRequest` validate giỏ hàng bằng hook; (2) Tách method `placeOrder`, `orders`, `orderShow`, `cancelOrder`, `orderSuccess` từ `ShopController` ra `OrderController`; (3) Tạo `OrderPaymentService` kế thừa logic thanh toán VNPay Sandbox, MoMo Sandbox nhưng sửa dụng cho model `OrderPayment`; (4) Xử lý URL callback qua `OrderPaymentController` để redirect trạng thái trả về thành công/thất bại cho Client.
 
 - **25/03/2026**: 13.3 Phase 7 hoàn thành — Admin quản lý đơn hàng: (1) Tạo `Admin\OrderController` với đầy đủ tính năng filter và update FSM cho Order; (2) Tạo UI listview và detail view cho admin qua views Blade `index.blade.php` và `show.blade.php`; (3) Cập nhật admin sidebar hiển thị số lượng đơn pending theo thời gian thực. Bổ sung modal AlpineJS cho logic hủy đơn.
+
+- **25/03/2026**: 13.3 Bổ sung Email Notification — Tự động gửi email qua `OrderStatusUpdatedMail` khi khách hàng chuyển các giai đoạn: Tạo, Xác nhận, Giao hàng, Hoàn thành, Hủy. Được gọi trong `OrderService` qua Queue mượt mà. Đã hoàn thành test.
 

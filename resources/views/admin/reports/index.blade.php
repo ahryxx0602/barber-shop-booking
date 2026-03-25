@@ -24,8 +24,22 @@
         </form>
     </div>
 
-    {{-- Stat Cards --}}
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+    {{-- Tabs Alpine --}}
+    <div x-data="{ currentTab: 'service' }" @change-tab.window="currentTab = $event.detail; document.getElementById('reportType').value = currentTab; updateTitle(); fetchChartData();">
+        <div class="flex gap-6 mb-6 border-b border-gray-200 dark:border-gray-700">
+            <button @click="$dispatch('change-tab', 'service')" 
+                :class="currentTab === 'service' ? 'border-green-500 text-green-600 dark:text-green-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'" 
+                class="pb-3 border-b-2 font-semibold text-sm transition-colors">Dịch vụ & Booking</button>
+            <button @click="$dispatch('change-tab', 'product')" 
+                :class="currentTab === 'product' ? 'border-green-500 text-green-600 dark:text-green-400' : 'border-transparent text-gray-500 hover:text-gray-700 dark:hover:text-gray-300'" 
+                class="pb-3 border-b-2 font-semibold text-sm transition-colors">Sản phẩm E-commerce</button>
+        </div>
+
+        <input type="hidden" id="reportType" value="service">
+
+        {{-- Tab Dịch vụ Stats --}}
+        <div x-show="currentTab === 'service'">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
 
         {{-- Card: Tổng Booking --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
@@ -120,7 +134,74 @@
             <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Khách hàng mới trong tháng</p>
         </div>
 
-    </div>
+        </div>
+        </div>
+
+        {{-- Tab Sản phẩm Stats --}}
+        <div x-show="currentTab === 'product'" x-cloak>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                {{-- Card: Tổng Đơn Hàng --}}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-indigo-50 dark:bg-indigo-500/10">
+                            <svg class="w-6 h-6 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M16 11V7a4 4 0 00-8 0v4M5 9h14l1 12H4L5 9z" />
+                            </svg>
+                        </div>
+                        @php $orderChange = $productOverview['orders']['change']; @endphp
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+                            {{ $orderChange > 0 ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' : ($orderChange < 0 ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-gray-50 text-gray-500 dark:bg-gray-600/10 dark:text-gray-400') }}">
+                            @if ($orderChange > 0)
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V3m0 0L3 6m3-3l3 3" /></svg>
+                                +{{ $orderChange }}%
+                            @elseif ($orderChange < 0)
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3v6m0 0l3-3m-3 3L3 6" /></svg>
+                                {{ $orderChange }}%
+                            @else 0% @endif
+                        </span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ number_format($productOverview['orders']['total']) }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Tổng đơn hàng trong tháng</p>
+                </div>
+
+                {{-- Card: Doanh thu Sản phẩm --}}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-green-50 dark:bg-green-500/10">
+                            <svg class="w-6 h-6 text-green-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                            </svg>
+                        </div>
+                        @php $productRevenueChange = $productOverview['revenue']['change']; @endphp
+                        <span class="inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium
+                            {{ $productRevenueChange > 0 ? 'bg-green-50 text-green-600 dark:bg-green-500/10 dark:text-green-400' : ($productRevenueChange < 0 ? 'bg-red-50 text-red-600 dark:bg-red-500/10 dark:text-red-400' : 'bg-gray-50 text-gray-500 dark:bg-gray-600/10 dark:text-gray-400') }}">
+                            @if ($productRevenueChange > 0)
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 9V3m0 0L3 6m3-3l3 3" /></svg>
+                                +{{ $productRevenueChange }}%
+                            @elseif ($productRevenueChange < 0)
+                                <svg class="w-3 h-3" fill="none" viewBox="0 0 12 12" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M6 3v6m0 0l3-3m-3 3L3 6" /></svg>
+                                {{ $productRevenueChange }}%
+                            @else 0% @endif
+                        </span>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ number_format($productOverview['revenue']['total'], 0, ',', '.') }} ₫</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Doanh thu sản phẩm</p>
+                </div>
+
+                {{-- Card: Sản phẩm đang bán --}}
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <div class="flex items-center justify-center w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-500/10">
+                            <svg class="w-6 h-6 text-amber-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+                                <path stroke-linecap="round" stroke-linejoin="round" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" />
+                            </svg>
+                        </div>
+                    </div>
+                    <h3 class="text-3xl font-bold text-gray-900 dark:text-white">{{ number_format($productOverview['products']['total']) }}</h3>
+                    <p class="text-sm text-gray-500 dark:text-gray-400 mt-1">Sản phẩm đang bán</p>
+                </div>
+            </div>
+        </div>
 
     {{-- Biểu đồ doanh thu --}}
     <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
@@ -177,8 +258,8 @@
         </div>
     </div>
 
-    {{-- Top Thợ & Top Dịch vụ --}}
-    <div class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+    {{-- Top Thợ & Top Dịch vụ (Dịch vụ Tab) --}}
+    <div x-show="currentTab === 'service'" class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
 
         {{-- Top Thợ theo doanh thu --}}
         <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
@@ -279,6 +360,57 @@
         </div>
 
     </div>
+
+    {{-- Top Sản phẩm (Sản phẩm Tab) --}}
+    <div x-show="currentTab === 'product'" x-cloak class="mt-6 grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6 lg:col-span-2">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-800 dark:text-white">Top sản phẩm bán chạy</h3>
+                <span class="text-xs text-gray-400 dark:text-gray-500">Tháng này</span>
+            </div>
+
+            @if (count($topSellingProducts) > 0)
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    @foreach ($topSellingProducts as $index => $product)
+                        <div class="flex items-center gap-3 p-3 rounded-lg border border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-800/50">
+                            {{-- Rank --}}
+                            @php
+                                $rankColors = ['bg-yellow-400 text-yellow-900', 'bg-gray-300 text-gray-700', 'bg-amber-600 text-white'];
+                            @endphp
+                            <div class="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold {{ $rankColors[$index] ?? 'bg-gray-200 text-gray-600' }}">
+                                {{ $index + 1 }}
+                            </div>
+
+                            {{-- Image --}}
+                            @if ($product['image'])
+                                <img src="{{ Storage::url($product['image']) }}" class="w-12 h-12 rounded-lg object-cover flex-shrink-0">
+                            @else
+                                <div class="w-12 h-12 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg flex items-center justify-center text-indigo-500 flex-shrink-0">
+                                    <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0l-8 4m8-4v10l-8 4m0-10L4 7m8 4v10M4 7v10l8 4" /></svg>
+                                </div>
+                            @endif
+
+                            {{-- Info --}}
+                            <div class="flex-1 min-w-0">
+                                <p class="text-sm font-medium text-gray-800 dark:text-white truncate">{{ $product['name'] }}</p>
+                                <p class="text-xs text-gray-500 dark:text-gray-400 mt-0.5">Giá: {{ number_format($product['price'], 0, ',', '.') }}₫</p>
+                            </div>
+
+                            {{-- Stats --}}
+                            <div class="text-right flex-shrink-0">
+                                <p class="text-sm font-bold text-gray-800 dark:text-white">{{ $product['sold'] }} đã bán</p>
+                                <p class="text-xs font-semibold text-green-600 dark:text-green-400 mt-0.5">{{ number_format($product['revenue'], 0, ',', '.') }}₫</p>
+                            </div>
+                        </div>
+                    @endforeach
+                </div>
+            @else
+                <p class="text-sm text-gray-400 dark:text-gray-500 text-center py-8">Chưa có dữ liệu</p>
+            @endif
+        </div>
+    </div>
+    
+    </div> {{-- End Tabs Alpine wrapper --}}
 
     {{-- Ghi chú --}}
     <div class="mt-6 bg-white rounded-xl shadow-sm border border-gray-200 dark:bg-gray-800 dark:border-gray-700 p-6">
@@ -432,7 +564,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Fetch dữ liệu từ API
     async function fetchChartData() {
-        const params = new URLSearchParams({ mode: currentMode });
+        const typeMode = document.getElementById('reportType').value;
+        const params = new URLSearchParams({ mode: currentMode, type: typeMode });
 
         if (currentMode === 'monthly') {
             params.append('month', filterMonth.value);
@@ -455,12 +588,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Cập nhật title
     function updateTitle() {
+        const typeMode = document.getElementById('reportType').value;
+        const typeStr = typeMode === 'product' ? 'Doanh thu sản phẩm' : 'Doanh thu dịch vụ';
+
         if (currentMode === 'recent') {
-            chartTitle.textContent = 'Doanh thu 30 ngày gần nhất';
+            chartTitle.textContent = `${typeStr} 30 ngày gần nhất`;
         } else if (currentMode === 'monthly') {
-            chartTitle.textContent = `Doanh thu ${MONTH_NAMES[filterMonth.value]} năm ${filterYear.value}`;
+            chartTitle.textContent = `${typeStr} ${MONTH_NAMES[filterMonth.value]} năm ${filterYear.value}`;
         } else {
-            chartTitle.textContent = `Doanh thu năm ${filterYear.value}`;
+            chartTitle.textContent = `${typeStr} năm ${filterYear.value}`;
         }
     }
 

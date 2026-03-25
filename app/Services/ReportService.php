@@ -259,6 +259,162 @@ class ReportService
     }
 
     /**
+     * Lấy thống kê tổng quan sản phẩm theo tháng.
+     */
+    public function getProductMonthlyOverview(?Carbon $date = null): array
+    {
+        $date = $date ?? now();
+
+        $currentMonthStart = $date->copy()->startOfMonth();
+        $currentMonthEnd = $date->copy()->endOfMonth();
+        $prevMonthStart = $date->copy()->subMonth()->startOfMonth();
+        $prevMonthEnd = $date->copy()->subMonth()->endOfMonth();
+
+        // Tổng đơn hàng (phát sinh)
+        $currentOrders = \App\Models\Order::whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count();
+        $prevOrders = \App\Models\Order::whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count();
+
+        // Doanh thu (chỉ tính đơn hàng Confirmed, Shipping, Delivered)
+        $revenueStatuses = [
+            \App\Enums\OrderStatus::Confirmed,
+            \App\Enums\OrderStatus::Shipping,
+            \App\Enums\OrderStatus::Delivered,
+        ];
+
+        $currentRevenue = \App\Models\Order::whereIn('status', $revenueStatuses)
+            ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
+            ->sum('total_amount');
+
+        $prevRevenue = \App\Models\Order::whereIn('status', $revenueStatuses)
+            ->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])
+            ->sum('total_amount');
+
+        // Tổng số sản phẩm đang bán
+        $totalProducts = \App\Models\Product::where('is_active', true)->count();
+
+        return [
+            'month' => $date->format('m/Y'),
+            'orders' => [
+                'total' => $currentOrders,
+                'change' => $this->calculateChange($currentOrders, $prevOrders),
+            ],
+            'revenue' => [
+                'total' => $currentRevenue,
+                'change' => $this->calculateChange($currentRevenue, $prevRevenue),
+            ],
+            'products' => [
+                'total' => $totalProducts,
+            ],
+        ];
+    }
+
+    /**
+     * Lấy doanh thu sản phẩm theo ngày (biểu đồ).
+     */
+    public function getProductDailyRevenue(?int $month = null, ?int $year = null): array
+    {
+        if ($month && $year) {
+            $startDate = Carbon::create($year, $month, 1)->startOfDay();
+            $endDate = $startDate->copy()->endOfMonth();
+        } else {
+            $startDate = now()->subDays(29)->startOfDay();
+            $endDate = now()->endOfDay();
+        }
+
+        $revenueStatuses = [
+            \App\Enums\OrderStatus::Confirmed,
+            \App\Enums\OrderStatus::Shipping,
+            \App\Enums\OrderStatus::Delivered,
+        ];
+
+        $revenues = \App\Models\Order::whereIn('status', $revenueStatuses)
+            ->whereBetween('created_at', [$startDate, $endDate])
+            ->selectRaw('DATE(created_at) as date, SUM(total_amount) as total')
+            ->groupBy('date')
+            ->orderBy('date')
+            ->pluck('total', 'date');
+
+        $labels = [];
+        $data = [];
+        $current = $startDate->copy();
+
+        while ($current <= $endDate) {
+            $dateKey = $current->format('Y-m-d');
+            $labels[] = $current->format('d/m');
+            $data[] = (float) ($revenues[$dateKey] ?? 0);
+            $current->addDay();
+        }
+
+        return compact('labels', 'data');
+    }
+
+    /**
+     * Lấy doanh thu sản phẩm theo từng tháng trong năm.
+     */
+    public function getProductMonthlyRevenue(int $year): array
+    {
+        $revenueStatuses = [
+            \App\Enums\OrderStatus::Confirmed,
+            \App\Enums\OrderStatus::Shipping,
+            \App\Enums\OrderStatus::Delivered,
+        ];
+
+        $revenues = \App\Models\Order::whereIn('status', $revenueStatuses)
+            ->whereYear('created_at', $year)
+            ->selectRaw('MONTH(created_at) as month, SUM(total_amount) as total')
+            ->groupBy('month')
+            ->orderBy('month')
+            ->pluck('total', 'month');
+
+        $labels = [];
+        $data = [];
+
+        for ($m = 1; $m <= 12; $m++) {
+            $labels[] = 'T' . $m;
+            $data[] = (float) ($revenues[$m] ?? 0);
+        }
+
+        return compact('labels', 'data');
+    }
+
+    /**
+     * Top sản phẩm bán chạy.
+     */
+    public function getTopSellingProducts(int $limit = 5): array
+    {
+        $startOfMonth = now()->startOfMonth();
+        $endOfMonth = now()->endOfMonth();
+
+        $revenueStatuses = [
+            \App\Enums\OrderStatus::Confirmed,
+            \App\Enums\OrderStatus::Shipping,
+            \App\Enums\OrderStatus::Delivered,
+        ];
+
+        return \App\Models\Product::select('products.id', 'products.name', 'products.price', 'products.image')
+            ->selectRaw('COALESCE(SUM(order_items.quantity), 0) as total_sold')
+            ->selectRaw('COALESCE(SUM(order_items.total_price), 0) as total_revenue')
+            ->leftJoin('order_items', 'products.id', '=', 'order_items.product_id')
+            ->leftJoin('orders', function ($join) use ($startOfMonth, $endOfMonth, $revenueStatuses) {
+                $join->on('order_items.order_id', '=', 'orders.id')
+                    ->whereBetween('orders.created_at', [$startOfMonth, $endOfMonth])
+                    ->whereIn('orders.status', $revenueStatuses);
+            })
+            ->groupBy('products.id', 'products.name', 'products.price', 'products.image')
+            ->orderByDesc('total_sold')
+            ->limit($limit)
+            ->get()
+            ->map(fn ($item) => [
+                'name' => $item->name,
+                'price' => (float) $item->price,
+                'image' => $item->image,
+                'sold' => (int) $item->total_sold,
+                'revenue' => (float) $item->total_revenue,
+            ])
+            ->toArray();
+    }
+
+    /**
      * Tính % thay đổi so với tháng trước.
      */
     private function calculateChange(float $current, float $previous): float
