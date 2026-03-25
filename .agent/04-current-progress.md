@@ -9,7 +9,7 @@
 
 ```
 Giai đoạn đang làm : 13 — Mở rộng quản trị Admin (Exp P3)
-Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Coupon ✅, Phase 6 ✅)
+Bước đang làm      : 13.3 — Quản lý sản phẩm bán kèm (Phase 1 ✅, Phase 2 ✅, Phase 3 ✅, Phase 4 ✅, Phase 5 ✅, Coupon ✅, Phase 6 ✅, Phase 7 ✅)
 Cập nhật lần cuối  : 25/03/2026
 ```
 
@@ -426,8 +426,14 @@ Cập nhật lần cuối  : 25/03/2026
 - [x] Tạo `OrderPaymentController` để xử lý các callback thanh toán.
 - [x] Cập nhật `routes/web.php`.
 
-**Phase 7–8:** Chưa bắt đầu
-- [ ] 13.4 Audit Log nâng cao (Ghi lại mọi thay đổi Model)
+**Phase 7 — Admin quản lý đơn hàng (đã xong):**
+- [x] Tạo `Admin\OrderController` (index, show, updateStatus theo FSM).
+- [x] Thêm routes admin cho truy cập Orders.
+- [x] View `admin/orders/index.blade.php` hiển thị bảng phân trang, tích hợp 4 stats cards và filter theo trạng thái/search text.
+- [x] View `admin/orders/show.blade.php` hiển thị thông tin chi tiết hóa đơn (khách hàng, giao hàng, thanh toán, bảng tính SP) và cụm nút action để cập nhật trạng thái đơn (Confirmed, Shipping, Delivered, Cancelled) kèm modal xác nhận hủy.
+- [x] Cập nhật sidebar Admin `tailadmin-sidebar.blade.php` với nút Đơn hàng báo số liệu đơn Pending.
+
+**Phase 8:** Chưa bắt đầu
 - [ ] 13.5 Dashboard Analytics nâng cao (Heatmap, So sánh kỳ)
 
 ---
@@ -455,4 +461,6 @@ Khi hoàn thành cả giai đoạn, đổi `⬜ Chưa bắt đầu` thành `✅ 
 - **25/03/2026**: Coupon System cho Checkout — (1) Migration thêm `applies_to` (product/shipping/booking) vào `coupons` + discount tracking columns vào `orders`; (2) `CouponAppliesTo` enum + `CouponService::validate()` type-aware; (3) API `ShopController::applyCoupon()` AJAX + coupon-aware `placeOrder()`; (4) Checkout UI 2 ô mã (Sản phẩm + Ship) với Alpine.js; (5) Trang `/coupons` (public) hiển danh sách mã giảm giá + link trên header nav; (6) Admin form thêm dropdown "Áp dụng cho" + validation.
 
 - **25/03/2026**: 13.3 Phase 6 hoàn thành — Thanh toán đơn hàng: (1) Tạo `PlaceOrderRequest` validate giỏ hàng bằng hook; (2) Tách method `placeOrder`, `orders`, `orderShow`, `cancelOrder`, `orderSuccess` từ `ShopController` ra `OrderController`; (3) Tạo `OrderPaymentService` kế thừa logic thanh toán VNPay Sandbox, MoMo Sandbox nhưng sửa dụng cho model `OrderPayment`; (4) Xử lý URL callback qua `OrderPaymentController` để redirect trạng thái trả về thành công/thất bại cho Client.
+
+- **25/03/2026**: 13.3 Phase 7 hoàn thành — Admin quản lý đơn hàng: (1) Tạo `Admin\OrderController` với đầy đủ tính năng filter và update FSM cho Order; (2) Tạo UI listview và detail view cho admin qua views Blade `index.blade.php` và `show.blade.php`; (3) Cập nhật admin sidebar hiển thị số lượng đơn pending theo thời gian thực. Bổ sung modal AlpineJS cho logic hủy đơn.
 
