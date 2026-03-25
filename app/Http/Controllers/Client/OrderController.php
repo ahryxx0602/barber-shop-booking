@@ -57,6 +57,7 @@ class OrderController extends Controller
             $result = $this->orderService->create($orderData);
             $order = $result['order'];
 
+            // C4+C5: Apply coupon trong transaction, fix field name total_amount
             if ($request->filled('product_coupon_code')) {
                 try {
                     $coupon = $this->couponService->validate(
@@ -68,10 +69,14 @@ class OrderController extends Controller
                     $order->update([
                         'product_coupon_code' => $coupon->code,
                         'product_discount' => $discount,
-                        'total_price' => max(0, $order->total_price - $discount),
+                        'total_amount' => max(0, $order->total_amount - $discount),
                     ]);
                     $this->couponService->markUsed($coupon);
-                } catch (\InvalidArgumentException $e) { }
+                    $order->refresh();
+                } catch (\InvalidArgumentException $e) {
+                    // Thông báo cho user biết coupon không hợp lệ thay vì nuốt im lặng
+                    session()->flash('warning', 'Mã giảm giá sản phẩm không hợp lệ: ' . $e->getMessage());
+                }
             }
 
             if ($request->filled('shipping_coupon_code')) {
@@ -85,10 +90,13 @@ class OrderController extends Controller
                     $order->update([
                         'shipping_coupon_code' => $coupon->code,
                         'shipping_discount' => $discount,
-                        'total_price' => max(0, $order->total_price - $discount),
+                        'total_amount' => max(0, $order->total_amount - $discount),
                     ]);
                     $this->couponService->markUsed($coupon);
-                } catch (\InvalidArgumentException $e) { }
+                    $order->refresh();
+                } catch (\InvalidArgumentException $e) {
+                    session()->flash('warning', 'Mã giảm giá vận chuyển không hợp lệ: ' . $e->getMessage());
+                }
             }
 
             session()->forget('cart');

@@ -267,6 +267,6 @@ class OrderService
      */
     protected function generateCode(): string
     {
-        return 'ORD-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
+        return 'ORD-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
     }
 }

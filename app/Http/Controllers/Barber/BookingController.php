@@ -25,9 +25,14 @@ class BookingController extends Controller
     {
         $barber = $request->user()->barber;
 
-        $weekStart = $request->input('week')
-            ? Carbon::parse($request->input('week'))->startOfWeek(Carbon::MONDAY)
-            : now()->startOfWeek(Carbon::MONDAY);
+        // M7: Validate week parameter, fallback to current week if invalid
+        try {
+            $weekStart = $request->input('week')
+                ? Carbon::parse($request->input('week'))->startOfWeek(Carbon::MONDAY)
+                : now()->startOfWeek(Carbon::MONDAY);
+        } catch (\Exception $e) {
+            $weekStart = now()->startOfWeek(Carbon::MONDAY);
+        }
 
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
 

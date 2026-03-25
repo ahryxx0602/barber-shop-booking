@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Client;
 
 use App\Enums\PaymentMethod;
+use App\Models\Payment;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
@@ -23,6 +24,11 @@ class PaymentController extends Controller
      */
     public function show(Booking $booking): View
     {
+        // C3: Kiểm tra quyền sở hữu booking
+        if (auth()->check() && $booking->customer_id !== auth()->id()) {
+            abort(403, 'Bạn không có quyền xem thanh toán này.');
+        }
+
         // Chặn truy cập nếu đã thanh toán
         if ($booking->payment && $booking->payment->status === PaymentStatus::Paid) {
             return view('client.booking.confirmation', [
@@ -43,6 +49,11 @@ class PaymentController extends Controller
      */
     public function process(Request $request, Booking $booking): RedirectResponse
     {
+        // C3: Kiểm tra quyền sở hữu booking
+        if (auth()->check() && $booking->customer_id !== auth()->id()) {
+            abort(403, 'Bạn không có quyền thanh toán booking này.');
+        }
+
         $request->validate([
             'payment_method' => ['required', 'in:cash,vnpay,momo'],
         ]);
@@ -80,7 +91,7 @@ class PaymentController extends Controller
     /**
      * VNPay: tạo URL sandbox rồi redirect.
      */
-    private function handleVNPay(mixed $payment, Request $request): RedirectResponse
+    private function handleVNPay(Payment $payment, Request $request): RedirectResponse
     {
         $url = $this->paymentService->createVNPayUrl($payment, $request);
         return redirect()->away($url);
@@ -89,7 +100,7 @@ class PaymentController extends Controller
     /**
      * Momo: gọi API lấy payUrl rồi redirect.
      */
-    private function handleMomo(mixed $payment): RedirectResponse
+    private function handleMomo(Payment $payment): RedirectResponse
     {
         $url = $this->paymentService->createMomoUrl($payment);
 

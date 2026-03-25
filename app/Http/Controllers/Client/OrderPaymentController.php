@@ -12,6 +12,27 @@ class OrderPaymentController extends Controller
         protected OrderPaymentService $orderPaymentService
     ) {}
 
+    /**
+     * VNPay IPN — Server-to-server callback cho Order Payment.
+     * Đảm bảo payment luôn được cập nhật ngay cả khi user đóng browser.
+     */
+    public function vnpayIPN(Request $request)
+    {
+        $result = $this->orderPaymentService->verifyVNPayCallback($request->all());
+
+        if ($result['success']) {
+            return response()->json([
+                'RspCode' => '00',
+                'Message' => 'Confirm Success',
+            ]);
+        }
+
+        return response()->json([
+            'RspCode' => '99',
+            'Message' => $result['message'],
+        ]);
+    }
+
     public function vnpayReturn(Request $request)
     {
         $result = $this->orderPaymentService->verifyVNPayCallback($request->all());
@@ -46,3 +67,4 @@ class OrderPaymentController extends Controller
         return redirect()->route('client.orders.show', $order->id)->with('error', $result['message']);
     }
 }
+

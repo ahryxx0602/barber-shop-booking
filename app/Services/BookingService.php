@@ -58,7 +58,8 @@ class BookingService
                     $couponCode = $coupon->code;
                     $this->couponService->markUsed($coupon);
                 } catch (\InvalidArgumentException $e) {
-                    // Cố tình bỏ qua mã giảm giá không hợp lệ, tiếp tục quá trình đặt lịch với giá gốc
+                    // M1: Thông báo cho user thay vì nuốt im lặng
+                    session()->flash('warning', 'Mã giảm giá không hợp lệ: ' . $e->getMessage());
                 }
             }
 
@@ -296,6 +297,6 @@ class BookingService
 
     protected function generateCode(): string
     {
-        return 'BB-' . now()->format('Ymd') . '-' . strtoupper(Str::random(4));
+        return 'BB-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));
     }
 }

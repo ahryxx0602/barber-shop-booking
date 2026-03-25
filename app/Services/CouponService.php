@@ -61,10 +61,22 @@ class CouponService
     }
 
     /**
-     * Tăng lượt sử dụng coupon.
+     * Tăng lượt sử dụng coupon (H7: atomic với conditional WHERE).
+     *
+     * @throws \InvalidArgumentException nếu coupon đã hết lượt sử dụng
      */
     public function markUsed(Coupon $coupon): void
     {
-        $coupon->increment('used_count');
+        // H7: Atomic update — chỉ tăng nếu chưa vượt max_usage
+        $affected = Coupon::where('id', $coupon->id)
+            ->where(function ($query) {
+                $query->whereNull('max_usage')
+                      ->orWhereColumn('used_count', '<', 'max_usage');
+            })
+            ->increment('used_count');
+
+        if ($affected === 0) {
+            throw new \InvalidArgumentException('Mã giảm giá đã hết lượt sử dụng.');
+        }
     }
 }

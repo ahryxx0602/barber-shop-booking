@@ -28,27 +28,36 @@ class OrderController extends Controller
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('order_code', 'like', "%{$search}%")
+                // M2: order_code dùng prefix match (index-friendly) thay vì %like%
+                $q->where('order_code', 'like', "{$search}%")
                   ->orWhereHas('customer', function ($q) use ($search) {
                       $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "%{$search}%")
-                        ->orWhere('phone', 'like', "%{$search}%");
+                        ->orWhere('email', 'like', "{$search}%")
+                        ->orWhere('phone', 'like', "{$search}%");
                   });
             });
         }
 
         $orders = $query->paginate(15)->withQueryString();
 
-        // Stats
-        $totalOrders = Order::count();
-        $pendingOrders = Order::where('status', OrderStatus::Pending)->count();
-        $shippingOrders = Order::where('status', OrderStatus::Shipping)->count();
-        
-        // Doanh thu tháng này (Delivered)
-        $thisMonthRevenue = Order::where('status', OrderStatus::Delivered)
-            ->whereMonth('created_at', now()->month)
-            ->whereYear('created_at', now()->year)
-            ->sum('total_amount');
+        // M6: Gom stats vào 1 query aggregate thay vì 4 queries riêng
+        $stats = Order::selectRaw("
+            COUNT(*) as total_orders,
+            SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending_orders,
+            SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as shipping_orders,
+            SUM(CASE WHEN status = ? AND MONTH(created_at) = ? AND YEAR(created_at) = ? THEN total_amount ELSE 0 END) as this_month_revenue
+        ", [
+            OrderStatus::Pending->value,
+            OrderStatus::Shipping->value,
+            OrderStatus::Delivered->value,
+            now()->month,
+            now()->year,
+        ])->first();
+
+        $totalOrders = $stats->total_orders;
+        $pendingOrders = $stats->pending_orders;
+        $shippingOrders = $stats->shipping_orders;
+        $thisMonthRevenue = $stats->this_month_revenue;
 
         return view('admin.orders.index', compact('orders', 'totalOrders', 'pendingOrders', 'shippingOrders', 'thisMonthRevenue'));
     }
@@ -68,7 +77,7 @@ class OrderController extends Controller
     public function updateStatus(Request $request, Order $order)
     {
         $request->validate([
-            'status' => 'required|string',
+            'status' => ['required', 'string', \Illuminate\Validation\Rule::in(array_column(OrderStatus::cases(), 'value'))],
             'cancel_reason' => 'nullable|string|max:500',
         ]);
 

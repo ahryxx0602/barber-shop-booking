@@ -12,7 +12,9 @@ use App\Http\Controllers\Client\OrderPaymentController as ClientOrderPaymentCont
 use App\Http\Controllers\Client\ShippingAddressController as ClientShippingAddressController;
 use App\Http\Controllers\Client\ShopController as ClientShopController;
 use App\Http\Controllers\Client\WaitlistController as ClientWaitlistController;
+use App\Http\Controllers\Client\NotificationController as ClientNotificationController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Middleware\TrustedIpn;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', function () {
@@ -31,33 +33,33 @@ Route::name('client.')->group(function () {
     Route::get('/shop/{product:slug}', [ClientShopController::class, 'show'])->name('shop.show');
     Route::get('/coupons', [ClientShopController::class, 'coupons'])->name('coupons');
 
-    // Cart — session-based (không cần auth)
+    // Cart — xem giỏ hàng (public)
     Route::get('/cart', [ClientShopController::class, 'cart'])->name('cart');
-    Route::post('/cart/add', [ClientShopController::class, 'addToCart'])->name('cart.add');
-    Route::patch('/cart/update', [ClientShopController::class, 'updateCart'])->name('cart.update');
-    Route::delete('/cart/remove', [ClientShopController::class, 'removeFromCart'])->name('cart.remove');
 
     // Booking - accessible to both guests and authenticated users
     Route::post('/booking/apply-coupon', [ClientBookingController::class, 'applyCoupon'])->name('booking.apply-coupon');
     Route::get('/booking/create', [ClientBookingController::class, 'create'])->name('booking.create');
     Route::post('/booking', [ClientBookingController::class, 'store'])->middleware('throttle:5,1')->name('booking.store');
-    Route::get('/booking/{booking}/confirmation', [ClientBookingController::class, 'confirmation'])->name('booking.confirmation');
 
     // Payment — callback routes từ cổng thanh toán (phải đặt TRƯỚC wildcard {booking})
     Route::get('/payment/vnpay/return', [ClientPaymentController::class, 'vnpayReturn'])->name('payment.vnpay.return');
-    Route::post('/payment/vnpay/ipn', [ClientPaymentController::class, 'vnpayIPN'])->withoutMiddleware(['csrf'])->name('payment.vnpay.ipn');
+    Route::post('/payment/vnpay/ipn', [ClientPaymentController::class, 'vnpayIPN'])->withoutMiddleware(['csrf'])->middleware(TrustedIpn::class)->name('payment.vnpay.ipn');
     Route::get('/payment/momo/return', [ClientPaymentController::class, 'momoReturn'])->name('payment.momo.return');
 
-    // Order Payment — callback routes
+    // Order Payment — callback routes (C2: thêm IPN endpoint)
     Route::get('/order-payment/vnpay/return', [ClientOrderPaymentController::class, 'vnpayReturn'])->name('order-payment.vnpay.return');
+    Route::post('/order-payment/vnpay/ipn', [ClientOrderPaymentController::class, 'vnpayIPN'])->withoutMiddleware(['csrf'])->middleware(TrustedIpn::class)->name('order-payment.vnpay.ipn');
     Route::get('/order-payment/momo/return', [ClientOrderPaymentController::class, 'momoReturn'])->name('order-payment.momo.return');
-
-    // Payment — chọn phương thức & thanh toán online (VNPay / Momo Sandbox)
-    Route::get('/payment/{booking}', [ClientPaymentController::class, 'show'])->name('payment.show');
-    Route::post('/payment/{booking}', [ClientPaymentController::class, 'process'])->middleware('throttle:5,1')->name('payment.process');
 
     // Profile & booking management requires authentication
     Route::middleware(['auth'])->group(function () {
+        // C3: Payment — chọn phương thức & thanh toán (cần auth + ownership)
+        Route::get('/payment/{booking}', [ClientPaymentController::class, 'show'])->name('payment.show');
+        Route::post('/payment/{booking}', [ClientPaymentController::class, 'process'])->middleware('throttle:5,1')->name('payment.process');
+
+        // H1: Booking confirmation (cần auth để bảo vệ thông tin khách hàng)
+        Route::get('/booking/{booking}/confirmation', [ClientBookingController::class, 'confirmation'])->name('booking.confirmation');
+
         Route::get('/profile', [ClientProfileController::class, 'show'])->name('profile.show');
         Route::get('/profile/edit', [ClientProfileController::class, 'edit'])->name('profile.edit');
         Route::put('/profile', [ClientProfileController::class, 'update'])->name('profile.update');
@@ -67,6 +69,11 @@ Route::name('client.')->group(function () {
         Route::post('/reviews', [ClientReviewController::class, 'store'])->name('reviews.store');
         Route::post('/barbers/{barber}/favorite', [ClientFavoriteBarberController::class, 'toggle'])->name('barbers.favorite');
         Route::post('/waitlist', [ClientWaitlistController::class, 'store'])->name('waitlist.store');
+
+        // Cart — thêm/sửa/xóa (cần đăng nhập)
+        Route::post('/cart/add', [ClientShopController::class, 'addToCart'])->name('cart.add');
+        Route::patch('/cart/update', [ClientShopController::class, 'updateCart'])->name('cart.update');
+        Route::delete('/cart/remove', [ClientShopController::class, 'removeFromCart'])->name('cart.remove');
 
         // Checkout & Orders (cần đăng nhập)
         Route::get('/checkout', [ClientShopController::class, 'checkout'])->name('checkout');
@@ -101,24 +108,8 @@ Route::middleware(['auth', 'role:admin,barber'])->group(function () {
 
 // Notifications - all authenticated users
 Route::middleware('auth')->group(function () {
-    Route::patch('/notifications/read-all', function () {
-        auth()->user()->notifications()->where('is_read', false)->update(['is_read' => true]);
-        return back();
-    })->name('notifications.read-all');
-
-    Route::get('/notifications/poll', function () {
-        $unreadNotifications = auth()->user()->notifications()
-            ->where('is_read', false)
-            ->orderByDesc('created_at')
-            ->limit(10)
-            ->get();
-        $unreadCount = auth()->user()->notifications()->where('is_read', false)->count();
-
-        return response()->json([
-            'count' => $unreadCount,
-            'html' => view('partials.notification-items', compact('unreadNotifications'))->render()
-        ]);
-    })->name('notifications.poll');
+    Route::patch('/notifications/read-all', [ClientNotificationController::class, 'readAll'])->name('notifications.read-all');
+    Route::get('/notifications/poll', [ClientNotificationController::class, 'poll'])->name('notifications.poll');
 });
 
 require __DIR__ . '/auth.php';

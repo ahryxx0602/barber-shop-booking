@@ -31,6 +31,8 @@ class LogActivity
                 'ip'       => $request->ip(),
                 'status'   => $response->getStatusCode(),
                 'duration' => "{$duration}ms",
+                // L3: Ghi request body (loại bỏ fields nhạy cảm) cho audit trail
+                'payload'  => $request->except(['password', 'password_confirmation', '_token']),
             ]);
         }
 

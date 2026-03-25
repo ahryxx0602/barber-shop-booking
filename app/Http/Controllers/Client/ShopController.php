@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers\Client;
 
+use App\Enums\CouponAppliesTo;
+use App\Enums\OrderPaymentMethod;
+use App\Enums\ProductCategory;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
 use App\Services\CouponService;
@@ -416,16 +419,26 @@ class ShopController extends Controller
     }
 
     /**
-     * Tính subtotal từ session cart.
+     * Tính subtotal từ session cart (M3: fix N+1 query).
      */
     protected function calculateSubtotal(): float
     {
         $cart = session()->get('cart', []);
-        $subtotal = 0;
 
+        if (empty($cart)) {
+            return 0;
+        }
+
+        // M3: Batch load tất cả products trong 1 query thay vì N+1
+        $products = Product::whereIn('id', array_keys($cart))
+            ->where('is_active', true)
+            ->get()
+            ->keyBy('id');
+
+        $subtotal = 0;
         foreach ($cart as $productId => $item) {
-            $product = Product::find($productId);
-            if ($product && $product->is_active) {
+            $product = $products->get($productId);
+            if ($product) {
                 $subtotal += $product->price * min($item['quantity'], $product->stock_quantity);
             }
         }
