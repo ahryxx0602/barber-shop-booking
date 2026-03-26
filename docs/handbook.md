@@ -1,276 +1,296 @@
-# 📖 BarberBook — Developer Handbook
+# 📖 Classic Cut Barbershop — Sach Giao Khoa Lap Trinh
 
-> Cuốn sổ tay dành cho developer, giải thích đầy đủ kiến trúc, luồng xử lý, nghiệp vụ,  
-> và cách các thành phần trong dự án liên kết với nhau.
-
----
-
-## Mục lục
-
-1. [Tổng quan kiến trúc](#1-tổng-quan-kiến-trúc)
-2. [Cấu trúc thư mục & Đường đi file](#2-cấu-trúc-thư-mục--đường-đi-file)
-3. [Luồng xử lý một request](#3-luồng-xử-lý-một-request)
-4. [Hệ thống Enum — Tại sao cần & cách hoạt động](#4-hệ-thống-enum)
-5. [DTO (Data Transfer Object) — Là gì & tác dụng](#5-dto-data-transfer-object)
-6. [Service Layer — Nơi chứa business logic](#6-service-layer)
-7. [Luồng đặt lịch (Booking Flow)](#7-luồng-đặt-lịch-booking-flow)
-8. [Luồng thanh toán (Payment Flow)](#8-luồng-thanh-toán-payment-flow)
-9. [Hệ thống Event / Listener / Job](#9-hệ-thống-event--listener--job)
-10. [Caching — CacheService](#10-caching--cacheservice)
-11. [Middleware — Bộ lọc request](#11-middleware--bộ-lọc-request)
-12. [Policy — Phân quyền chi tiết](#12-policy--phân-quyền-chi-tiết)
-13. [Console Commands — Tác vụ nền](#13-console-commands--tác-vụ-nền)
-14. [Database Schema — Sơ đồ CSDL](#14-database-schema--sơ-đồ-cơ-sở-dữ-liệu)
-15. [Tổng kết sơ đồ kiến trúc](#15-tổng-kết-sơ-đồ-kiến-trúc)
-16. [Nghiệp vụ mở rộng - Giai đoạn 11](#16-nghiệp-vụ-mở-rộng---giai-đoạn-11)
+> **Cuon sach nay khong phai tai lieu liet ke tinh nang.**
+> Day la cuon cam nang dao tao danh cho lap trinh vien, giai thich **TAI SAO** moi quyet dinh ky thuat duoc dua ra,
+> **VAN DE GI** se xay ra neu khong lam, va **CACH** source code thuc te dang giai quyet no.
+>
+> Moi khai niem deu duoc mo xe theo khung tu duy: **WHAT** (La gi?) → **WHY** (Tai sao phai dung?) → **HOW** (Dang ap dung ra sao trong code?)
 
 ---
 
-## 1. Tổng quan kiến trúc
+## Muc luc
 
-Dự án sử dụng mô hình **MVC + Service Layer**:
+1. [Tong quan kien truc](#1-tong-quan-kien-truc)
+2. [Cau truc thu muc & Duong di file](#2-cau-truc-thu-muc--duong-di-file)
+3. [Luong xu ly mot Request — Tu A den Z](#3-luong-xu-ly-mot-request--tu-a-den-z)
+4. [He thong Enum — Ky luat Gia tri Co dinh](#4-he-thong-enum--ky-luat-gia-tri-co-dinh)
+5. [FSM (Finite State Machine) — Canh sat Trang thai](#5-fsm-finite-state-machine--canh-sat-trang-thai)
+6. [DTO (Data Transfer Object) — Hop van chuyen Du lieu](#6-dto-data-transfer-object--hop-van-chuyen-du-lieu)
+7. [FormRequest — Hai quan soi chieu Du lieu](#7-formrequest--hai-quan-soi-chieu-du-lieu)
+8. [Service Layer — Nao bo Nghiep vu](#8-service-layer--nao-bo-nghiep-vu)
+9. [Pessimistic Locking — Chong Race Condition](#9-pessimistic-locking--chong-race-condition)
+10. [Luong dat lich (Booking Flow)](#10-luong-dat-lich-booking-flow)
+11. [Luong thanh toan (Payment Flow)](#11-luong-thanh-toan-payment-flow)
+12. [Event / Listener / Job — He thong Side Effects](#12-event--listener--job--he-thong-side-effects)
+13. [Caching — CacheService](#13-caching--cacheservice)
+14. [Middleware — Bo loc Request](#14-middleware--bo-loc-request)
+15. [Policy — Phan quyen Row-Level](#15-policy--phan-quyen-row-level)
+16. [E-Commerce — Module Ban hang](#16-e-commerce--module-ban-hang)
+17. [Shipping — Tinh phi van chuyen (Haversine)](#17-shipping--tinh-phi-van-chuyen-haversine)
+18. [Console Commands — Tac vu nen](#18-console-commands--tac-vu-nen)
+19. [Database Schema — So do CSDL](#19-database-schema--so-do-co-so-du-lieu)
+20. [Analytics & Heatmaps (ApexCharts)](#20-analytics--heatmaps-apexcharts)
+21. [Bao mat nang cao — 6 Tang Phong thu](#21-bao-mat-nang-cao--6-tang-phong-thu)
+22. [Nghiep vu mo rong — Loyalty, Coupon, Recurring, Waitlist](#22-nghiep-vu-mo-rong)
+23. [Tong ket kien truc & Cong thuc them tinh nang moi](#23-tong-ket-kien-truc--cong-thuc-them-tinh-nang-moi)
+
+---
+
+## 1. Tong quan kien truc
+
+### 🎯 WHAT — Kien truc tong the la gi?
+
+Classic Cut su dung mo hinh **MVC + Service Layer + DTO** — mot kien truc phan tang ro rang, noi moi thanh phan chi lam DUY NHAT mot nhiem vu.
 
 ```
-Request → Middleware → Controller → Service → Model/DB
-                                  ↘ DTO (dữ liệu vào)
-                                  ↘ Enum (giá trị cố định)
-                                  ↘ Event → Listener → Job (side effects)
+Request → Middleware → FormRequest → Controller → DTO → Service → Model/DB
+                                                          ↘ Event → Listener → Job (side effects)
+                                                          ↘ Cache (toi uu hieu suat)
 ```
 
-**Nguyên tắc cốt lõi:**
-- **Controller**: Chỉ nhận request, gọi Service, trả response. **Không chứa business logic.**
-- **Service**: Chứa toàn bộ business logic (tính toán, validate nghiệp vụ, gọi DB).
-- **DTO**: Đóng gói dữ liệu từ request → truyền vào Service (type-safe, rõ ràng).
-- **Enum**: Định nghĩa các giá trị cố định (trạng thái, vai trò...) thay vì dùng string rời rạc.
-- **Model**: Chỉ định nghĩa relationships, casts, fillable. Không có business logic.
+### ❓ WHY — Tai sao phai phan tang nhu vay?
+
+**Pain Point:** Tuong tuong ban xay mot tiem cat toc ma chi co 1 nguoi lam tat ca: don khach, kiem tra lich, cat toc, tinh tien, ghi so. Mot minh lam het thi nhanh bi qua tai, lam sai, va khong the nho nguoi khac giup vi chi minh hieu cach lam.
+
+Trong code cung vay. Neu nhoi het logic vao Controller, no se phinh to thanh "Fat Controller" 1000 dong — kho doc, kho test, kho tai su dung.
+
+### 🛠 HOW — Phan chia trach nhiem nhu the nao?
+
+| Tang | Trach nhiem | **KHONG** duoc lam |
+|------|------------|-------------------|
+| **Controller** | Nhan request, tao DTO, goi Service, tra response | Chua business logic, query DB truc tiep |
+| **FormRequest** | Validate du lieu dau vao | Chua logic nghiep vu |
+| **DTO** | Dong goi du lieu, dam bao type-safe | Chua logic xu ly |
+| **Service** | Business logic, DB transactions, phat Events | Tra response HTTP, nhan Request object |
+| **Model** | Relationships, casts, scopes, fillable | Chua business logic phuc tap |
+| **Event/Listener/Job** | Side effects (notification, email, log) | Chua core business logic |
+| **Policy** | Phan quyen tren tung record cu the | Chua logic nghiep vu |
+| **Middleware** | Loc request o ranh gioi (auth, role, headers) | Chua logic tinh toan |
+
+> 🎯 **Quy tac vang:** Moi tang chi lam DUNG viec cua minh. Controller khong tinh toan. Service khong biet HTTP la gi. Model khong biet business rule.
 
 ---
 
-## 2. Cấu trúc thư mục & Đường đi file
+## 2. Cau truc thu muc & Duong di file
 
 ```
 app/
 ├── Console/Commands/          # Artisan commands (cron jobs)
-│   ├── CleanupLogs.php        # Dọn log cũ
-│   ├── ExpireBookings.php     # Tự động hủy booking quá hạn
-│   ├── GenerateTimeSlots.php  # Tạo time slots hàng ngày
-│   └── SecurityAudit.php      # Kiểm tra bảo mật
+│   ├── CleanupLogs.php        # Don log cu
+│   ├── ExpireBookings.php     # Tu dong huy booking qua han
+│   ├── GenerateTimeSlots.php  # Tao time slots hang ngay
+│   └── SecurityAudit.php      # Kiem tra bao mat
 │
 ├── DTOs/                      # Data Transfer Objects
-│   ├── CreateBookingData.php  # Dữ liệu tạo booking
-│   ├── CreateBarberData.php   # Dữ liệu tạo barber
-│   ├── UpdateBarberData.php   # Dữ liệu sửa barber
-│   ├── StoreReviewData.php    # Dữ liệu đánh giá
-│   ├── ScheduleItemData.php   # 1 ngày trong lịch
-│   └── UpdateScheduleData.php # Cập nhật lịch (7 ngày)
+│   ├── CreateBookingData.php  # Du lieu tao booking
+│   ├── CreateBarberData.php   # Du lieu tao barber
+│   ├── UpdateBarberData.php   # Du lieu sua barber
+│   ├── CreateOrderData.php    # Du lieu tao don hang E-commerce
+│   ├── StoreReviewData.php    # Du lieu danh gia
+│   ├── ScheduleItemData.php   # 1 ngay trong lich
+│   └── UpdateScheduleData.php # Cap nhat lich (7 ngay)
 │
-├── Enums/                     # Giá trị cố định
-│   ├── BookingStatus.php      # Trạng thái booking (với FSM)
-│   ├── PaymentMethod.php      # Phương thức thanh toán
-│   ├── PaymentStatus.php      # Trạng thái thanh toán
-│   ├── TimeSlotStatus.php     # Trạng thái khung giờ
-│   └── UserRole.php           # Vai trò người dùng
+├── Enums/                     # Gia tri co dinh (PHP 8.1 Backed Enums)
+│   ├── BookingStatus.php      # Trang thai booking (voi FSM)
+│   ├── OrderStatus.php        # Trang thai don hang (voi FSM)
+│   ├── PaymentMethod.php      # Phuong thuc thanh toan
+│   ├── PaymentStatus.php      # Trang thai thanh toan
+│   ├── TimeSlotStatus.php     # Trang thai khung gio
+│   ├── UserRole.php           # Vai tro nguoi dung
+│   ├── CouponType.php         # Loai giam gia (fixed/percent)
+│   ├── CouponAppliesTo.php    # Ap dung cho (product/shipping/booking)
+│   ├── ProductCategory.php    # Danh muc san pham
+│   └── OrderPaymentMethod.php # Phuong thuc thanh toan E-commerce
 │
-├── Events/                    # Sự kiện domain
+├── Events/                    # Su kien domain
 │   ├── BookingConfirmed.php
 │   ├── BookingCancelled.php
 │   └── BookingCompleted.php
 │
 ├── Exceptions/
-│   └── SlotNotAvailableException.php  # Slot đã bị đặt
+│   └── SlotNotAvailableException.php  # Slot da bi dat
 │
 ├── Http/
 │   ├── Controllers/
-│   │   ├── Admin/             # 8 controllers cho admin
-│   │   │   ├── DashboardController.php
-│   │   │   ├── BarberController.php
-│   │   │   ├── ServiceController.php
-│   │   │   ├── BookingController.php
-│   │   │   ├── ScheduleController.php
-│   │   │   ├── UserController.php
-│   │   │   ├── ReportController.php
-│   │   │   └── SystemLogController.php
+│   │   ├── Admin/             # 10+ controllers cho admin
 │   │   ├── Barber/            # 3 controllers cho barber
-│   │   │   ├── DashboardController.php
-│   │   │   ├── BookingController.php
-│   │   │   └── ScheduleController.php
-│   │   ├── Client/            # 5 controllers cho khách
-│   │   │   ├── BarberController.php
-│   │   │   ├── BookingController.php
-│   │   │   ├── PaymentController.php
-│   │   │   ├── ProfileController.php
-│   │   │   └── ReviewController.php
-│   │   └── ProfileController.php  # Profile chung (Breeze)
-│   │
+│   │   └── Client/            # 8+ controllers cho khach
 │   ├── Middleware/
-│   │   ├── RoleMiddleware.php      # Kiểm tra vai trò
-│   │   ├── LogActivity.php         # Log thay đổi dữ liệu
+│   │   ├── RoleMiddleware.php      # Kiem tra vai tro
+│   │   ├── LogActivity.php         # Log thay doi du lieu
 │   │   └── SecurityHeaders.php     # HTTP security headers
-│   │
 │   └── Requests/              # Form validation
-│       ├── Admin/             # Validate cho admin
-│       ├── Barber/            # Validate cho barber
-│       ├── Client/            # Validate cho client
-│       └── Auth/              # Validate cho auth
+│       ├── Admin/
+│       ├── Barber/
+│       └── Client/
 │
 ├── Jobs/
-│   └── SendBookingNotificationJob.php  # Gửi notification async
+│   └── SendBookingNotificationJob.php  # Gui notification async
 │
-├── Listeners/                 # Xử lý events
+├── Listeners/                 # Xu ly events
 │   ├── SendBookingConfirmedNotification.php
 │   ├── SendBookingCancelledNotification.php
-│   └── SendBookingCompletedNotification.php
+│   ├── SendBookingCompletedNotification.php
+│   ├── CalculateCommissionOnCompleted.php
+│   ├── RewardPointsForBooking.php
+│   └── NotifyWaitlistOnCancel.php
 │
-├── Models/                    # 10 Eloquent models
-│   ├── User.php
-│   ├── Barber.php
-│   ├── Service.php
-│   ├── Booking.php
-│   ├── BookingService.php     # Pivot table
-│   ├── TimeSlot.php
-│   ├── WorkingSchedule.php
-│   ├── Payment.php
-│   ├── Review.php
-│   └── Notification.php
+├── Models/                    # 21 Eloquent models
+│   ├── User, Barber, Service, Booking, BookingService (pivot)
+│   ├── TimeSlot, WorkingSchedule, Payment, Review, Notification
+│   ├── Product, Order, OrderItem, OrderPayment, ShippingAddress
+│   ├── Coupon, Branch, BarberLeave, Commission, LoyaltyPoint
+│   └── Waitlist
 │
 ├── Policies/
-│   └── BookingPolicy.php      # Phân quyền booking
+│   └── BookingPolicy.php      # Phan quyen booking (confirm/reject/start/complete/cancel)
 │
 ├── Providers/
-│   └── AppServiceProvider.php # Đăng ký events, rate limiting
+│   └── AppServiceProvider.php # Dang ky events, rate limiting
 │
-└── Services/                  # Business logic layer
-    ├── BookingService.php     # Nghiệp vụ đặt lịch
-    ├── PaymentService.php     # Thanh toán VNPay/MoMo
-    ├── BarberService.php      # CRUD barber
-    ├── ScheduleService.php    # Lịch làm việc
-    ├── TimeSlotService.php    # Tạo/quản lý time slots
-    ├── ReviewService.php      # Đánh giá
-    ├── ReportService.php      # Báo cáo thống kê
-    ├── ServiceService.php     # CRUD dịch vụ
-    └── CacheService.php       # Quản lý cache tập trung
+├── Traits/
+│   └── PaymentGatewayTrait.php # Logic chung VNPay/MoMo cho Booking + Order
+│
+└── Services/                  # 14 business services
+    ├── BookingService.php     # Tao/huy booking, FSM transitions, pessimistic locking
+    ├── PaymentService.php     # VNPay + MoMo integration, signature verify
+    ├── OrderService.php       # E-commerce: tao don, tru kho, tinh thue
+    ├── OrderPaymentService.php # Thanh toan don hang (VNPay/MoMo/COD)
+    ├── CartService.php        # Gio hang (Session-based)
+    ├── ProductService.php     # CRUD san pham + tru/hoan kho an toan
+    ├── ShippingService.php    # Tinh phi ship (Haversine / Google Maps fallback)
+    ├── CouponService.php      # Validate + ap dung ma giam gia
+    ├── TimeSlotService.php    # Sinh slot tu dong, batch upsert
+    ├── ScheduleService.php    # CRUD lich lam viec barber
+    ├── BarberService.php      # CRUD barber + user
+    ├── ServiceService.php     # CRUD dich vu
+    ├── ReviewService.php      # Danh gia + cap nhat rating trung binh
+    ├── ReportService.php      # Chart.js, ApexCharts Heatmaps, Top stats
+    ├── CacheService.php       # Cache layer tap trung
+    └── CommissionService.php  # Tinh toan hoa hong tho cat
 
 routes/
-├── web.php                    # Routes client + trang chủ
+├── web.php                    # Routes client + guest + E-commerce
 ├── admin.php                  # Routes admin (prefix /admin)
 ├── barber.php                 # Routes barber (prefix /barber)
-├── auth.php                   # Routes đăng nhập/đăng ký
+├── auth.php                   # Routes dang nhap/dang ky (Breeze)
 └── console.php                # Cron schedules
 ```
 
 ---
 
-## 3. Luồng xử lý một request
+## 3. Luong xu ly mot Request — Tu A den Z
 
-Lấy ví dụ cụ thể: **Khách hàng đặt lịch cắt tóc**
+Hay theo chan mot request thuc te: **Khach hang dat lich cat toc**.
 
-### Bước 1: Request đi vào từ browser
-
-```
-POST /booking  →  routes/web.php  →  Route match: client.booking.store
-```
-
-### Bước 2: Middleware xử lý
+### Buoc 1: Request bay tu browser
 
 ```
-1. SecurityHeaders    → Thêm header bảo mật vào response
-2. throttle:5,1       → Rate limit: tối đa 5 request/phút  
-3. LogActivity        → Ghi log POST request
+POST /booking  →  routes/web.php  →  Route::post('/booking', [BookingController::class, 'store'])
 ```
 
-### Bước 3: Form Request validate dữ liệu
+### Buoc 2: Middleware chan cua
+
+```
+1. SecurityHeaders    → Them header bao mat vao response (chong XSS, Clickjacking)
+2. throttle:5,1       → Rate limit: toi da 5 request/phut (chong spam bot)
+3. LogActivity        → Ghi log POST request (ai, lam gi, luc nao, tu IP nao)
+```
+
+### Buoc 3: FormRequest validate du lieu
 
 ```php
-// StoreBookingRequest tự động validate trước khi Controller nhận request
+// File: app/Http/Requests/Client/StoreBookingRequest.php
 class StoreBookingRequest extends FormRequest
 {
     public function rules(): array
     {
         return [
-            'barber_id'    => 'required|exists:barbers,id',
-            'time_slot_id' => 'required|exists:time_slots,id',
-            'service_ids'  => 'required|array',
-            // ...
+            'service_ids'   => 'required|array|min:1',           // Phai chon it nhat 1 dich vu
+            'service_ids.*' => 'exists:services,id',             // Moi service phai ton tai trong DB
+            'barber_id'     => 'required|exists:barbers,id',     // Tho phai ton tai
+            'time_slot_id'  => 'required|exists:time_slots,id',  // Slot phai ton tai
+            'note'          => 'nullable|string|max:500',
         ];
     }
 }
 ```
 
-> Nếu validate **fail** → Laravel tự redirect về + show lỗi. Controller không bao giờ nhận data sai.
+> Neu validate **fail** → Laravel tu redirect ve trang truoc + show loi. Controller KHONG BAO GIO nhan data sai.
 
-### Bước 4: Controller nhận request → Tạo DTO → Gọi Service
+### Buoc 4: Controller nhan request → Tao DTO → Goi Service
 
 ```php
-// Client\BookingController::store()
+// File: app/Http/Controllers/Client/BookingController.php
 public function store(StoreBookingRequest $request)
 {
-    // 1. Tạo DTO từ request (đã validated)
+    // 1. Tao DTO tu request (da validated)
     $dto = CreateBookingData::fromRequest($request);
-    
-    // 2. Gọi service với DTO
+
+    // 2. Goi service voi DTO — Controller KHONG tinh toan gi ca
     $booking = $this->bookingService->create($dto, $request->user());
-    
-    // 3. Redirect sang trang thanh toán
+
+    // 3. Redirect sang trang thanh toan
     return redirect()->route('client.payment.show', $booking);
 }
 ```
 
-### Bước 5: Service xử lý business logic
+### Buoc 5: Service xu ly business logic
 
 ```php
-// BookingService::create()
+// File: app/Services/BookingService.php
 public function create(CreateBookingData $data, ?User $customer = null): Booking
 {
     return DB::transaction(function () use ($data, $customer) {
-        // 1. Lock slot để tránh race condition
+        // 1. Lock slot de tranh race condition (2 nguoi dat cung slot)
         $slot = TimeSlot::lockForUpdate()->findOrFail($data->time_slot_id);
-        
-        // 2. Kiểm tra slot còn available không
+
+        // 2. Kiem tra slot con available khong
         if ($slot->status !== TimeSlotStatus::Available) {
-            throw new SlotNotAvailableException('Slot đã được đặt');
+            throw new SlotNotAvailableException('Slot da duoc dat');
         }
-        
-        // 3. Tạo booking + attach services + update slot
+
+        // 3. Tao booking + attach services + update slot
         $booking = Booking::create([...]);
-        $booking->services()->attach([...]);
+        $booking->services()->attach([...]); // pivot: price_snapshot, duration_snapshot
         $slot->update(['status' => TimeSlotStatus::Booked]);
-        
-        // 4. Ghi log
-        Log::channel('booking')->info('Booking created', [...]);
-        
+
+        // 4. Gui notification cho barber (async qua Job)
+        SendBookingNotificationJob::dispatch($booking->barber_id, $message);
+
         return $booking;
     });
 }
 ```
 
-### Sơ đồ tổng quát
+### So do tong quat
 
 ```
 Browser POST /booking
     │
     ▼
 ┌─────────────────┐
-│   Middleware     │  SecurityHeaders → throttle → LogActivity
+│   Middleware     │  SecurityHeaders → throttle:5,1 → LogActivity
 └────────┬────────┘
          │
          ▼
 ┌─────────────────┐
-│  FormRequest    │  StoreBookingRequest → validate dữ liệu
-│  (Validation)   │  Fail? → redirect back + lỗi
+│  FormRequest    │  StoreBookingRequest → validate du lieu
+│  (Validation)   │  Fail? → redirect back + loi
 └────────┬────────┘
          │ (validated data)
          ▼
 ┌─────────────────┐
 │   Controller    │  BookingController::store()
-│  (Điều phối)    │  1. Tạo DTO ← CreateBookingData::fromRequest()
-│                 │  2. Gọi Service ← bookingService->create()
+│  (Dieu phoi)    │  1. Tao DTO ← CreateBookingData::fromRequest()
+│                 │  2. Goi Service ← bookingService->create()
 └────────┬────────┘
          │ (DTO)
          ▼
 ┌─────────────────┐
 │    Service      │  BookingService::create()
-│ (Business Logic)│  DB::transaction → lock slot → tạo booking → attach services
-│                 │  → update slot status → Log → return Booking
+│ (Business Logic)│  DB::transaction → lock slot → tao booking → attach services
+│                 │  → update slot status → dispatch Job → return Booking
 └────────┬────────┘
          │
          ▼
@@ -281,125 +301,199 @@ Browser POST /booking
 
 ---
 
-## 4. Hệ thống Enum
+## 4. He thong Enum — Ky luat Gia tri Co dinh
 
-### Enum là gì?
+### 🎯 WHAT — Enum la gi?
 
-Enum = **tập hợp các giá trị cố định được đặt tên**. Thay vì viết string `'pending'`, `'confirmed'` rải rác khắp code, ta dùng `BookingStatus::Pending`, `BookingStatus::Confirmed`.
+Enum (Enumeration) = **tap hop cac gia tri co dinh duoc dat ten**. Thay vi viet string `'pending'`, `'confirmed'` rai rac khap 50+ file code, ta goi chung vao mot class Enum duy nhat.
 
-### Tại sao cần Enum?
+### ❓ WHY — Tai sao can Enum? Noi dau o day la gi?
 
-| Không có Enum ❌ | Có Enum ✅ |
-|---|---|
-| `$booking->status = 'pending'` | `$booking->status = BookingStatus::Pending` |
-| Dễ sai chính tả, IDE không gợi ý | IDE autocomplete, type-safe |
-| Không biết có bao nhiêu trạng thái | Xem Enum biết hết |
-| Kiểm tra: `$status == 'pendding'` (typo) | Compile-time error nếu sai |
-
-### 5 Enum trong dự án
-
-#### 4.1. `BookingStatus` — Trạng thái booking
+**Pain Point:** Tuong tuong he thong KHONG co Enum:
 
 ```php
+// Lap trinh vien A viet:
+$booking->status = 'pending';
+
+// Lap trinh vien B go nham chinh ta:
+$booking->status = 'pendding';  // ← SAI chinh ta!
+
+// MySQL van hon nhien luu chu "pendding"
+// Man hinh Admin lay danh sach don "pending" se bi SOT don nay
+// He thong gay luong ngam ma TEST CUC KHO RA
+```
+
+**Giai quyet:** Enum ep buoc tai Compile-time. IDE bao loi gach dit do lom ngay tuc thi neu ban go sai ten trang thai:
+
+```php
+$booking->status = BookingStatus::Pendding;  // ← IDE gach do: "Pendding" khong ton tai!
+$booking->status = BookingStatus::Pending;   // ← ✅ Dung, an toan 100%
+```
+
+### 🛠 HOW — Cach dung trong du an
+
+#### BookingStatus — Trang thai booking
+
+```php
+// File: app/Enums/BookingStatus.php
 enum BookingStatus: string
 {
-    case Pending    = 'pending';       // Chờ xác nhận
-    case Confirmed  = 'confirmed';     // Đã xác nhận  
-    case InProgress = 'in_progress';   // Đang phục vụ
-    case Completed  = 'completed';     // Hoàn thành
-    case Cancelled  = 'cancelled';     // Đã hủy
+    case Pending    = 'pending';       // Cho xac nhan
+    case Confirmed  = 'confirmed';     // Da xac nhan
+    case InProgress = 'in_progress';   // Dang phuc vu
+    case Completed  = 'completed';     // Hoan thanh
+    case Cancelled  = 'cancelled';     // Da huy
+
+    // Hien thi tieng Viet tren UI
+    public function label(): string
+    {
+        return match ($this) {
+            self::Pending    => 'Cho xac nhan',
+            self::Confirmed  => 'Da xac nhan',
+            self::InProgress => 'Dang phuc vu',
+            self::Completed  => 'Hoan thanh',
+            self::Cancelled  => 'Da huy',
+        };
+    }
+
+    // Mau badge cho Blade template (Tailwind CSS)
+    public function color(): string
+    {
+        return match ($this) {
+            self::Pending    => 'yellow',
+            self::Confirmed  => 'blue',
+            self::InProgress => 'orange',
+            self::Completed  => 'green',
+            self::Cancelled  => 'red',
+        };
+    }
 }
 ```
 
-**Đặc biệt: Có FSM (Finite State Machine) — Máy trạng thái hữu hạn**
+#### Ket noi Enum voi Model — tu dong convert string ↔ Enum
 
-#### FSM là gì?
+```php
+// File: app/Models/Booking.php
+protected function casts(): array
+{
+    return [
+        'status' => BookingStatus::class,  // ← cast string → Enum tu dong
+    ];
+}
 
-FSM = **quy tắc kiểm soát một đối tượng chỉ được chuyển từ trạng thái A sang trạng thái B theo đúng luồng cho phép**, không được nhảy loạn.
-
-**Ví dụ đời thực — Đèn giao thông:**
+// Khi do:
+$booking->status;                        // BookingStatus::Pending (Enum object)
+$booking->status->value;                 // "pending" (string)
+$booking->status->label();               // "Cho xac nhan"
+$booking->status === BookingStatus::Pending;  // true ← so sanh AN TOAN
 ```
-Xanh ──→ Vàng ──→ Đỏ ──→ Xanh (lặp lại)
 
-✅ Xanh → Vàng     (hợp lệ)
-✅ Vàng → Đỏ       (hợp lệ)
-❌ Xanh → Đỏ       (KHÔNG hợp lệ — phải qua Vàng trước)
-❌ Đỏ → Vàng       (KHÔNG hợp lệ — đèn đỏ chỉ chuyển sang Xanh)
+#### Dung Enum trong Blade
+
+```blade
+<span class="badge bg-{{ $booking->status->color() }}">
+    {{ $booking->status->label() }}
+</span>
 ```
 
-Đèn giao thông **KHÔNG THỂ** nhảy lung tung. Booking cũng vậy!
+#### 9 Enum trong du an
 
-#### Sơ đồ FSM của Booking trong dự án
+| Enum | Cac gia tri | Dung o dau |
+|------|------------|-----------|
+| `BookingStatus` | Pending → Confirmed → InProgress → Completed / Cancelled | Booking model, BookingService FSM |
+| `OrderStatus` | Pending → Confirmed → Shipping → Delivered / Cancelled | Order model, OrderService FSM |
+| `PaymentStatus` | Pending / Paid / Failed / Refunded | Payment model, callback verify |
+| `PaymentMethod` | Cash / VNPay / MoMo | Booking payment |
+| `OrderPaymentMethod` | COD / VNPay / MoMo | E-commerce payment |
+| `TimeSlotStatus` | Available / Booked / Blocked | TimeSlot model, lock logic |
+| `UserRole` | Admin / Barber / Customer | RoleMiddleware, auth |
+| `CouponType` | Fixed / Percent | CouponService tinh giam gia |
+| `ProductCategory` | Danh muc san pham | ProductService filter |
+
+---
+
+## 5. FSM (Finite State Machine) — Canh sat Trang thai
+
+### 🎯 WHAT — FSM la gi?
+
+FSM (Finite State Machine) = **quy tac kiem soat mot doi tuong chi duoc chuyen tu trang thai A sang trang thai B theo dung luong cho phep**, khong duoc nhay loan.
+
+**Vi du doi thuc — Den giao thong:**
+```
+Xanh ──→ Vang ──→ Do ──→ Xanh (lap lai)
+
+✅ Xanh → Vang     (hop le)
+✅ Vang → Do       (hop le)
+❌ Xanh → Do       (KHONG hop le — phai qua Vang truoc!)
+❌ Do → Vang       (KHONG hop le — den do chi chuyen sang Xanh!)
+```
+
+Den giao thong **KHONG THE** nhay lung tung. Booking cung vay!
+
+### ❓ WHY — Tai sao can FSM? Noi dau o day la gi?
+
+**Pain Point:** Khong co FSM, bat ky ai cung co the doi status bat ky luc nao:
+
+```php
+// ❌ Khong co FSM — Barber vo tinh "Hoan thanh" mot booking dang "Pending"
+$booking->update(['status' => 'completed']);
+// → Chua ai xac nhan ma da hoan thanh?! Logic vo ly!
+
+// ❌ Hacker bat request, doi payload status thanh "completed"
+// → Bypass toan bo quy trinh, tiem nhiem data ban vao DB
+```
+
+**Hau qua thuc te trong tiem cat toc:**
+- Admin bam "Hoan thanh" cho booking dang `Cancelled` → Khach bi tinh tien lan 2
+- Tho bam "Bat dau cat" cho booking chua `Confirmed` → Khach den ma chua dong y
+- Booking nhay tu `Pending` thang `Completed` → Khong ai xac nhan, khong ai cat toc, nhung tien da thu
+
+### 🛠 HOW — Cach FSM hoat dong trong code
+
+#### So do FSM cua Booking
 
 ```
                     ┌─────────────────────────────────────────────────┐
                     │          BOOKING STATE MACHINE                   │
                     │                                                 │
-                    │   ┌──────────┐    xác nhận    ┌──────────┐     │
+                    │   ┌──────────┐    xac nhan    ┌──────────┐     │
                     │   │ PENDING  │ ──────────────→│CONFIRMED │     │
-                    │   │(Chờ xác  │                │(Đã xác   │     │
-                    │   │  nhận)   │                │  nhận)   │     │
+                    │   │(Cho xac  │                │(Da xac   │     │
+                    │   │  nhan)   │                │  nhan)   │     │
                     │   └────┬─────┘                └────┬─────┘     │
                     │        │                           │           │
-                    │        │ từ chối/                   │ bắt đầu  │
-                    │        │ khách hủy      khách hủy  │ phục vụ  │
+                    │        │ tu choi/                   │ bat dau  │
+                    │        │ khach huy      khach huy  │ phuc vu  │
                     │        │                    │       │           │
                     │        ▼                    ▼       ▼           │
                     │   ┌──────────┐         ┌──────────┐            │
                     │   │CANCELLED │         │IN_PROGRESS│            │
-                    │   │(Đã hủy)  │         │(Đang phục│            │
-                    │   │          │         │   vụ)    │            │
+                    │   │(Da huy)  │         │(Dang phuc│            │
+                    │   │          │         │   vu)    │            │
                     │   └──────────┘         └────┬─────┘            │
-                    │   (Trạng thái               │                  │
-                    │    cuối cùng)          hoàn thành               │
+                    │   (Trang thai               │                  │
+                    │    cuoi cung)          hoan thanh               │
                     │                             │                  │
                     │                             ▼                  │
                     │                        ┌──────────┐            │
                     │                        │COMPLETED │            │
-                    │                        │(Hoàn     │            │
-                    │                        │  thành)  │            │
+                    │                        │(Hoan     │            │
+                    │                        │  thanh)  │            │
                     │                        └──────────┘            │
-                    │                        (Trạng thái             │
-                    │                         cuối cùng)             │
+                    │                        (Trang thai             │
+                    │                         cuoi cung)             │
                     └─────────────────────────────────────────────────┘
 ```
 
-#### Bảng chuyển trạng thái đầy đủ
+#### Bang chuyen trang thai day du
 
-| Trạng thái hiện tại | Được chuyển sang | KHÔNG được chuyển sang |
+| Trang thai hien tai | Duoc chuyen sang | KHONG duoc chuyen sang |
 |---------------------|-----------------|----------------------|
 | **Pending** | ✅ Confirmed, ✅ Cancelled | ❌ InProgress, ❌ Completed |
 | **Confirmed** | ✅ InProgress, ✅ Cancelled | ❌ Pending, ❌ Completed |
 | **InProgress** | ✅ Completed | ❌ Pending, ❌ Confirmed, ❌ Cancelled |
-| **Completed** | _(không chuyển được nữa)_ | ❌ Tất cả |
-| **Cancelled** | _(không chuyển được nữa)_ | ❌ Tất cả |
-
-#### Ví dụ cụ thể: Hợp lệ vs Không hợp lệ
-
-```
-✅ HỢP LỆ — Luồng bình thường:
-   Pending → Confirmed → InProgress → Completed
-   "Khách đặt → Barber xác nhận → Bắt đầu cắt → Cắt xong"
-
-✅ HỢP LỆ — Khách hủy sớm:
-   Pending → Cancelled
-   "Khách đặt → Khách đổi ý, hủy"
-
-✅ HỢP LỆ — Barber từ chối:
-   Pending → Cancelled
-   "Khách đặt → Barber bận, từ chối"
-
-✅ HỢP LỆ — Khách hủy sau khi xác nhận:
-   Pending → Confirmed → Cancelled
-   "Khách đặt → Barber xác nhận → Khách hủy (trước 2 tiếng)"
-
-❌ KHÔNG HỢP LỆ:
-   Pending → Completed     ← Chưa xác nhận mà hoàn thành?!
-   Pending → InProgress    ← Chưa xác nhận mà bắt đầu phục vụ?!
-   Completed → Cancelled   ← Đã cắt xong rồi mà hủy?!
-   InProgress → Cancelled  ← Đang cắt dở mà hủy?! (khách phải chờ xong)
-   Cancelled → Pending     ← Đã hủy rồi mà mở lại?!
-```
+| **Completed** | _(khong chuyen duoc nua)_ | ❌ Tat ca |
+| **Cancelled** | _(khong chuyen duoc nua)_ | ❌ Tat ca |
 
 #### Code FSM trong Enum
 
@@ -409,196 +503,160 @@ Xanh ──→ Vàng ──→ Đỏ ──→ Xanh (lặp lại)
 public function canTransitionTo(self $target): bool
 {
     return match ($this) {
-        //  Từ trạng thái    →  Được chuyển sang
+        //  Tu trang thai    →  Duoc chuyen sang
         self::Pending    => in_array($target, [self::Confirmed, self::Cancelled]),
         self::Confirmed  => in_array($target, [self::InProgress, self::Cancelled]),
-        self::InProgress => $target === self::Completed,  // Chỉ 1 hướng duy nhất
-        
-        // Trạng thái cuối cùng — không chuyển đi đâu được nữa
+        self::InProgress => $target === self::Completed,  // Chi 1 huong duy nhat
+
+        // Trang thai cuoi cung — khong chuyen di dau duoc nua
         self::Completed, self::Cancelled => false,
     };
 }
 ```
 
-#### Cách Service dùng FSM
+#### Cach Service dung FSM
 
 ```php
-// BookingService::confirm()
+// File: app/Services/BookingService.php
+
 public function confirm(Booking $booking): Booking
 {
-    // BƯỚC 1: Hỏi FSM — "Từ trạng thái hiện tại có được chuyển sang Confirmed không?"
+    // BUOC 1: Hoi FSM — "Tu trang thai hien tai co duoc chuyen sang Confirmed khong?"
     if (!$booking->status->canTransitionTo(BookingStatus::Confirmed)) {
-        // VD: booking đang InProgress → canTransitionTo(Confirmed) = false
         throw new \InvalidArgumentException(
-            'Không thể xác nhận booking ở trạng thái: ' . $booking->status->label()
+            'Khong the xac nhan booking o trang thai: ' . $booking->status->label()
         );
     }
 
-    // BƯỚC 2: FSM cho phép → cập nhật trạng thái
+    // BUOC 2: FSM cho phep → cap nhat trang thai
     $booking->update(['status' => BookingStatus::Confirmed]);
-    
+
+    // BUOC 3: Phat event — Listener tu xu ly notification
+    event(new BookingConfirmed($booking));
+
     return $booking;
 }
 ```
 
-**Mọi method trong BookingService đều gọi `canTransitionTo()` trước khi đổi trạng thái:**
+**Moi method trong BookingService deu goi `canTransitionTo()` truoc khi doi trang thai:**
 ```
-confirm()  → canTransitionTo(Confirmed)    ← chỉ Pending mới confirm được
-reject()   → canTransitionTo(Cancelled)    ← chỉ Pending mới reject được
-start()    → canTransitionTo(InProgress)   ← chỉ Confirmed mới start được
-complete() → canTransitionTo(Completed)    ← chỉ InProgress mới complete được
-cancel()   → canTransitionTo(Cancelled)    ← chỉ Pending/Confirmed mới cancel được
-```
-
-#### Nếu KHÔNG có FSM?
-
-```php
-// ❌ Không có FSM — ai cũng có thể đổi status bất kỳ lúc nào
-$booking->update(['status' => 'completed']);
-// → Booking đang 'pending' mà nhảy thẳng 'completed'?! Chưa ai xác nhận!
-// → Booking đang 'cancelled' mà bỗng 'completed'?! Đã hủy rồi mà!
-
-// ✅ Có FSM — chặn mọi chuyển trạng thái sai
-$booking->status->canTransitionTo(BookingStatus::Completed);
-// Pending → Completed = false → throw exception → KHÔNG CHO PHÉP
+confirm()  → canTransitionTo(Confirmed)    ← chi Pending moi confirm duoc
+reject()   → canTransitionTo(Cancelled)    ← chi Pending moi reject duoc
+start()    → canTransitionTo(InProgress)   ← chi Confirmed moi start duoc
+complete() → canTransitionTo(Completed)    ← chi InProgress moi complete duoc
+cancel()   → canTransitionTo(Cancelled)    ← chi Pending/Confirmed moi cancel duoc
 ```
 
-> 🎯 **Tóm lại**: FSM = "cảnh sát giao thông" cho trạng thái — đảm bảo booking đi đúng luồng, không ai hack hay lỗi code gây nhảy trạng thái lung tung.
+#### Vi du cu the: Hop le vs Khong hop le
 
-**Helper methods cho UI:**
-```php
-$booking->status->label();   // "Chờ xác nhận" — hiển thị tiếng Việt
-$booking->status->color();   // "yellow"        — màu badge trong Blade
+```
+✅ HOP LE — Luong binh thuong:
+   Pending → Confirmed → InProgress → Completed
+   "Khach dat → Barber xac nhan → Bat dau cat → Cat xong"
+
+✅ HOP LE — Khach huy som:
+   Pending → Cancelled
+   "Khach dat → Khach doi y, huy"
+
+❌ KHONG HOP LE:
+   Pending → Completed     ← Chua xac nhan ma hoan thanh?!
+   Pending → InProgress    ← Chua xac nhan ma bat dau phuc vu?!
+   Completed → Cancelled   ← Da cat xong roi ma huy?!
+   Cancelled → Pending     ← Da huy roi ma mo lai?!
 ```
 
-#### 4.2. `PaymentMethod` — Phương thức thanh toán
-
-```php
-enum PaymentMethod: string
-{
-    case Cash  = 'cash';    // Tiền mặt tại quán
-    case VNPay = 'vnpay';   // Thanh toán VNPay
-    case Momo  = 'momo';    // Ví MoMo
-    
-    public function label(): string { ... }  // Tên hiển thị TV
-    public function icon(): string { ... }   // Icon Material Symbols
-}
-```
-
-#### 4.3. `PaymentStatus` — Trạng thái thanh toán
-
-```php
-enum PaymentStatus: string
-{
-    case Pending  = 'pending';   // Chờ thanh toán
-    case Paid     = 'paid';      // Đã thanh toán
-    case Failed   = 'failed';    // Thất bại
-    case Refunded = 'refunded';  // Đã hoàn tiền
-}
-```
-
-#### 4.4. `TimeSlotStatus` — Trạng thái khung giờ
-
-```php
-enum TimeSlotStatus: string
-{
-    case Available = 'available';  // Trống — còn đặt được
-    case Booked    = 'booked';     // Đã đặt — không khả dụng
-}
-```
-
-#### 4.5. `UserRole` — Vai trò người dùng
-
-```php
-enum UserRole: string
-{
-    case Admin    = 'admin';     // Quản trị viên
-    case Barber   = 'barber';    // Thợ cắt tóc
-    case Customer = 'customer';  // Khách hàng
-}
-```
-
-### Enum hoạt động với Model thế nào?
-
-Trong Model, ta dùng **cast** để Laravel tự động convert string ↔ Enum:
-
-```php
-// Booking Model
-protected function casts(): array
-{
-    return [
-        'status' => BookingStatus::class,   // ← cast string → Enum
-    ];
-}
-```
-
-Khi đó:
-```php
-$booking->status;                        // BookingStatus::Pending (Enum object)
-$booking->status->value;                 // "pending" (string)
-$booking->status->label();               // "Chờ xác nhận"
-$booking->status === BookingStatus::Pending;  // true ← so sánh an toàn
-```
+> 🎯 **Tom lai:** FSM = "canh sat giao thong" cho trang thai — dam bao booking di dung luong, khong ai hack hay loi code gay nhay trang thai lung tung.
 
 ---
 
-## 5. DTO (Data Transfer Object)
+## 6. DTO (Data Transfer Object) — Hop van chuyen Du lieu
 
-### DTO là gì?
+### 🎯 WHAT — DTO la gi?
 
-DTO = **một class chỉ chứa dữ liệu**, không có logic phức tạp. Nó đóng gói dữ liệu từ request trước khi truyền vào Service.
+DTO = **mot class "ti hon" chi chua du lieu**, khong co tinh toan logic phuc tap. No dong vai tro "hop van chuyen": bien du lieu tho tu Request thanh mot Object co cau truc chat che, roi dua vao Service.
 
-### Tại sao cần DTO?
+### ❓ WHY — Tai sao can DTO? Noi dau o day la gi?
 
-| Không có DTO ❌ | Có DTO ✅ |
-|---|---|
-| `$service->create($request->all())` | `$service->create(CreateBookingData::fromRequest($request))` |
-| Service nhận `array` — không biết bên trong có gì | Service nhận object có kiểu rõ ràng |
-| IDE không gợi ý `$data['barber_id']` | IDE gợi ý `$data->barber_id` |
-| Dễ miss field, sai tên key | Có property declaration, compile-time check |
-| Nếu đổi field → phải tìm mọi nơi dùng `$data['...']` | Đổi property DTO → IDE báo lỗi hết |
-
-### Cấu trúc một DTO
+**Pain Point:** Goi ham `$service->create($request->all())` — Service nhan vao 1 Mang (Array) vo danh, mu mit:
 
 ```php
-<?php
+// ❌ Truyen array tho — Service khong biet ben trong co gi
+$service->create($request->all());
 
+// VAN DE 1: Service khong biet key nao ton tai
+$data['barber_id']    // Co chac key nay ton tai?
+$data['time_slot']    // Hay la 'time_slot_id'?
+
+// VAN DE 2: Frontend doi ten field → Backend sap ngam
+// Frontend gui: { "barberId": 5 }
+// Backend goi: $data['barber_id'] → null → loi runtime!
+
+// VAN DE 3: Hacker nhet them field
+// Frontend gui: { "barber_id": 5, "role": "admin" }
+// $request->all() chua ca "role" → Mass Assignment attack!
+```
+
+**Giai quyet:** DTO voi `readonly` properties yeu cau du lieu dau vao BAT BUOC phai DUNG TEN, DUNG KIEU:
+
+```php
+// ✅ IDE go $dto-> se tu dong so ra danh sach bien
+$dto->barber_id;      // int — chac chan ton tai, chac chan la so
+$dto->time_slot_id;   // int
+$dto->service_ids;    // array
+$dto->note;           // ?string — co the null
+```
+
+### 🛠 HOW — Cau truc mot DTO trong code
+
+```php
 // File: app/DTOs/CreateBookingData.php
 
-readonly class CreateBookingData    // ← readonly: khởi tạo xong không thể sửa
+readonly class CreateBookingData    // ← readonly: Du lieu khoi tao xong DONG BANG
 {
     public function __construct(
-        public int $barber_id,       // ← khai báo rõ kiểu
+        public int $barber_id,           // ← Bat buoc phai la so Nguyen (int)
         public int $time_slot_id,
         public array $service_ids,
-        public ?string $note = null,        // ← nullable, có default
-        public ?string $guest_name = null,
+        public ?string $note = null,            // ← Dau "?" nghia la co the Null
+        public ?string $coupon_code = null,
+        public ?string $recurring_frequency = null,
+        public ?string $guest_name = null,      // Guest khong can dang nhap
         public ?string $guest_email = null,
         public ?string $guest_phone = null,
     ) {}
 
-    // Factory method: Tạo DTO từ request đã validate
+    // Factory method: Nem Request vao → chung cat ra DTO
     public static function fromRequest(StoreBookingRequest $request): self
     {
-        $data = $request->validated();
+        $data = $request->validated();  // ← Chi lay du lieu DA VALIDATED
 
         return new self(
             barber_id: $data['barber_id'],
             time_slot_id: $data['time_slot_id'],
             service_ids: $data['service_ids'],
             note: $data['note'] ?? null,
+            coupon_code: $data['coupon_code'] ?? null,
             guest_name: $data['guest_name'] ?? null,
-            // ...
+            guest_email: $data['guest_email'] ?? null,
+            guest_phone: $data['guest_phone'] ?? null,
         );
     }
 }
 ```
 
-### Luồng DTO đi qua đâu?
+### Keyword `readonly` — Tai sao quan trong?
+
+```php
+readonly class CreateBookingData { ... }
+```
+
+Sau khi tao xong DTO, **KHONG AI co the sua du lieu ben trong**. Dieu nay dam bao du lieu di xuyen suot he thong LUON NHAT QUAN — tu Controller qua Service qua Model, khong ai "vay" duoc data giua duong.
+
+### Luong DTO di qua dau?
 
 ```
       Request        →      Controller      →     Service      →   Model/DB
-(dữ liệu thô từ form)   (tạo DTO từ request)  (dùng DTO.properties)  (insert/update)
+(du lieu tho tu form)   (tao DTO tu request)  (dung DTO.properties)  (insert/update)
 
    POST /booking     →   BookingController   →  BookingService  →  Booking::create()
                           │                      │
@@ -607,608 +665,183 @@ readonly class CreateBookingData    // ← readonly: khởi tạo xong không th
                           │ fromRequest($req)     │ $dto->service_ids
 ```
 
-### 6 DTO trong dự án
+### 7 DTO trong du an
 
-| DTO | Dùng ở đâu | Chứa gì |
+| DTO | Dung o dau | Chua gi |
 |-----|-----------|---------|
-| `CreateBookingData` | Client đặt lịch | barber_id, time_slot_id, service_ids, note, thông tin guest |
-| `CreateBarberData` | Admin tạo barber | name, email, password, phone, bio, experience |
-| `UpdateBarberData` | Admin sửa barber | Giống Create nhưng password optional |
-| `StoreReviewData` | Client đánh giá | booking_id, rating, comment |
-| `ScheduleItemData` | 1 ngày trong lịch | day_of_week, is_working, start_time, end_time |
-| `UpdateScheduleData` | Cập nhật lịch tuần | Mảng 7 ScheduleItemData |
-
-### Keyword `readonly`
-
-```php
-readonly class CreateBookingData { ... }
-```
-
-Nghĩa là: sau khi tạo xong DTO, **không ai có thể sửa dữ liệu bên trong**. Điều này đảm bảo dữ liệu đi xuyên suốt hệ thống luôn nhất quán.
+| `CreateBookingData` | Client dat lich | barber_id, time_slot_id, service_ids, note, thong tin guest |
+| `CreateOrderData` | Client dat hang E-commerce | items, shipping_address, coupon_code, payment_method |
+| `CreateBarberData` | Admin tao barber | name, email, password, phone, bio, experience |
+| `UpdateBarberData` | Admin sua barber | Giong Create nhung password optional |
+| `StoreReviewData` | Client danh gia | booking_id, rating, comment |
+| `ScheduleItemData` | 1 ngay trong lich | day_of_week, is_working, start_time, end_time |
+| `UpdateScheduleData` | Cap nhat lich tuan | Mang 7 ScheduleItemData |
 
 ---
 
-## 6. Service Layer
+## 7. FormRequest — Hai quan soi chieu Du lieu
 
-### Service Layer là gì?
+### 🎯 WHAT — FormRequest la gi?
 
-Là **lớp trung gian giữa Controller và Model**, chứa toàn bộ business logic.
+FormRequest la **lop chuyen trach validate (kiem tra) du lieu** dau vao tu browser truoc khi Controller nhan duoc. No nhu "bao ve cong xa" — khach nao giay to khong hop le thi bi chan lai ngay, khong cho vao.
 
-### Tại sao cần Service Layer?
+### ❓ WHY — Tai sao can FormRequest? Noi dau o day la gi?
 
-```
-❌ Fat Controller:                          ✅ Thin Controller + Service:
-Controller::store() {                       Controller::store() {
-    validate();                                 $dto = DTO::fromRequest();
-    $slot = TimeSlot::find();                   $booking = $service->create($dto);
-    if ($slot->status !== ...) throw;           return redirect();
-    $booking = Booking::create();           }
-    $booking->services()->attach();         
-    $slot->update();                        Service::create($dto) {
-    Log::info();                                // Tất cả logic ở đây
-    return redirect();                          // Dễ test, dễ tái sử dụng
-}                                           }
-```
-
-### 9 Service trong dự án
-
-| Service | Nhiệm vụ |
-|---------|----------|
-| `BookingService` | Tạo/confirm/reject/start/complete/cancel booking. Quản lý FSM. |
-| `PaymentService` | Tạo URL thanh toán VNPay/MoMo. Verify callback. Xử lý idempotency. |
-| `BarberService` | CRUD barber (tạo User + Barber trong transaction). Quản lý avatar. |
-| `ScheduleService` | Đọc/hiển thị/cập nhật lịch làm việc. Dùng upsert tối ưu. |
-| `TimeSlotService` | Tạo time slots từ lịch làm việc. Dọn slots cũ. |
-| `ReviewService` | Tạo/xóa đánh giá. Cập nhật rating trung bình barber. |
-| `ReportService` | Thống kê: tổng booking, doanh thu, khách mới, top barbers/services. |
-| `ServiceService` | CRUD dịch vụ (cắt tóc, gội đầu...). |
-| `CacheService` | Quản lý cache tập trung (xem phần 10). |
-
-### Ví dụ Service pattern
+**Pain Point 1 — Bai rac Controller:**
 
 ```php
-class BarberService
+// ❌ Validate trong Controller — Controller thanh bai rac
+public function store(Request $request)
 {
-    // Inject dependency qua constructor
-    public function __construct(private CacheService $cacheService) {}
-    
-    public function create(CreateBarberData $data, ?UploadedFile $avatar = null): Barber
+    $request->validate([
+        'barber_id' => 'required|exists:barbers,id',
+        'time_slot_id' => 'required|exists:time_slots,id',
+        'service_ids' => 'required|array|min:1',
+        // ... 15 dong validation nua
+    ]);
+
+    // Roi moi den business logic...
+    // Controller gio da 50 dong chi de validate!
+}
+```
+
+**Pain Point 2 — Mass Assignment Attack:**
+
+```php
+// ❌ NGUY HIEM: Truyen thang request->all() vao Model
+User::create($request->all());
+
+// Hacker F12 chen them: { "name": "Hacker", "role": "admin" }
+// → He thong tao tai khoan voi role admin!
+```
+
+**Giai quyet:** FormRequest tach rieng validation. Controller sach se. Chi du lieu da validated moi duoc phep di tiep:
+
+```php
+// ✅ Controller sach bon:
+public function store(StoreBookingRequest $request)  // ← validate TU DONG
+{
+    $dto = CreateBookingData::fromRequest($request);  // ← chi lay du lieu da validated
+    $booking = $this->bookingService->create($dto);
+    return redirect()->route('client.payment.show', $booking);
+}
+```
+
+### 🛠 HOW — FormRequest thuc te trong du an
+
+```php
+// File: app/Http/Requests/Client/StoreBookingRequest.php
+
+class StoreBookingRequest extends FormRequest
+{
+    public function authorize(): bool
     {
-        // 1. Wrap trong transaction để đảm bảo tính nhất quán
-        $barber = DB::transaction(function () use ($data, $avatar) {
-            $user = User::create([...]);      // Tạo user
-            return Barber::create([...]);      // Tạo barber
-        });
-        
-        // 2. Xóa cache (vì dữ liệu đã thay đổi)
-        $this->cacheService->clearBarberCache();
-        
-        return $barber;
+        return true; // Ai cung duoc phep dat lich (ca guest)
     }
-}
-```
 
----
-
-## 7. Luồng đặt lịch (Booking Flow)
-
-### Toàn bộ lifecycle của một booking
-
-```
-            ┌──────── Guest/Khách đặt lịch ────────┐
-            │                                        │
-            ▼                                        │
-    ┌───────────────┐                               │
-    │    PENDING     │ ← Booking vừa tạo            │
-    │  (Chờ xác nhận)│                               │
-    └───────┬───────┘                               │
-            │                                        │
-     Barber xác nhận?                         Barber từ chối / Khách hủy
-            │                                        │
-            ▼                                        ▼
-    ┌───────────────┐                       ┌───────────────┐
-    │   CONFIRMED    │                       │   CANCELLED    │
-    │  (Đã xác nhận) │──── Khách hủy ──────→│   (Đã hủy)    │
-    └───────┬───────┘                       └───────────────┘
-            │                                   (Slot mở lại)
-     Barber bắt đầu phục vụ
-            │
-            ▼
-    ┌───────────────┐
-    │  IN_PROGRESS   │
-    │ (Đang phục vụ) │
-    └───────┬───────┘
-            │
-     Barber hoàn thành
-            │
-            ▼
-    ┌───────────────┐
-    │   COMPLETED    │
-    │  (Hoàn thành)  │
-    └───────────────┘
-```
-
-### Chi tiết luồng code
-
-**1. Khách mở form đặt lịch:**
-```
-GET /booking/create → Client\BookingController::create()
-    → Load danh sách services (is_active=true)
-    → Load danh sách barbers (is_active=true, with user)
-    → Return view('client.booking.create')
-```
-
-**2. Khách chọn barber + ngày → AJAX lấy slots:**
-```
-GET /booking/slots?barber_id=1&date=2026-03-24
-    → Client\BookingController::getSlots()
-    → Query TimeSlot where barber_id, slot_date, status=Available
-    → Filter slots đã qua giờ (nếu ngày hôm nay)
-    → Return JSON: [{id, start_time, end_time, label}, ...]
-```
-
-**3. Khách submit form đặt lịch:**
-```
-POST /booking
-    → throttle:5,1 (chống spam)
-    → StoreBookingRequest (validate)
-    → CreateBookingData::fromRequest() → DTO
-    → BookingService::create(DTO, user)
-        → DB::transaction
-            → TimeSlot::lockForUpdate() (pessimistic locking)
-            → Check slot status === Available
-            → Tính total_price, total_duration, end_time
-            → Booking::create()
-            → attach services (pivot: price_snapshot, duration_snapshot)
-            → Slot → status = Booked
-            → Log::channel('booking')
-        → Return Booking
-    → Redirect to Payment page
-```
-
-**4. Thanh toán (xem phần 8)**
-
-**5. Barber xác nhận:**
-```
-PATCH /barber/bookings/{booking}/confirm
-    → BookingPolicy::confirm() — kiểm tra quyền
-    → BookingService::confirm()
-        → canTransitionTo(Confirmed) — FSM check
-        → Update status = Confirmed
-        → Event: BookingConfirmed
-            → Listener → Job (gửi notification async)
-```
-
-**6. Barber bắt đầu phục vụ:**
-```
-PATCH /barber/bookings/{booking}/start
-    → BookingPolicy::start() — Chỉ confirmed mới start được
-    → BookingService::start()
-        → canTransitionTo(InProgress) — FSM check  
-        → Update status = InProgress
-```
-
-**7. Barber hoàn thành:**
-```
-PATCH /barber/bookings/{booking}/complete
-    → BookingPolicy::complete()
-    → BookingService::complete()
-        → canTransitionTo(Completed) — FSM check
-        → Update status = Completed
-        → Event: BookingCompleted → Notification cho khách
-```
-
-**8. Khách hủy:**
-```
-PATCH /booking/{booking}/cancel
-    → BookingPolicy::cancel()
-        → Chỉ khách hàng của booking
-        → Chỉ Pending/Confirmed
-        → Phải trước 2 tiếng (120 phút)
-    → BookingService::cancel()
-        → canTransitionTo(Cancelled) — FSM check
-        → Update status, cancelled_at, cancel_reason
-        → Mở lại slot (TimeSlotStatus::Available)
-        → Event: BookingCancelled → Notification
-```
-
-### Các kỹ thuật quan trọng
-
-| Kỹ thuật | Mục đích | Nơi dùng |
-|----------|---------|----------|
-| `DB::transaction` | Đảm bảo tất cả hoặc không gì xảy ra | BookingService::create(), cancel() |
-| `lockForUpdate()` | Pessimistic locking, chống 2 người đặt cùng slot | BookingService::create() |
-| `price_snapshot` | Ghi nhớ giá tại thời điểm đặt (giá sau có thể đổi) | booking_services pivot |
-| FSM `canTransitionTo()` | Kiểm soát chuyển trạng thái hợp lệ | Mọi method trong BookingService |
-
-### 🔒 Xử lý Race Condition — 2 người đặt cùng slot cùng lúc
-
-#### Race Condition là gì?
-
-Race Condition = **2 tiến trình chạy đồng thời, tranh nhau tài nguyên chung**, dẫn đến kết quả sai nếu không có cơ chế kiểm soát.
-
-**Ví dụ cụ thể trong dự án:**
-- Slot 10:00 sáng của barber Tuấn chỉ còn **1 chỗ trống**.
-- Khách A và Khách B **cùng lúc** nhấn "Đặt lịch" chọn slot này.
-- Nếu không xử lý → **cả 2 đều đặt thành công** → barber có 2 lịch hẹn 10:00 → sai!
-
-#### Cách dự án xử lý: 3 lớp bảo vệ
-
-```php
-// BookingService::create() — File: app/Services/BookingService.php
-
-public function create(CreateBookingData $data, ?User $customer = null): Booking
-{
-    // ┌─ LỚP 1: DB Transaction ──────────────────────────────────┐
-    // │ Đảm bảo tất cả thao tác DB thành công hoặc rollback hết │
-    return DB::transaction(function () use ($data, $customer) {
-    
-        // ┌─ LỚP 2: Pessimistic Locking ────────────────────────┐
-        // │ lockForUpdate() = khóa hàng trong DB                 │
-        // │ Ai đến trước → giữ khóa, người sau phải CHỜ         │
-        $slot = TimeSlot::lockForUpdate()->findOrFail($data->time_slot_id);
-        //                 ^^^^^^^^^^^^^^
-        //                 SQL: SELECT * FROM time_slots WHERE id=? FOR UPDATE
-        //                 → Hàng bị LOCK cho đến khi transaction COMMIT/ROLLBACK
-        
-        // ┌─ LỚP 3: Status Check ──────────────────────────────┐
-        // │ Sau khi có lock, kiểm tra slot còn available không   │
-        if ($slot->status !== TimeSlotStatus::Available) {
-            throw new SlotNotAvailableException(
-                'Slot này vừa được đặt, vui lòng chọn lại.'
-            );
-        }
-        // └──────────────────────────────────────────────────────┘
-        
-        // ... tạo booking, attach services ...
-        
-        $slot->update(['status' => TimeSlotStatus::Booked]);
-        //              ^^^^^^^^^ Đổi sang Booked → người sau sẽ thấy Booked
-        
-    }); // ← COMMIT transaction → giải lock
-}
-```
-
-#### Timeline chi tiết: 2 người đặt cùng slot cùng lúc
-
-```
-Thời gian │  Khách A (request trước vài ms)     │  Khách B (request sau vài ms)
-──────────┼──────────────────────────────────────┼─────────────────────────────────────
-T1        │  POST /booking                       │  POST /booking
-T2        │  BEGIN TRANSACTION                   │  BEGIN TRANSACTION
-T3        │  SELECT * FROM time_slots            │  SELECT * FROM time_slots
-          │  WHERE id=5 FOR UPDATE               │  WHERE id=5 FOR UPDATE
-          │  → ✅ Lấy được lock!                 │  → ⏳ BỊ CHẶN (hàng đang bị A lock)
-          │                                      │     A chưa commit → B phải chờ
-T4        │  status = 'available' → OK ✅        │  (vẫn đang chờ...)
-T5        │  Booking::create() ✅                │  (vẫn đang chờ...)
-T6        │  services()->attach() ✅             │  (vẫn đang chờ...)
-T7        │  slot → status = 'booked' ✅         │  (vẫn đang chờ...)
-T8        │  Log::info() ✅                      │  (vẫn đang chờ...)
-T9        │  COMMIT → giải lock 🔓               │  → Lock được giải! Đọc slot
-T10       │  Redirect → Payment page ✅          │  status = 'booked' → ❌ FAIL!
-T11       │                                      │  throw SlotNotAvailableException
-T12       │                                      │  ROLLBACK transaction
-T13       │                                      │  Redirect back + lỗi:
-          │                                      │  "Slot vừa được đặt, chọn lại." 
-```
-
-**Kết quả:**
-- ✅ Khách A: đặt thành công, chuyển sang trang thanh toán
-- ❌ Khách B: nhận thông báo lỗi, quay lại form chọn slot khác
-- ✅ **Không bao giờ** có 2 booking trùng slot
-
-#### Nếu KHÔNG có `lockForUpdate()`?
-
-```
-Thời gian │  Khách A                             │  Khách B
-──────────┼──────────────────────────────────────┼────────────────────────────────
-T1        │  SELECT * FROM time_slots WHERE id=5 │  SELECT * FROM time_slots WHERE id=5
-          │  status = 'available' → OK ✅        │  status = 'available' → OK ✅
-          │  (CẢ HAI đều thấy slot trống!)       │  (CẢ HAI đều thấy slot trống!)
-T2        │  Booking::create() ← booking #1      │  Booking::create() ← booking #2
-T3        │  slot → 'booked'                     │  slot → 'booked'
-          │                                      │
-          │  ❌ 2 BOOKING CHO CÙNG 1 SLOT!       │  ❌ RACE CONDITION XẢY RA!
-```
-
-#### Tóm tắt 3 lớp bảo vệ
-
-```
-┌──────────────────────────────────────────────────────────────┐
-│ LỚP 1: DB::transaction                                      │
-│ → Nếu bất kỳ bước nào fail → ROLLBACK toàn bộ              │
-│ → Không bao giờ có trạng thái "nửa chừng"                   │
-│                                                              │
-│   ┌──────────────────────────────────────────────────────┐   │
-│   │ LỚP 2: lockForUpdate()                              │   │
-│   │ → Khóa hàng slot trong DB ở cấp database            │   │
-│   │ → Request thứ 2 PHẢI CHỜ request thứ 1 commit       │   │
-│   │ → Đây là "Pessimistic Locking" (bi quan = giả sử    │   │
-│   │   sẽ có xung đột → khóa trước cho chắc)             │   │
-│   │                                                      │   │
-│   │   ┌──────────────────────────────────────────────┐   │   │
-│   │   │ LỚP 3: Status Check                         │   │   │
-│   │   │ → Sau khi có lock, kiểm tra lại status       │   │   │
-│   │   │ → Nếu 'booked' → throw Exception            │   │   │
-│   │   │ → User nhận thông báo "slot đã hết"          │   │   │
-│   │   └──────────────────────────────────────────────┘   │   │
-│   └──────────────────────────────────────────────────────┘   │
-└──────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 8. Luồng thanh toán (Payment Flow)
-
-### Tổng quan 3 phương thức
-
-```
-┌─────────────────────────────────────────────────────────┐
-│                  Chọn phương thức                        │
-│                                                         │
-│  ┌──────────┐   ┌──────────┐   ┌──────────┐           │
-│  │  💵 Cash  │   │ 💳 VNPay │   │ 📱 MoMo  │           │
-│  └────┬─────┘   └────┬─────┘   └────┬─────┘           │
-│       │              │              │                   │
-│       ▼              ▼              ▼                   │
-│  Ghi Payment    Redirect sang    Redirect sang          │
-│  status=Pending  VNPay Sandbox   MoMo Sandbox          │
-│  → Confirmation  → Thanh toán    → Thanh toán           │
-│                  → Callback URL  → Callback URL         │
-│                  → Verify HMAC   → Verify HMAC          │
-│                  → Update status → Update status        │
-└─────────────────────────────────────────────────────────┘
-```
-
-### Luồng VNPay chi tiết
-
-```
-1. Khách chọn VNPay → POST /payment/{booking}
-   → PaymentService::createPendingPayment() — Tạo Payment record (status=Pending)
-   → PaymentService::createVNPayUrl() — Tạo URL thanh toán
-       → Ký dữ liệu bằng HMAC SHA512 (vnpHashSecret)
-       → Tạo vnp_TxnRef = "paymentId_timestamp"
-   → Redirect khách sang VNPay Sandbox
-
-2. Khách thanh toán trên VNPay → VNPay redirect về app
-   → GET /payment/vnpay/return
-   → PaymentService::verifyVNPayCallback()
-       → Verify chữ ký HMAC SHA512 (chống fake request)
-       → Tìm Payment từ vnp_TxnRef
-       → Idempotency check: đã xử lý rồi thì return ngay
-       → vnp_ResponseCode === '00' → SUCCESS
-           → Payment.status = Paid, transaction_id, paid_at
-       → Khác '00' → FAIL
-           → Payment.status = Failed
-
-3. VNPay cũng gọi IPN (server-to-server)
-   → POST /payment/vnpay/ipn (withoutMiddleware CSRF)
-   → Verify + cập nhật tương tự
-```
-
-### Luồng MoMo tương tự
-
-```
-1. Tạo signature HMAC SHA256
-2. Gọi API MoMo (HTTP POST) → nhận payUrl
-3. Redirect khách sang payUrl
-4. MoMo callback → verify signature → update Payment status
-```
-
-### Bảo mật thanh toán
-
-| Biện pháp | Chi tiết |
-|-----------|---------|
-| HMAC signature | VNPay = SHA512, MoMo = SHA256. Chống giả mạo callback. |
-| Idempotency | Nếu payment đã Paid/Failed → return kết quả cũ, không xử lý lại. |
-| CSRF bypass | IPN route tắt CSRF vì request từ VNPay server, không có token. |
-| Transaction ref | `paymentId_timestamp` — unique mỗi giao dịch. |
-
----
-
-## 9. Hệ thống Event / Listener / Job
-
-### Tại sao cần Event system?
-
-Thay vì viết tất cả logic trong Service:
-```php
-// ❌ Service phình to, khó maintain
-public function confirm(Booking $booking) {
-    $booking->update(['status' => 'confirmed']);
-    $notification = Notification::create([...]);   // Side effect
-    // Nếu thêm: gửi email, SMS, Slack... → Service phình thêm
-}
-```
-
-Ta tách side effects ra Event/Listener:
-```php
-// ✅ Service gọn, side effects tách riêng
-public function confirm(Booking $booking) {
-    $booking->update(['status' => BookingStatus::Confirmed]);
-    event(new BookingConfirmed($booking));   // Phát sự kiện, không quan tâm ai xử lý
-}
-```
-
-### Luồng Event → Listener → Job
-
-```
-BookingService::confirm()
-    │
-    ├─ update status
-    │
-    └─ event(new BookingConfirmed($booking))
-            │
-            ▼
-    AppServiceProvider đã đăng ký:
-    Event::listen(BookingConfirmed::class, SendBookingConfirmedNotification::class)
-            │
-            ▼
-    SendBookingConfirmedNotification::handle()
-        │
-        ├─ Tạo message: "Lịch hẹn #BB-... đã được xác nhận bởi ..."
-        │
-        └─ SendBookingNotificationJob::dispatch($customerId, $message)
-                │  ← Đưa vào queue, xử lý async
-                ▼
-            Job::handle()
-                │
-                └─ Notification::create([...])  ← Ghi vào DB
-```
-
-### 3 Event trong dự án
-
-| Event | Khi nào phát | Listener làm gì |
-|-------|-------------|-----------------|
-| `BookingConfirmed` | Barber xác nhận booking | Gửi notification cho khách |
-| `BookingCancelled` | Barber từ chối / Khách hủy | Gửi notification cho khách |
-| `BookingCompleted` | Barber hoàn thành | Gửi notification cho khách |
-
-### Job — Xử lý bất đồng bộ
-
-```php
-class SendBookingNotificationJob implements ShouldQueue  // ← ShouldQueue = async
-{
-    use Queueable;
-    
-    public function handle(): void
+    public function rules(): array
     {
-        Notification::create([
-            'user_id' => $this->userId,
-            'message' => $this->message,
-        ]);
+        return [
+            'service_ids'           => 'required|array|min:1',
+            'service_ids.*'         => 'exists:services,id',
+            'barber_id'             => 'required|exists:barbers,id',
+            'time_slot_id'          => 'required|exists:time_slots,id',
+            'note'                  => 'nullable|string|max:500',
+            'coupon_code'           => 'nullable|string|max:50',
+            'recurring_frequency'   => 'nullable|in:none,weekly,biweekly,monthly',
+            // Guest fields — bat buoc neu CHUA dang nhap
+            'guest_name'            => 'required_without:' . (auth()->id() ? 'null' : '') . '|string|max:255',
+            'guest_email'           => 'required_without:' . (auth()->id() ? 'null' : '') . '|email',
+            'guest_phone'           => 'required_without:' . (auth()->id() ? 'null' : '') . '|string|max:20',
+        ];
     }
-}
-```
 
-> 🎯 **Tại sao dùng Job?**  
-> Nếu ghi notification **đồng bộ** trong Listener → request chậm hơn.  
-> Dùng Job, notification được đưa vào **queue** → xử lý sau → response nhanh hơn.
-
----
-
-## 10. Caching — CacheService
-
-### Cache là gì? Ví dụ đời thực
-
-Hãy tưởng tượng bạn đang ở **quán cà phê**:
-
-> **Không có cache**: Mỗi lần khách hỏi "có bao nhiêu món?", nhân viên phải chạy vào kho đếm lại từ đầu → mất 5 phút.  
-> **Có cache**: Lần đầu đếm xong, ghi ra **bảng menu treo tường** → khách hỏi lại thì nhìn bảng → 1 giây.  
-> **Cache hết hạn (TTL)**: Mỗi 1 tiếng xóa bảng cũ, đếm lại → đảm bảo thông tin không quá cũ.  
-> **Cache invalidation**: Thêm món mới → **xóa bảng cũ ngay lập tức** → đếm lại.
-
-Trong code cũng vậy:
-
-```
-Không cache:  Request → Query DB (chậm, ~50ms) → Response
-Có cache:     Request → Đọc từ RAM/File (nhanh, ~1ms) → Response
-```
-
-### Tại sao cần Cache?
-
-| Không cache ❌ | Có cache ✅ |
-|---|---|
-| Mỗi request đều query DB | Đọc từ bộ nhớ nhanh, không cần DB |
-| 100 user = 100 lần query giống nhau | 100 user = **1 lần** query, 99 lần đọc cache |
-| Chậm khi nhiều user đồng thời | Nhanh gấp **10-50 lần** |
-| DB chịu tải cao | DB nhẹ nhàng |
-
-### 2 method quan trọng nhất
-
-#### `Cache::remember()` — Lấy dữ liệu (tự động cache)
-
-```php
-$result = Cache::remember('cache_key', $seconds, function () {
-    // Code chỉ chạy KHI CHƯA CÓ CACHE
-    return DB::table('services')->get();
-});
-```
-
-**Logic bên trong:**
-```
-Cache::remember('active_services', 3600, fn() => query DB)
-    │
-    ├── Cache có key 'active_services'?
-    │       │
-    │       ├── CÓ (cache hit) → return dữ liệu từ cache (NHANH!)
-    │       │
-    │       └── KHÔNG (cache miss) → chạy fn() → query DB
-    │                                   │
-    │                                   ├── Lưu kết quả vào cache với key 'active_services'
-    │                                   │   (tự xóa sau 3600 giây)
-    │                                   │
-    │                                   └── return kết quả
-```
-
-#### `Cache::forget()` — Xóa cache (khi dữ liệu thay đổi)
-
-```php
-Cache::forget('active_services');
-// Lần sau gọi Cache::remember() → cache miss → query DB lại → cache mới
-```
-
-### TTL (Time To Live) là gì?
-
-TTL = **thời gian cache tồn tại** trước khi tự hết hạn. Sau TTL, cache tự xóa → lần sau phải query DB lại.
-
-```
-TTL = 3600 giây (1 giờ)
-
-Timeline:
-0s     → Cache::remember() → cache miss → query DB → lưu cache
-10s    → Cache::remember() → cache hit ✅ → return từ cache
-1800s  → Cache::remember() → cache hit ✅ → return từ cache
-3600s  → Cache hết hạn, tự xóa
-3601s  → Cache::remember() → cache miss → query DB lại → lưu cache mới
-```
-
-**Chọn TTL thế nào?**
-
-| Loại dữ liệu | TTL gợi ý | Lý do |
-|--------------|-----------|-------|
-| Dữ liệu gần như không đổi (danh mục, cấu hình) | 2-24 giờ | Ít thay đổi |
-| Dữ liệu thay đổi vài lần/ngày (danh sách sản phẩm) | 30-60 phút | Cân bằng tốc độ vs độ tươi |
-| Dữ liệu thay đổi thường xuyên (báo cáo) | 5-15 phút | Cần tương đối mới |
-| Dữ liệu thay đổi liên tục (giỏ hàng, trạng thái) | ❌ KHÔNG CACHE | Luôn cần chính xác |
-
-### CacheService — Quản lý tập trung
-
-```php
-class CacheService
-{
-    // ── BƯỚC 1: Định nghĩa keys + TTL tại 1 nơi duy nhất ──
-    private const KEY_ACTIVE_SERVICES = 'active_services';
-    private const KEY_ACTIVE_BARBERS = 'active_barbers';
-    private const TTL_SERVICES = 3600;     // 1 giờ
-    private const TTL_BARBERS = 1800;      // 30 phút
-
-    // ── BƯỚC 2: Method lấy dữ liệu (có cache) ──
-    public function getActiveServices()
+    // Custom validation phuc tap: slot khong duoc nam trong qua khu
+    public function withValidator($validator): void
     {
-        return Cache::remember(
-            self::KEY_ACTIVE_SERVICES,     // key
-            self::TTL_SERVICES,            // TTL: 3600 giây
-            function () {
-                // Closure này CHỈ chạy khi cache miss
-                return Service::where('is_active', true)
-                    ->orderBy('name')
-                    ->get();
+        $validator->after(function ($validator) {
+            if ($this->time_slot_id) {
+                $slot = TimeSlot::find($this->time_slot_id);
+                if ($slot) {
+                    $slotDatetime = Carbon::parse($slot->slot_date . ' ' . $slot->start_time);
+                    if ($slotDatetime->isPast()) {
+                        $validator->errors()->add('time_slot_id', 'Khung gio da qua.');
+                    }
+                }
             }
-        );
-    }
-
-    // ── BƯỚC 3: Method xóa cache (gọi khi dữ liệu thay đổi) ──
-    public function clearServiceCache(): void
-    {
-        Cache::forget(self::KEY_ACTIVE_SERVICES);
+        });
     }
 }
 ```
 
-### Thực tế: Cache được dùng ở đâu trong code?
+### Flow tu dong cua FormRequest
 
-**1. BarberService — Xóa cache khi tạo/sửa/xóa barber:**
+```
+Request → StoreBookingRequest → validate()
+                                 │
+                          ┌──────┴──────┐
+                          ▼             ▼
+                       Pass ✅       Fail ❌
+                    Controller      tu dong redirect back
+                    nhan data       + $errors (session)
+```
+
+---
+
+## 8. Service Layer — Nao bo Nghiep vu
+
+### 🎯 WHAT — Service Layer la gi?
+
+La **tang kep giua Controller va Database** — day chinh la "Nao bo" cat giau 100% logic kinh doanh cua tiem hot toc: Tinh tong bill, tru kho, ap dung voucher, sinh time slot, tinh phi ship...
+
+### ❓ WHY — Tai sao can Service Layer? Noi dau o day la gi?
+
+**Pain Point (Fat Controller):**
+
+Tuong tuong code Booking: Vua check gio trong cua tho, vua ra soat ma giam gia, vua INSERT Database, roi bat log, roi gui notification. Controller nhanh chong phi non len 1000 dong.
+
+Roi ngay mai sep bao: *"Em tao them 1 cai Console Command de tu dong huy booking qua han nhe"*. Luc nay, ta KHONG THE goi API Controller tu Console duoc. Phai copy-paste 1000 dong code do sang file Command → **Rac Code** kinh hoang.
+
+**Giai quyet (Nguyen ly Tai su dung):**
+
+Trut het logic vao `BookingService`. Sau do, ke xac la Controller goi, Job goi, hay Console Command goi... cu reo ten ham `$bookingService->create()` la xong. Controller thu nho rong tuech:
+
+```php
+❌ Fat Controller (Sai lam):              ✅ Thin Controller + Service (Tuyet tac):
+
+Controller::store() {                     Controller::store() {
+    validate();                               $dto = DTO::fromRequest();
+    $slot = TimeSlot::find();                 $booking = $service->create($dto);
+    if ($slot->status !== ...) throw;         return redirect();
+    $booking = Booking::create();         }
+    $booking->services()->attach();
+    $slot->update();
+    Log::info();
+    Notification::create();
+    return redirect();
+}
+```
+
+### 🛠 HOW — 14 Service trong du an
+
+| Service | Nhiem vu |
+|---------|----------|
+| `BookingService` | Tao/confirm/reject/start/complete/cancel booking. FSM + locking. |
+| `PaymentService` | Tao URL VNPay/MoMo. Verify callback. Idempotency. |
+| `OrderService` | E-commerce: tao don, tru kho (lockForUpdate), tinh thue 10%. |
+| `OrderPaymentService` | Thanh toan don hang (VNPay/MoMo/COD). |
+| `CartService` | Gio hang session-based: add, update, remove, gop trung. |
+| `ProductService` | CRUD san pham + tru/hoan kho an toan (lockForUpdate). |
+| `ShippingService` | Tinh phi ship (Haversine mien phi / Google Maps fallback). |
+| `CouponService` | Validate + tinh giam gia + tang used_count. |
+| `TimeSlotService` | Sinh slot 30 phut tu lich lam viec. Batch upsert toi uu. |
+| `ScheduleService` | CRUD lich lam viec barber. |
+| `BarberService` | CRUD barber (tao User + Barber trong transaction). |
+| `ReviewService` | Tao danh gia + cap nhat rating trung binh barber. |
+| `ReportService` | Thong ke: tong booking, doanh thu, Heatmaps. |
+| `CacheService` | Quan ly cache tap trung (keys + TTL tai 1 noi). |
+
+### Vi du Service pattern — BarberService
 
 ```php
 // File: app/Services/BarberService.php
@@ -1216,193 +849,643 @@ class CacheService
 class BarberService
 {
     public function __construct(private CacheService $cacheService) {}
-    //                                  ^^^^^^^^^^^^ Inject CacheService
 
-    public function create(CreateBarberData $data): Barber
+    public function create(CreateBarberData $data, ?UploadedFile $avatar = null): Barber
     {
-        $barber = DB::transaction(function () use ($data) {
-            $user = User::create([...]);
-            return Barber::create([...]);
+        // Wrap trong transaction → all or nothing
+        $barber = DB::transaction(function () use ($data, $avatar) {
+            $user = User::create([
+                'name'     => $data->name,
+                'email'    => $data->email,
+                'password' => Hash::make($data->password),
+                'role'     => UserRole::Barber,
+            ]);
+            return Barber::create([
+                'user_id'          => $user->id,
+                'bio'              => $data->bio,
+                'experience_years' => $data->experience_years,
+            ]);
         });
 
-        // Tạo barber mới → cache danh sách barber cũ KHÔNG CÒN ĐÚNG
-        // → Xóa cache để lần sau query DB lấy danh sách mới
+        // Xoa cache cu vi du lieu da thay doi
         $this->cacheService->clearBarberCache();
 
         return $barber;
     }
-
-    public function delete(Barber $barber): void
-    {
-        DB::transaction(function () use ($barber) {
-            $barber->user->delete();
-        });
-
-        $this->cacheService->clearBarberCache();  // Xóa cache khi xóa barber
-    }
 }
-```
-
-**2. Booking form — Dùng cache cho danh sách dịch vụ:**
-
-```
-Khách mở form đặt lịch → cần hiển thị danh sách dịch vụ
-    │
-    ▼
-$cacheService->getActiveServices()
-    │
-    ├── Có cache? → Trả về ngay (1ms) ✅
-    │
-    └── Không cache? → SELECT * FROM services WHERE is_active=1 (50ms)
-                       → Lưu cache → Trả về
-```
-
-### Sơ đồ tổng thể luồng cache
-
-```
-                    Lần 1 (cache miss)
-Request ──→ CacheService ──→ Cache::remember()
-                                  │
-                              key không tồn tại
-                                  │
-                              Query DB: SELECT * FROM services...
-                                  │
-                              Lưu kết quả vào cache (TTL=3600s)
-                                  │
-                              Return kết quả cho user
-
-                    Lần 2-1000 (cache hit)
-Request ──→ CacheService ──→ Cache::remember()
-                                  │
-                              key tồn tại + chưa hết hạn
-                                  │
-                              Return từ cache (NHANH! không query DB)
-
-                    Admin sửa dịch vụ
-Admin POST ──→ ServiceController ──→ ServiceService::update()
-                                          │
-                                      Update DB
-                                          │
-                                      $cacheService->clearServiceCache()
-                                          │
-                                      Cache::forget('active_services')
-
-                    Lần tiếp theo (cache miss do vừa xóa)
-Request ──→ CacheService ──→ Cache::remember()
-                                  │
-                              key không tồn tại (vừa bị forget)
-                                  │
-                              Query DB lại → lấy dữ liệu MỚI
-                                  │
-                              Lưu cache mới → Return
-```
-
-### 3 loại cache trong dự án
-
-| Cache Key | TTL | Dữ liệu | Xóa khi |
-|-----------|-----|---------|---------|
-| `active_services` | 1 giờ | Danh sách dịch vụ đang hoạt động | Admin tạo/sửa/xóa dịch vụ |
-| `active_barbers` | 30 phút | Danh sách thợ đang hoạt động | Admin tạo/sửa/xóa thợ |
-| `report_*` | 15 phút | Kết quả báo cáo thống kê | Admin xem báo cáo mới |
-
-### Tại sao quản lý cache TẬP TRUNG trong CacheService?
-
-```
-❌ Cache rải rác (mỗi nơi tự viết key):
-    Controller A: Cache::remember('services', ...)
-    Controller B: Cache::forget('service_list')   ← SAI KEY! Cache cũ KHÔNG bị xóa
-    → Bug: user thấy dữ liệu cũ mãi
-
-✅ Cache tập trung (CacheService quản lý key):
-    Controller A: $cacheService->getActiveServices()     ← key nằm BÊN TRONG CacheService
-    Controller B: $cacheService->clearServiceCache()     ← cũng dùng key BÊN TRONG
-    → Không bao giờ sai key vì DEV không cần biết key là gì
-```
-
-### Khi nào KHÔNG nên cache?
-
-```
-❌ Dữ liệu thay đổi mỗi giây       → Giỏ hàng, session
-❌ Dữ liệu cần chính xác real-time  → Số dư ví, trạng thái thanh toán
-❌ Dữ liệu khác nhau theo user      → Profile riêng (trừ khi cache theo user_id)
-❌ Dữ liệu rất nhỏ, query rất nhanh → SELECT COUNT(*) đơn giản
-
-✅ Danh sách ít thay đổi             → Dịch vụ, danh mục, barbers
-✅ Kết quả tính toán phức tạp        → Báo cáo, thống kê
-✅ Dữ liệu GIỐNG NHAU cho mọi user  → Menu, cấu hình hệ thống
 ```
 
 ---
 
-## 11. Middleware — Bộ lọc request
+## 9. Pessimistic Locking — Chong Race Condition
 
-Middleware = **code chạy TRƯỚC và/hoặc SAU** khi request đến Controller. Dùng để lọc, kiểm tra, bổ sung thông tin.
+### 🎯 WHAT — Race Condition & Pessimistic Locking la gi?
 
-### 3 Middleware tự viết
+**Race Condition** = 2 tien trinh chay dong thoi, tranh nhau tai nguyen chung, dan den ket qua sai.
 
-#### 11.1. `RoleMiddleware` — Phân quyền theo vai trò
+**Pessimistic Locking** = khoa bi quan — "Toi giu dinh rang SE CO xung dot, nen khoa truoc cho chac". Khi Request A vom lay Record, Database lap tuc "khoa bang" (Row-level Lock). Request B buoc phai dung cho.
 
-```php
-// Đăng ký trong route:
-Route::middleware(['auth', 'role:admin'])->group(function () {
-    // Chỉ admin mới vào được
-});
+### ❓ WHY — Tai sao can Pessimistic Locking? Noi dau o day la gi?
 
-Route::middleware(['auth', 'role:barber,admin'])->group(function () {
-    // Barber HOẶC admin
-});
+**Pain Point 1 — Double Booking (dat trung slot):**
+
+Slot 10:00 sang cua tho Tuan chi con **1 cho trong**. Khach A va Khach B **cung luc** nhan "Dat lich":
+
+```
+T1: A doc slot → status = 'available' ✅
+T1: B doc slot → status = 'available' ✅  (CA HAI deu thay slot trong!)
+T2: A tao booking → thanh cong
+T2: B tao booking → thanh cong  ← SAI! 2 booking cho 1 slot!
 ```
 
+**Pain Point 2 — Oversell (ban vuot kho):**
+
+Pomade chi con 1 hop trong kho. 2 nguoi bam "Mua" cung luc:
+
+```
+T1: A doc stock → stock = 1 ✅
+T1: B doc stock → stock = 1 ✅
+T2: A mua → stock = 0
+T2: B mua → stock = -1  ← AM! Kho am vo ly!
+```
+
+### 🛠 HOW — 3 lop bao ve trong code
+
 ```php
-// Cách hoạt động:
+// File: app/Services/BookingService.php
+
+public function create(CreateBookingData $data, ?User $customer = null): Booking
+{
+    // ┌─ LOP 1: DB Transaction ──────────────────────────────────────┐
+    // │ Dam bao tat ca thao tac DB thanh cong hoac ROLLBACK het      │
+    return DB::transaction(function () use ($data, $customer) {
+
+        // ┌─ LOP 2: Pessimistic Locking ────────────────────────────┐
+        // │ lockForUpdate() = khoa hang trong DB                     │
+        // │ Ai den truoc → giu khoa, nguoi sau phai CHO              │
+        $slot = TimeSlot::lockForUpdate()->findOrFail($data->time_slot_id);
+        //                 ^^^^^^^^^^^^^^
+        //                 SQL: SELECT * FROM time_slots WHERE id=? FOR UPDATE
+        //                 → Hang bi LOCK cho den khi transaction COMMIT/ROLLBACK
+
+        // ┌─ LOP 3: Status Check ──────────────────────────────────┐
+        // │ Sau khi co lock, kiem tra slot con available khong       │
+        if ($slot->status !== TimeSlotStatus::Available) {
+            throw new SlotNotAvailableException(
+                'Slot nay vua duoc dat, vui long chon lai.'
+            );
+        }
+        // └────────────────────────────────────────────────────────┘
+
+        // ... tao booking, attach services ...
+
+        $slot->update(['status' => TimeSlotStatus::Booked]);
+        //              ^^^^^^^^^ Doi sang Booked → nguoi sau se thay Booked
+
+    }); // ← COMMIT transaction → giai lock
+}
+```
+
+### Timeline chi tiet: 2 nguoi dat cung slot cung luc
+
+```
+Thoi gian │  Khach A (request truoc vai ms)     │  Khach B (request sau vai ms)
+──────────┼──────────────────────────────────────┼─────────────────────────────────────
+T1        │  POST /booking                       │  POST /booking
+T2        │  BEGIN TRANSACTION                   │  BEGIN TRANSACTION
+T3        │  SELECT * FROM time_slots            │  SELECT * FROM time_slots
+          │  WHERE id=5 FOR UPDATE               │  WHERE id=5 FOR UPDATE
+          │  → ✅ Lay duoc lock!                 │  → ⏳ BI CHAN (hang dang bi A lock)
+T4        │  status = 'available' → OK ✅        │  (van dang cho...)
+T5        │  Booking::create() ✅                │  (van dang cho...)
+T6        │  slot → status = 'booked' ✅         │  (van dang cho...)
+T7        │  COMMIT → giai lock 🔓               │  → Lock duoc giai! Doc slot
+T8        │  Redirect → Payment page ✅          │  status = 'booked' → ❌ FAIL!
+T9        │                                      │  throw SlotNotAvailableException
+T10       │                                      │  ROLLBACK → Redirect back + loi
+```
+
+**Ket qua:**
+- ✅ Khach A: dat thanh cong, chuyen sang trang thanh toan
+- ❌ Khach B: nhan thong bao loi, quay lai form chon slot khac
+- ✅ **Khong bao gio** co 2 booking trung slot
+
+### Pessimistic Locking con duoc dung o dau?
+
+| Service | Dung lockForUpdate() de | File |
+|---------|------------------------|------|
+| `BookingService::create()` | Chong double booking (2 nguoi dat cung slot) | `app/Services/BookingService.php` |
+| `ProductService::decreaseStock()` | Chong oversell (ban vuot kho) | `app/Services/ProductService.php` |
+| `OrderService::create()` | Chong oversell khi dat hang E-commerce | `app/Services/OrderService.php` |
+| `CouponService::markUsed()` | Chong over-redeem voucher | `app/Services/CouponService.php` |
+
+### Tom tat 3 lop bao ve
+
+```
+┌──────────────────────────────────────────────────────────────┐
+│ LOP 1: DB::transaction                                        │
+│ → Neu bat ky buoc nao fail → ROLLBACK toan bo                │
+│ → Khong bao gio co trang thai "nua chung"                     │
+│                                                              │
+│   ┌──────────────────────────────────────────────────────┐   │
+│   │ LOP 2: lockForUpdate()                              │   │
+│   │ → Khoa hang slot trong DB o cap database            │   │
+│   │ → Request thu 2 PHAI CHO request thu 1 commit       │   │
+│   │                                                      │   │
+│   │   ┌──────────────────────────────────────────────┐   │   │
+│   │   │ LOP 3: Status Check                         │   │   │
+│   │   │ → Sau khi co lock, kiem tra lai status       │   │   │
+│   │   │ → Neu 'booked' → throw Exception            │   │   │
+│   │   │ → User nhan thong bao "slot da het"          │   │   │
+│   │   └──────────────────────────────────────────────┘   │   │
+│   └──────────────────────────────────────────────────────┘   │
+└──────────────────────────────────────────────────────────────┘
+```
+
+---
+
+## 10. Luong dat lich (Booking Flow)
+
+### Toan bo lifecycle cua mot booking
+
+```
+            ┌──────── Guest/Khach dat lich ────────┐
+            │                                        │
+            ▼                                        │
+    ┌───────────────┐                               │
+    │    PENDING     │ ← Booking vua tao            │
+    │  (Cho xac nhan)│                               │
+    └───────┬───────┘                               │
+            │                                        │
+     Barber xac nhan?                         Barber tu choi / Khach huy
+            │                                        │
+            ▼                                        ▼
+    ┌───────────────┐                       ┌───────────────┐
+    │   CONFIRMED    │                       │   CANCELLED    │
+    │  (Da xac nhan) │──── Khach huy ──────→│   (Da huy)    │
+    └───────┬───────┘                       └───────────────┘
+            │                                   (Slot mo lai)
+     Barber bat dau phuc vu
+            │
+            ▼
+    ┌───────────────┐
+    │  IN_PROGRESS   │
+    │ (Dang phuc vu) │
+    └───────┬───────┘
+            │
+     Barber hoan thanh
+            │
+            ▼
+    ┌───────────────┐
+    │   COMPLETED    │
+    │  (Hoan thanh)  │
+    └───────────────┘
+```
+
+### Chi tiet luong code
+
+**1. Khach mo form dat lich:**
+```
+GET /booking/create → Client\BookingController::create()
+    → Load services (CacheService::getActiveServices() — co cache 1 gio)
+    → Load barbers (CacheService::getActiveBarbers() — co cache 30 phut)
+    → Return view('client.booking.create') — Wizard 4 buoc Alpine.js
+```
+
+**2. Khach chon barber + ngay → AJAX lay slots:**
+```
+GET /booking/slots?barber_id=1&date=2026-03-24
+    → Client\BookingController::getSlots()
+    → Query TimeSlot where barber_id, slot_date, status=Available
+    → Filter slots da qua gio (neu la ngay hom nay)
+    → Return JSON: [{id, start_time, end_time, label}, ...]
+```
+
+**3. Khach submit form dat lich:**
+```
+POST /booking (throttle:5,1 — chong spam)
+    → StoreBookingRequest validate
+    → CreateBookingData::fromRequest() → DTO
+    → BookingService::create(DTO, user)
+        → DB::transaction
+            → TimeSlot::lockForUpdate() (chong race condition)
+            → Check slot status === Available
+            → Tinh total_price, end_time tu tong duration cac dich vu
+            → Booking::create() voi booking_code tu sinh
+            → attach services (pivot: price_snapshot, duration_snapshot)
+            → Slot → status = Booked
+            → Dispatch Job gui notification cho barber
+        → Return Booking
+    → Redirect sang Payment page
+```
+
+**4. Thanh toan (xem phan 11)**
+
+**5. Barber xac nhan:**
+```
+PATCH /barber/bookings/{booking}/confirm
+    → BookingPolicy::confirm() — barber nay so huu booking nay? Trang thai la Pending?
+    → BookingService::confirm()
+        → canTransitionTo(Confirmed) — FSM check
+        → Update status = Confirmed
+        → event(BookingConfirmed) → Listener → Job gui notification cho khach
+```
+
+**6. Barber bat dau phuc vu:**
+```
+PATCH /barber/bookings/{booking}/start
+    → BookingPolicy::start() — Chi confirmed moi start duoc
+    → BookingService::start()
+        → canTransitionTo(InProgress) — FSM check
+        → Update status = InProgress
+```
+
+**7. Barber hoan thanh:**
+```
+PATCH /barber/bookings/{booking}/complete
+    → BookingPolicy::complete()
+    → BookingService::complete()
+        → canTransitionTo(Completed)
+        → Update status = Completed
+        → event(BookingCompleted) → Notification + Commission + Loyalty Points
+```
+
+**8. Khach huy:**
+```
+PATCH /booking/{booking}/cancel
+    → BookingPolicy::cancel()
+        → Chi khach hang cua booking nay
+        → Chi Pending/Confirmed
+        → Phai truoc 2 tieng (120 phut)
+    → BookingService::cancel()
+        → canTransitionTo(Cancelled)
+        → Update status, cancelled_at, cancel_reason
+        → Mo lai slot (TimeSlotStatus::Available)
+        → event(BookingCancelled) → Notification + Notify Waitlist
+```
+
+### Cac ky thuat quan trong
+
+| Ky thuat | Muc dich | Noi dung |
+|----------|---------|----------|
+| `DB::transaction` | Dam bao tat ca hoac khong gi xay ra | BookingService::create(), cancel() |
+| `lockForUpdate()` | Pessimistic locking, chong double-booking | BookingService::create() |
+| `price_snapshot` | Ghi nho gia tai thoi diem dat (gia sau co the doi) | booking_services pivot |
+| FSM `canTransitionTo()` | Kiem soat chuyen trang thai hop le | Moi method trong BookingService |
+| `SendBookingNotificationJob` | Gui thong bao bat dong bo (khong block request) | Dispatch tu Listeners |
+
+---
+
+## 11. Luong thanh toan (Payment Flow)
+
+### 🎯 WHAT — Payment la gi?
+
+He thong ho tro 3 phuong thuc: Tien mat, VNPay (Sandbox), MoMo (Sandbox). Moi booking chi co DUNG 1 payment (quan he 1-1).
+
+### ❓ WHY — Tai sao can nhieu lop bao ve?
+
+**Pain Point 1 — Gia mao callback:** Hacker doc docs VNPay, biet webhook URL la `/payment/vnpay/ipn`. No gui POST data gia "Thanh toan thanh cong" → he thong mo khoa don → mat tien!
+
+**Pain Point 2 — Duplicate callback:** Mang lag, VNPay gui "Da thanh toan" 5 lan lien tiep → he thong xu ly 5 lan → sai du lieu!
+
+### 🛠 HOW — Luong VNPay chi tiet
+
+```
+1. Khach chon VNPay → POST /payment/{booking}
+   → PaymentService::createPendingPayment() — Tao Payment record (status=Pending)
+   → PaymentService::createVNPayUrl() — Ky du lieu bang HMAC SHA512
+       → Tao vnp_TxnRef = "paymentId_timestamp" (unique)
+   → Redirect khach sang VNPay Sandbox
+
+2. Khach thanh toan xong → VNPay redirect ve app
+   → GET /payment/vnpay/return
+   → PaymentService::verifyVNPayCallback()
+       → Verify chu ky HMAC SHA512 (CHONG GIA MAO)
+       → Tim Payment tu vnp_TxnRef
+       → IDEMPOTENCY CHECK: status da khac Pending? → return ket qua cu, KHONG xu ly lai
+       → vnp_ResponseCode === '00' → Payment.status = Paid + paid_at
+       → Khac '00' → Payment.status = Failed
+
+3. VNPay DONG THOI goi IPN (server-to-server backup)
+   → POST /payment/vnpay/ipn (KHONG co CSRF token vi la server-to-server)
+   → Cung verify + idempotency → tra JSON {RspCode: '00'}
+```
+
+### Bao mat thanh toan — 4 biem phap
+
+| Bien phap | Chi tiet | File |
+|-----------|---------|------|
+| **HMAC Signature** | VNPay = SHA512, MoMo = SHA256. Du lieu bi sua → chu ky troi nhip → tu choi | `PaymentService`, `PaymentGatewayTrait` |
+| **Idempotency** | Neu payment DA Paid/Failed → return ngay, KHONG xu ly lai | `verifyVNPayCallback()` |
+| **CSRF Bypass** | IPN route tat CSRF vi request tu VNPay server, khong co browser token | `routes/web.php` |
+| **Transaction Ref** | `paymentId_timestamp` — unique moi giao dich, chong replay | `createVNPayUrl()` |
+
+---
+
+## 12. Event / Listener / Job — He thong Side Effects
+
+### 🎯 WHAT — No la gi?
+
+- **Event** = "Loa phat thanh". Khi Booking duoc xac nhan, he thong phat 1 tin hieu (`BookingConfirmed`).
+- **Listener** = "Nguoi nghe dai". Nghe thay tin hieu → chay di lam viec (tao notification, gui email).
+- **Job** = "Cong viec hau truong". Viec nang (gui email 3 giay) duoc dun ra Queue chay ngam, khong bat user cho.
+
+### ❓ WHY — Tai sao can Event system? Noi dau o day la gi?
+
+**Pain Point 1 — Coupling (Troi ma):**
+
+```php
+// ❌ Service phinh to, dinh chat voi Mailer, SMS, Notification
+public function confirm(Booking $booking) {
+    $booking->update(['status' => 'confirmed']);
+    Notification::create([...]);           // Side effect 1
+    Mail::to($customer)->send(...);        // Side effect 2
+    SMSGateway::send($phone, $message);    // Side effect 3
+    // → Loi Mailer sap → VO TUNG nghiep vu Booking!
+}
+```
+
+**Pain Point 2 — Toc do tham hoa:**
+
+Gui Email ton 3 giay, SMS ton 2 giay. User bam "Xac nhan" xong phai ha mom nhin man hinh quay vong vong 5 giay.
+
+**Giai quyet:**
+
+```php
+// ✅ Service gon, side effects tach rieng
+public function confirm(Booking $booking) {
+    $booking->update(['status' => BookingStatus::Confirmed]);
+    event(new BookingConfirmed($booking));   // 0.01 giay — khong quan tam ai xu ly
+}
+// → User chi cho 0.02 giay. Mail/SMS o hau truong Queue Worker tu xu ly.
+```
+
+### 🛠 HOW — Luong Event → Listener → Job
+
+```
+BookingService::confirm()
+    │
+    ├─ update status = Confirmed
+    │
+    └─ event(new BookingConfirmed($booking))     ← 0.01 giay
+            │
+            ▼
+    AppServiceProvider da dang ky:
+    Event::listen(BookingConfirmed::class, SendBookingConfirmedNotification::class)
+            │
+            ▼
+    SendBookingConfirmedNotification::handle()
+        │
+        ├─ Load booking relations (customer, barber, services)
+        ├─ Tao message: "Lich hen #BB-... da duoc xac nhan boi ..."
+        │
+        └─ SendBookingNotificationJob::dispatch($customerId, $message)
+                │  ← Dua vao queue, xu ly async
+                ▼
+            Job::handle()
+                │
+                └─ Notification::create([...])  ← Ghi vao DB (hau truong)
+```
+
+### 3 Event + 6 Listener trong du an
+
+| Event | Khi nao phat | Listeners |
+|-------|-------------|-----------|
+| `BookingConfirmed` | Barber xac nhan booking | `SendBookingConfirmedNotification` |
+| `BookingCancelled` | Barber tu choi / Khach huy | `SendBookingCancelledNotification`, `NotifyWaitlistOnCancel` |
+| `BookingCompleted` | Barber hoan thanh | `SendBookingCompletedNotification`, `CalculateCommissionOnCompleted`, `RewardPointsForBooking` |
+
+### Job — Xu ly bat dong bo
+
+```php
+// File: app/Jobs/SendBookingNotificationJob.php
+
+class SendBookingNotificationJob implements ShouldQueue  // ← ShouldQueue = async
+{
+    use Queueable;
+
+    public function __construct(
+        private int $userId,
+        private string $title,
+        private string $message,
+    ) {}
+
+    public function handle(): void
+    {
+        Notification::create([
+            'user_id' => $this->userId,
+            'type'    => 'booking',
+            'title'   => $this->title,
+            'message' => $this->message,
+        ]);
+    }
+}
+```
+
+> 🎯 **Tai sao dung Job?** Neu ghi notification **dong bo** trong Listener → request cham hon. Dung Job, notification duoc dua vao **queue** → xu ly sau → response NHANH hon.
+
+---
+
+## 13. Caching — CacheService
+
+### 🎯 WHAT — Cache la gi?
+
+Hay tuong tuong ban dang o **quan ca phe**:
+
+> **Khong co cache**: Moi lan khach hoi "co bao nhieu mon?", nhan vien phai chay vao kho dem lai tu dau → mat 5 phut.
+> **Co cache**: Lan dau dem xong, ghi ra **bang menu treo tuong** → khach hoi lai thi nhin bang → 1 giay.
+> **Cache het han (TTL)**: Moi 1 tieng xoa bang cu, dem lai → dam bao thong tin khong qua cu.
+> **Cache invalidation**: Them mon moi → **xoa bang cu ngay lap tuc** → dem lai.
+
+### ❓ WHY — Tai sao can Cache?
+
+| Khong cache ❌ | Co cache ✅ |
+|---|---|
+| Moi request deu query DB | Doc tu bo nho nhanh |
+| 100 user = 100 lan query giong nhau | 100 user = **1 lan** query, 99 lan doc cache |
+| Cham khi nhieu user dong thoi | Nhanh gap **10-50 lan** |
+| DB chiu tai cao | DB nhe nhang |
+
+### 🛠 HOW — CacheService tap trung
+
+```php
+// File: app/Services/CacheService.php
+
+class CacheService
+{
+    // ── BUOC 1: Dinh nghia keys + TTL tai 1 noi duy nhat ──
+    private const KEY_ACTIVE_SERVICES = 'active_services';
+    private const KEY_ACTIVE_BARBERS = 'active_barbers';
+    private const KEY_REPORT_PREFIX = 'report_';
+    private const TTL_SERVICES = 3600;     // 1 gio
+    private const TTL_BARBERS = 1800;      // 30 phut
+    private const TTL_REPORT = 900;        // 15 phut
+
+    // ── BUOC 2: Method lay du lieu (co cache) ──
+    public function getActiveServices()
+    {
+        return Cache::remember(
+            self::KEY_ACTIVE_SERVICES,     // key
+            self::TTL_SERVICES,            // TTL: 3600 giay
+            function () {
+                // Closure nay CHI chay khi cache miss
+                return Service::where('is_active', true)->orderBy('name')->get();
+            }
+        );
+    }
+
+    // ── BUOC 3: Method xoa cache (goi khi du lieu thay doi) ──
+    public function clearServiceCache(): void
+    {
+        Cache::forget(self::KEY_ACTIVE_SERVICES);
+    }
+}
+```
+
+### Tai sao quan ly cache TAP TRUNG?
+
+```
+❌ Cache rai rac (moi noi tu viet key):
+    Controller A: Cache::remember('services', ...)
+    Controller B: Cache::forget('service_list')   ← SAI KEY! Cache cu KHONG bi xoa
+    → Bug: user thay du lieu cu mai
+
+✅ Cache tap trung (CacheService quan ly key):
+    Controller A: $cacheService->getActiveServices()     ← key nam BEN TRONG CacheService
+    Controller B: $cacheService->clearServiceCache()     ← cung dung key BEN TRONG
+    → Khong bao gio sai key vi DEV khong can biet key la gi
+```
+
+### 3 loai cache trong du an
+
+| Cache Key | TTL | Du lieu | Xoa khi |
+|-----------|-----|---------|---------|
+| `active_services` | 1 gio | Danh sach dich vu dang hoat dong | Admin tao/sua/xoa dich vu |
+| `active_barbers` | 30 phut | Danh sach tho dang hoat dong | Admin tao/sua/xoa tho |
+| `report_*` | 15 phut | Ket qua bao cao thong ke | Tu het han |
+
+### Khi nao KHONG nen cache?
+
+```
+❌ Du lieu thay doi moi giay        → Gio hang, session
+❌ Du lieu can chinh xac real-time  → So du vi, trang thai thanh toan
+❌ Du lieu khac nhau theo user      → Profile rieng
+❌ Du lieu rat nho, query rat nhanh → SELECT COUNT(*) don gian
+
+✅ Danh sach it thay doi            → Dich vu, danh muc, barbers
+✅ Ket qua tinh toan phuc tap       → Bao cao, thong ke
+✅ Du lieu GIONG NHAU cho moi user  → Menu, cau hinh he thong
+```
+
+---
+
+## 14. Middleware — Bo loc Request
+
+### 🎯 WHAT — Middleware la gi?
+
+Middleware la **Cua khau Hai quan** chan tat ca cac Request truoc khi cho phep no tien vao Controller. No chay TRUOC (de kiem tra quyen) hoac SAU (de them header bao mat).
+
+### ❓ WHY — Tai sao can Middleware?
+
+**Pain Point:** Ban co 50 API danh cho Admin. De cam tho cat toc hoac khach xem trom doanh thu, neu khong co Middleware, o MOI ham Controller phai go lai:
+
+```php
+if (auth()->user()->role !== 'admin') abort(403);
+```
+
+50 Controller la 50 lan copy-paste. Nua dem thay doi logic quyen thi khoc thet di tim sua.
+
+**Giai quyet:** Gan `middleware('role:admin')` len 1 Group Route. He thong chan dung bat ky ten nao khong phai Admin tu vong gui xe.
+
+### 🛠 HOW — 3 Middleware trong du an
+
+#### 14.1 RoleMiddleware — Phan quyen theo vai tro
+
+```php
+// File: app/Http/Middleware/RoleMiddleware.php
+
 public function handle(Request $request, Closure $next, string ...$roles): Response
 {
-    // Convert string → Enum
+    // Convert string → Enum (type-safe!)
     $allowedRoles = array_map(fn ($role) => UserRole::from($role), $roles);
-    
-    // Check: đã login VÀ role nằm trong danh sách cho phép
+
+    // Check: da login VA role nam trong danh sach cho phep
     if (!auth()->check() || !in_array(auth()->user()->role, $allowedRoles)) {
         abort(403);   // Forbidden
     }
-    
+
     return $next($request);   // Cho qua
 }
 ```
 
-#### 11.2. `LogActivity` — Ghi log thay đổi dữ liệu
-
+**Dung trong route:**
 ```php
-// Chỉ log POST/PUT/PATCH/DELETE (bỏ qua GET để giảm noise)
-// Ghi: user_id, role, method, url, ip, status, duration
+// routes/admin.php — Tat ca route yeu cau auth + role:admin
+Route::middleware(['auth', 'role:admin'])->group(function () {
+    Route::get('/admin/dashboard', [DashboardController::class, 'index']);
+    Route::resource('/admin/services', ServiceController::class);
+    // ...
+});
+
+// routes/barber.php — Barber HOAC admin
+Route::middleware(['auth', 'role:barber,admin'])->group(function () {
+    Route::get('/barber/dashboard', [DashboardController::class, 'index']);
+    // ...
+});
 ```
 
-#### 11.3. `SecurityHeaders` — HTTP security headers
+#### 14.2 SecurityHeaders — HTTP security headers
 
 ```php
-// Thêm vào mọi response:
-X-Content-Type-Options: nosniff         // Chống MIME sniffing
-X-Frame-Options: DENY                   // Chống clickjacking
-X-XSS-Protection: 1; mode=block        // Chống XSS (trình duyệt cũ)
-Referrer-Policy: strict-origin-...      // Kiểm soát referrer
-Permissions-Policy: camera=(), ...      // Tắt quyền truy cập thiết bị
+// File: app/Http/Middleware/SecurityHeaders.php
+
+// Them vao MOI response:
+$response->headers->set('X-Content-Type-Options', 'nosniff');         // Chong MIME sniffing
+$response->headers->set('X-Frame-Options', 'DENY');                   // Chong clickjacking
+$response->headers->set('X-XSS-Protection', '1; mode=block');        // Chong XSS (trinh duyet cu)
+$response->headers->set('Referrer-Policy', 'strict-origin-when-cross-origin');
+$response->headers->set('Permissions-Policy', 'camera=(), microphone=(), geolocation=()');
+// + Content-Security-Policy (CSP) — chi cho phep JS tu domain da duyet
 ```
 
-### Sơ đồ pipeline Middleware
+#### 14.3 LogActivity — Ghi log thay doi du lieu
+
+```php
+// File: app/Http/Middleware/LogActivity.php
+
+// Chi log POST/PUT/PATCH/DELETE (bo qua GET de giam noise)
+// Ghi: user_id, role, method, url, ip, status, duration, payload (tru password)
+```
+
+#### Dang ky Middleware
+
+```php
+// File: bootstrap/app.php
+->withMiddleware(function (Middleware $middleware) {
+    $middleware->alias([
+        'role' => \App\Http\Middleware\RoleMiddleware::class,
+    ]);
+    $middleware->append(\App\Http\Middleware\LogActivity::class);
+    $middleware->append(\App\Http\Middleware\SecurityHeaders::class);
+})
+```
+
+### So do pipeline Middleware
 
 ```
 Request
     │
     ▼
 ┌─────────────────┐
-│ SecurityHeaders  │  Thêm headers bảo mật vào response
+│ SecurityHeaders  │  Them headers bao mat vao response
 ├─────────────────┤
-│   auth           │  Kiểm tra đã login chưa
+│   auth           │  Kiem tra da login chua
 ├─────────────────┤
-│   role:admin     │  Kiểm tra có phải admin không
+│   role:admin     │  Kiem tra co phai admin khong
 ├─────────────────┤
-│   LogActivity    │  Ghi log hành động (chỉ POST/PUT/PATCH/DELETE)
+│   LogActivity    │  Ghi log hanh dong (chi POST/PUT/PATCH/DELETE)
 ├─────────────────┤
-│   throttle:5,1   │  Rate limit: max 5 req/phút
+│   throttle:5,1   │  Rate limit: max 5 req/phut
 └────────┬────────┘
          │
          ▼
@@ -1411,575 +1494,556 @@ Request
 
 ---
 
-## 12. Policy — Phân quyền chi tiết
+## 15. Policy — Phan quyen Row-Level
 
-### Policy là gì?
+### 🎯 WHAT — Policy la gi?
 
-Hãy tưởng tượng thế này:
+Neu Middleware la **Bao ve cong** (Chi nhan vien moi duoc vao cty), thi Policy la **O khoa van tay** tren tung phong (Nhan vien Ke toan khong duoc mo cua phong Giam doc).
 
-> **Middleware** giống như **bảo vệ ở cổng tòa nhà**: "Anh là nhân viên (admin) thì vào, không phải thì đi về."  
-> **Policy** giống như **khóa phòng bên trong tòa nhà**: "Anh là nhân viên, nhưng chỉ được vào phòng CỦA ANH, không được vào phòng người khác."
+Policy = phan quyen "Row-Level" — soi xet tung dong du lieu: "User NAY co duoc phep lam hanh dong NAY voi Record NAY khong?"
 
-Policy = **quy tắc kiểm tra quyền trên từng record cụ thể** (từng booking, từng đơn hàng...).
+### ❓ WHY — Tai sao can Policy? Noi dau o day la gi?
 
-### So sánh chi tiết: Middleware vs Policy
+**Pain Point (IDOR — Insecure Direct Object Reference):**
+
+Khach hang A co ID=10, dang huy hoa don cua minh: `PATCH /booking/10/cancel`. Vi A to mo, F12 doi URL thanh `PATCH /booking/15/cancel`.
+
+Middleware chi check "A co phai khach hang da dang nhap khong?" → Co. The la he thong xoa luon hoa don so 15 cua Khach hang B! **Vu sap vi khach kien, Hacker tha ho thit co Server.**
+
+**Giai quyet:** Policy soi doi chieu: `customer_id` cua thang A co khop voi `customer_id` cua booking #15 khong? Lech nhau → da ra tong nguc `abort(403)`.
+
+### 🛠 HOW — So sanh Middleware vs Policy
 
 | | Middleware `role:admin` | Policy |
 |--|------------------------|--------|
-| **Câu hỏi** | "User có PHẢI role này không?" | "User có ĐƯỢC PHÉP làm hành động này VỚI record này không?" |
-| **Phạm vi** | Kiểm tra **cả route/trang** | Kiểm tra **từng record** |
-| **Ví dụ** | "Chỉ admin vào trang quản lý" | "Barber A chỉ xác nhận booking CỦA barber A" |
-| **Vị trí** | Chạy TRƯỚC Controller | Chạy BÊN TRONG Controller |
-| **Return** | Cho qua hoặc abort(403) | `true` (cho phép) hoặc `false` (cấm) |
+| **Cau hoi** | "User co PHAI role nay khong?" | "User co DUOC PHEP lam hanh dong nay VOI Record nay khong?" |
+| **Pham vi** | Kiem tra **CUM VUNG LON** (bien gioi) | Kiem tra **TUNG DONG DU LIEU** (ket sat van tay) |
+| **Vi du** | "Chi admin vao trang Quan ly" | "Barber A chi duoc xac nhan booking CUA Barber A" |
 
-### Ví dụ thực tế để hiểu rõ
+### Vi du thuc te
 
-Hệ thống có 3 barber: **Tuấn**, **Minh**, **Hùng**.
+He thong co 3 barber: **Tuan**, **Minh**, **Hung**:
 
 ```
-Middleware role:barber bảo vệ route /barber/bookings/{booking}/confirm
-    → Cả 3 barber đều QUA ĐƯỢC middleware (vì đều là role barber)
+Middleware role:barber bao ve route /barber/bookings/{booking}/confirm
+    → Ca 3 barber deu QUA DUOC middleware (vi deu la role barber)
 
-NHƯNG:
-    → Booking #10 là của barber Tuấn
-    → Minh vào /barber/bookings/10/confirm → KHÔNG ĐƯỢC! (không phải booking của Minh)
-    → Policy kiểm tra: user.barber.id === booking.barber_id → false → abort(403)
+NHUNG:
+    → Booking #10 la cua barber Tuan
+    → Minh vao /barber/bookings/10/confirm → KHONG DUOC! (khong phai booking cua Minh)
+    → Policy kiem tra: user.barber.id === booking.barber_id → false → abort(403)
 ```
 
 ```
                        Middleware                          Policy
                     ┌─────────────┐                  ┌─────────────┐
-Tuấn (barber) ────▶│ role:barber  │──── PASS ✅ ───▶│ confirm()   │──── booking CỦA Tuấn? ✅ PASS
+Tuan (barber) ────▶│ role:barber  │──── PASS ✅ ───▶│ confirm()   │──── booking CUA Tuan? ✅ PASS
                     │             │                  │             │
-Minh (barber) ────▶│ role:barber  │──── PASS ✅ ───▶│ confirm()   │──── booking CỦA Minh? ❌ DENY
+Minh (barber) ────▶│ role:barber  │──── PASS ✅ ───▶│ confirm()   │──── booking CUA Minh? ❌ DENY
                     │             │                  │             │
-Khách (customer) ──▶│ role:barber  │──── DENY ❌     │             │    (không bao giờ đến đây)
+Khach (customer) ──▶│ role:barber  │──── DENY ❌     │             │    (khong bao gio den day)
                     └─────────────┘                  └─────────────┘
 ```
 
-### BookingPolicy — Phân tích từng method
+### BookingPolicy — Phan tich tung method
 
 ```php
 // File: app/Policies/BookingPolicy.php
 
 class BookingPolicy
 {
-    /**
-     * Barber có được XÁC NHẬN booking này không?
-     * Điều kiện:
-     *   1. User phải là barber (có bản ghi trong bảng barbers)
-     *   2. Booking phải thuộc VỀ barber này (không phải barber khác)
-     *   3. Booking phải đang ở trạng thái Pending (chưa ai xác nhận)
-     */
+    // Barber co duoc XAC NHAN booking nay khong?
     public function confirm(User $user, Booking $booking): bool
     {
-        return $user->barber                                    // 1. User là barber?
-            && $user->barber->id === $booking->barber_id        // 2. Booking của barber này?
-            && $booking->status === BookingStatus::Pending;     // 3. Đang pending?
+        return $user->barber                                    // 1. User la barber?
+            && $user->barber->id === $booking->barber_id        // 2. Booking cua barber nay?
+            && $booking->status === BookingStatus::Pending;     // 3. Dang pending?
     }
 
-    /**
-     * Barber có được TỪ CHỐI booking này không?
-     * Điều kiện giống confirm: phải là barber của booking + đang Pending
-     */
-    public function reject(User $user, Booking $booking): bool
-    {
-        return $user->barber 
-            && $user->barber->id === $booking->barber_id
-            && $booking->status === BookingStatus::Pending;
-    }
-
-    /**
-     * Barber có được BẮT ĐẦU PHỤC VỤ booking này không?
-     * Điều kiện: là barber của booking + booking đã Confirmed
-     */
+    // Barber co duoc BAT DAU PHUC VU booking nay khong?
     public function start(User $user, Booking $booking): bool
     {
-        return $user->barber 
+        return $user->barber
             && $user->barber->id === $booking->barber_id
-            && $booking->status === BookingStatus::Confirmed;  // Phải confirmed trước
+            && $booking->status === BookingStatus::Confirmed;   // Phai confirmed truoc
     }
 
-    /**
-     * Barber có được HOÀN THÀNH booking này không?
-     * Điều kiện: là barber của booking + đang InProgress
-     */
-    public function complete(User $user, Booking $booking): bool
-    {
-        return $user->barber 
-            && $user->barber->id === $booking->barber_id
-            && $booking->status === BookingStatus::InProgress;  // Phải đang phục vụ
-    }
-
-    /**
-     * Khách hàng có được HỦY booking này không?
-     * Điều kiện phức tạp hơn:
-     *   1. Phải là khách hàng CỦA booking này
-     *   2. Booking phải đang Pending hoặc Confirmed
-     *   3. Phải hủy TRƯỚC giờ hẹn ít nhất 2 tiếng
-     */
+    // Khach hang co duoc HUY booking nay khong?
     public function cancel(User $user, Booking $booking): bool
     {
-        // 1. Chỉ khách hàng của booking
-        if ($user->id !== $booking->customer_id) {
-            return false;
-        }
+        // 1. Chi khach hang cua booking
+        if ($user->id !== $booking->customer_id) return false;
 
-        // 2. Chỉ hủy khi Pending hoặc Confirmed
+        // 2. Chi huy khi Pending hoac Confirmed
         if (!in_array($booking->status, [BookingStatus::Pending, BookingStatus::Confirmed])) {
             return false;
         }
 
-        // 3. Phải trước giờ hẹn ít nhất 2 tiếng (120 phút)
-        //    VD: Hẹn 10:00 → phải hủy trước 8:00
+        // 3. Phai truoc gio hen it nhat 2 tieng (120 phut)
         $appointmentTime = Carbon::parse($booking->booking_date . ' ' . $booking->start_time);
         return now()->diffInMinutes($appointmentTime, false) >= 120;
     }
 }
 ```
 
-### Cách gọi Policy trong Controller
+### Cach goi Policy trong Controller
 
 ```php
-// Barber\BookingController.php
+// File: app/Http/Controllers/Barber/BookingController.php
 
-class BookingController extends Controller
+public function confirm(Booking $booking): RedirectResponse
 {
-    use AuthorizesRequests;  // ← Cần trait này để dùng $this->authorize()
+    $this->authorize('confirm', $booking);
+    // ↑ Laravel tu dong:
+    //   1. Tim BookingPolicy (vi truyen Booking model)
+    //   2. Goi BookingPolicy::confirm(auth()->user(), $booking)
+    //   3. return false → abort(403) Forbidden
+    //   4. return true → tiep tuc code phia duoi
 
-    public function confirm(Booking $booking): RedirectResponse
-    {
-        // authorize('tên_method_trong_policy', $model)
-        $this->authorize('confirm', $booking);
-        // ↑ Laravel tự động:
-        //   1. Tìm BookingPolicy (vì truyền $booking là Booking model)
-        //   2. Gọi BookingPolicy::confirm(auth()->user(), $booking)
-        //   3. Nếu return false → abort(403) Forbidden
-        //   4. Nếu return true → tiếp tục ↓
-
-        $this->bookingService->confirm($booking);
-        return back()->with('success', 'Đã xác nhận lịch hẹn.');
-    }
-
-    public function reject(Request $request, Booking $booking): RedirectResponse
-    {
-        $this->authorize('reject', $booking);  // Policy check
-
-        $this->bookingService->reject($booking, $request->input('cancel_reason'));
-        return back()->with('success', 'Đã từ chối lịch hẹn.');
-    }
+    $this->bookingService->confirm($booking);
+    return back()->with('success', 'Da xac nhan lich hen.');
 }
-```
-
-### Luồng authorize hoạt động thế nào?
-
-```
-$this->authorize('confirm', $booking)
-         │              │         │
-         │              │         └── Model → Laravel biết tìm BookingPolicy
-         │              └──────────── Tên method trong Policy
-         │
-         ▼
-┌─────────────────────────────────────────────────────┐
-│ Laravel tự động làm:                                 │
-│                                                      │
-│ 1. $booking là Booking model                         │
-│    → Tìm file: App\Policies\BookingPolicy            │
-│                                                      │
-│ 2. Gọi: BookingPolicy::confirm(auth()->user(), $booking) │
-│                                                      │
-│ 3. Kết quả:                                          │
-│    return true  → ✅ tiếp tục code phía dưới        │
-│    return false → ❌ abort(403) Forbidden            │
-└─────────────────────────────────────────────────────┘
-```
-
-### Laravel tìm Policy thế nào?
-
-Laravel dùng **quy ước đặt tên** (convention) để tự động ghép Model ↔ Policy:
-
-| Model | Policy (Laravel tự tìm) |
-|-------|------------------------|
-| `App\Models\Booking` | `App\Policies\BookingPolicy` |
-| `App\Models\Order` | `App\Policies\OrderPolicy` |
-| `App\Models\Product` | `App\Policies\ProductPolicy` |
-
-Quy tắc: **Tên Model + "Policy"** → `Booking` + `Policy` = `BookingPolicy`.
-
-### Nếu KHÔNG có Policy thì sao?
-
-```php
-// ❌ Không dùng Policy — kiểm tra thủ công trong Controller
-public function confirm(Booking $booking)
-{
-    $user = auth()->user();
-    
-    if (!$user->barber) {
-        abort(403);
-    }
-    if ($user->barber->id !== $booking->barber_id) {
-        abort(403);
-    }
-    if ($booking->status !== BookingStatus::Pending) {
-        abort(403);
-    }
-    
-    // Logic xác nhận...
-}
-
-// ❌ Vấn đề: copy-paste logic này ở MỌI method (confirm, reject, start, complete)
-//    → Code lặp, khó maintain, dễ quên
-```
-
-```php
-// ✅ Dùng Policy — 1 dòng duy nhất, logic tập trung
-public function confirm(Booking $booking)
-{
-    $this->authorize('confirm', $booking);  // ← Sạch, gọn, rõ ràng
-    
-    // Logic xác nhận...
-}
-```
-
-### Tóm tắt: Khi nào dùng Policy?
-
-```
-□ Khi cần kiểm tra "user này có quyền trên RECORD CỤ THỂ này không?"
-□ Khi logic phân quyền phức tạp (nhiều điều kiện: role + ownership + status + thời gian)
-□ Khi cùng 1 kiểu kiểm tra lặp lại ở nhiều Controller methods
-□ Khi muốn tách logic phân quyền ra khỏi Controller cho gọn
-```
-
-
-
-## 13. Console Commands — Tác vụ nền
-
-4 Artisan commands chạy tự động (cron):
-
-| Command | Chức năng | Schedule |
-|---------|----------|----------|
-| `slots:generate` | Tạo time slots cho 7 ngày tới dựa trên lịch làm việc | Hàng ngày |
-| `bookings:expire` | Tự động hủy booking Pending quá 24h | Mỗi giờ |
-| `logs:cleanup` | Xóa log files cũ hơn 30 ngày | Hàng tuần |
-| `security:audit` | Kiểm tra bảo mật (permission, env, packages) | Hàng tuần |
-
-### Ví dụ: `GenerateTimeSlots`
-
-```
-1. Lấy tất cả barbers có is_active=true
-2. Với mỗi barber:
-   - Đọc WorkingSchedule (lịch 7 ngày trong tuần)
-   - Cho 7 ngày tới, nếu barber làm việc ngày đó:
-     - Tạo time slots mỗi 30 phút từ start_time → end_time
-     - Skip slots trùng (đã tồn tại)
 ```
 
 ---
 
-## 14. Database Schema — Sơ đồ cơ sở dữ liệu
+## 16. E-Commerce — Module Ban hang
 
-### Sơ đồ quan hệ (ER Diagram)
+### 🎯 WHAT — Module E-Commerce la gi?
+
+Classic Cut mo rong tu dich vu cat toc sang ban le san pham cham soc toc (Pomade, Dau goi, Sap...) — day du tinh nang: Gio hang, Ma giam gia, Thanh toan, Quan ly kho.
+
+### ❓ WHY — Tai sao lai can E-Commerce?
+
+Mot tiem cat toc hien dai khong chi ban dich vu. San pham ban kem (Pomade, Wax, Dau duong) tao nguon doanh thu bo sung va tang gia tri don hang trung binh.
+
+### 🛠 HOW — Luong mua hang
+
+#### 16.1 Gio hang (Cart) — Session-based
+
+```php
+// File: app/Services/CartService.php
+
+// Gio hang luu trong Session (khong luu DB) — mượt mà, nhanh
+public function addItem(int $productId, int $quantity = 1): void
+{
+    $cart = session()->get('cart', []);
+
+    // GOP SAN PHAM TRUNG: Neu da co trong gio → tang quantity
+    if (isset($cart[$productId])) {
+        $cart[$productId]['quantity'] += $quantity;
+    } else {
+        $product = Product::findOrFail($productId);
+        $cart[$productId] = [
+            'name'     => $product->name,
+            'price'    => $product->price,
+            'image'    => $product->image,
+            'quantity' => $quantity,
+        ];
+    }
+
+    session()->put('cart', $cart);
+}
+```
+
+> 🎯 **Tai sao gio hang dung Session ma khong dung DB?** Vi gio hang thay doi lien tuc (them/bot moi giay). Cache DB cho no la qua muc can thiet va tang tai server. Session nhe nhang, mat khi tat trinh duyet cung khong sao.
+
+#### 16.2 Checkout — Dat hang voi lockForUpdate
+
+```php
+// File: app/Services/OrderService.php
+
+public function create(CreateOrderData $data): array
+{
+    return DB::transaction(function () use ($data) {
+        // 1. Tru kho AN TOAN (lockForUpdate chong oversell)
+        foreach ($data->items as $item) {
+            $product = Product::lockForUpdate()->findOrFail($item['product_id']);
+
+            if ($product->stock_quantity < $item['quantity']) {
+                throw new \Exception("San pham {$product->name} het hang.");
+            }
+
+            $product->decrement('stock_quantity', $item['quantity']);
+        }
+
+        // 2. Tinh tien: subtotal + tax 10% + shipping
+        $subtotal = collect($data->items)->sum(fn ($i) => $i['price'] * $i['quantity']);
+        $taxAmount = $subtotal * 0.10;
+        $shippingFee = $this->shippingService->calculateFee(
+            $data->dest_lat, $data->dest_lng, $subtotal
+        )['fee'];
+
+        // 3. Tao Order
+        $order = Order::create([
+            'order_code'    => 'BB-ORD-' . strtoupper(Str::random(8)),
+            'customer_id'   => auth()->id(),
+            'subtotal'      => $subtotal,
+            'tax_amount'    => $taxAmount,
+            'shipping_fee'  => $shippingFee,
+            'total_amount'  => $subtotal + $taxAmount + $shippingFee,
+            'status'        => OrderStatus::Pending,
+        ]);
+
+        // 4. Tao order_items voi price_snapshot
+        foreach ($data->items as $item) {
+            $order->items()->create([
+                'product_id' => $item['product_id'],
+                'quantity'   => $item['quantity'],
+                'price'      => $item['price'],  // ← SNAPSHOT gia tai thoi diem mua
+            ]);
+        }
+
+        return ['order' => $order, 'redirect_url' => route('order.success', $order)];
+    });
+}
+```
+
+#### 16.3 Auth Modal — Bao ve hành dong E-commerce
+
+```
+❌ Khong co Auth Modal:
+    Khach dang xem shop → Bam "Them vao gio" → BAM! Redirect sang /login
+    → Mat hung, bo web, khong quay lai
+
+✅ Co Auth Modal (Alpine.js):
+    Khach dang xem shop → Bam "Them vao gio" → Pop-up dang nhap hien ra
+    → Nhap mat khau → Pop-up bien mat → Mon hang TU CHUI VAO GIO!
+    → Cam xuc mua sam lien mach 100%
+```
+
+---
+
+## 17. Shipping — Tinh phi van chuyen (Haversine)
+
+### 🎯 WHAT — Haversine la gi?
+
+Haversine la **cong thuc toan hoc** tinh khoang cach giua 2 diem tren be mat hinh cau (Trai Dat) dua tren kinh/vi do. Ket qua la khoang cach **duong chim bay** (khong phai duong bo).
+
+### ❓ WHY — Tai sao dung Haversine thay vi Google Maps API?
+
+| Tieu chi | Google Maps Distance Matrix | Haversine Formula |
+|---|---|---|
+| Chi phi | Tra phi sau $200/thang | **MIEN PHI** |
+| Can API key | ✅ Co | ❌ Khong |
+| Do chinh xac | Duong di thuc te (~100%) | Duong chim bay (~80-95%) |
+| Toc do | Phu thuoc mang (API call) | **Cuc nhanh** (tinh local) |
+
+**Pain Point:** Moi lan user day gio hang, App lai goi API tinh ship → hao tai nguyen, ton phi khi scale len 1 trieu user.
+
+**Giai quyet:** Haversine tinh noi bo, mien phi 100%. Sai so ~10-20% so voi duong bo thuc te, nhung voi phi ship chia theo khung gia (< 20km mien phi, > 20km dong gia) thi sai so nay HOAN TOAN CHAP NHAN DUOC.
+
+### 🛠 HOW — Code thuc te
+
+```php
+// File: app/Services/ShippingService.php
+
+public function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
+{
+    $earthRadius = 6371; // km — Ban kinh Trai Dat
+
+    $dLat = deg2rad($lat2 - $lat1);   // Chuyen do → radian
+    $dLng = deg2rad($lng2 - $lng1);
+
+    $a = sin($dLat / 2) ** 2
+       + cos(deg2rad($lat1)) * cos(deg2rad($lat2))
+       * sin($dLng / 2) ** 2;
+
+    $c = 2 * atan2(sqrt($a), sqrt(1 - $a));
+
+    return round($earthRadius * $c, 2); // km, 2 chu so thap phan
+}
+
+public function calculateFee(float $destLat, float $destLng, float $subtotal): array
+{
+    $distance = $this->getDistance(
+        $this->getShopCoordinates(),           // Toa do cua hang tu config
+        ['lat' => $destLat, 'lng' => $destLng]
+    );
+
+    // Mien phi ship neu don >= 500k
+    if ($subtotal >= config('services.shipping.free_above', 500000)) {
+        return ['fee' => 0, 'distance_km' => $distance, 'is_free' => true];
+    }
+
+    $fee = $this->feeFromDistance($distance);
+    return ['fee' => $fee, 'distance_km' => $distance, 'is_free' => false];
+}
+```
+
+### Bang phi van chuyen (cau hinh mac dinh)
+
+| Khoang cach | Phi ship | Ghi chu |
+|---|---|---|
+| 0 - 20 km | **0d** (Mien phi) | Trong ban kinh free_within_km |
+| 21 km | 12.000d | 10k base + (1 x 2k/km) |
+| 30 km | 30.000d | 10k base + (10 x 2k/km) |
+| > 40 km | **50.000d** | Cap max_fee |
+| Bat ky (don >= 500k) | **0d** | Mien phi ship |
+
+---
+
+## 18. Console Commands — Tac vu nen
+
+### 🎯 WHAT — Console Commands la gi?
+
+La cac lenh chay tu dong (cron) phia server, khong can user tuong tac. Giong nhu "nhan vien ca dem" — luc nua dem khong ai lam viec, he thong tu don dep, tu sinh du lieu.
+
+### ❓ WHY — Tai sao can cac tac vu nen?
+
+**Pain Point:** Neu khong co cron, admin phai thu cong vao moi sang de:
+- Tao time slots cho tho cat toc (30 phut/slot x 7 tho x 7 ngay = ~700 slots)
+- Kiem tra booking nao qua 24h chua xac nhan de huy
+- Don dep log file cu tranh day dia
+
+### 🛠 HOW — 4 Commands trong du an
+
+| Command | Chuc nang | Schedule |
+|---------|----------|----------|
+| `slots:generate` | Tao time slots cho 7 ngay toi dua tren lich lam viec | Hang ngay |
+| `bookings:expire` | Tu dong huy booking Pending qua 24h | Moi gio |
+| `logs:cleanup` | Xoa log files cu hon 30 ngay | Hang tuan |
+| `security:audit` | Kiem tra bao mat (permission, env, packages) | Hang tuan |
+
+### Vi du: TimeSlotService — Sinh slot tu dong
+
+```php
+// File: app/Services/TimeSlotService.php
+
+public function generateForBarber(int $barberId, string $date): void
+{
+    $schedule = WorkingSchedule::where('barber_id', $barberId)
+        ->where('day_of_week', Carbon::parse($date)->dayOfWeek)
+        ->first();
+
+    if (!$schedule || $schedule->is_off) return; // Ngay nghi → bo qua
+
+    // Sinh slots moi 30 phut tu start_time → end_time
+    $slots = [];
+    $current = Carbon::parse($schedule->start_time);
+    $end = Carbon::parse($schedule->end_time);
+
+    while ($current->lt($end)) {
+        $slots[] = [
+            'barber_id'  => $barberId,
+            'slot_date'  => $date,
+            'start_time' => $current->format('H:i'),
+            'end_time'   => $current->copy()->addMinutes(30)->format('H:i'),
+            'status'     => TimeSlotStatus::Available->value,
+        ];
+        $current->addMinutes(30);
+    }
+
+    // BATCH UPSERT — 1 query thay vi 40 queries!
+    TimeSlot::upsert($slots, ['barber_id', 'slot_date', 'start_time'], ['status']);
+}
+```
+
+> 🎯 **Tai sao dung `upsert` thay vi vong lap `create`?** Neu tho co 20 slots/ngay va sinh cho 7 ngay = 140 slots. Dung loop = 140 queries. Dung `upsert` = **1 query duy nhat**. Nhanh gap 140 lan!
+
+---
+
+## 19. Database Schema — So do Co so Du lieu
+
+### So do quan he (ER Diagram)
 
 ```mermaid
 erDiagram
-    users {
-        bigint id PK
-        varchar name
-        varchar email UK
-        varchar phone
-        varchar avatar
-        enum role "customer | barber | admin"
-        varchar password
-        boolean is_active
-        timestamp email_verified_at
-    }
+    users ||--o| barbers : "has profile"
+    users ||--o{ bookings : "makes"
+    users ||--o{ reviews : "writes"
+    users ||--o{ notifications : "receives"
+    users ||--o{ orders : "places"
+    users ||--o{ loyalty_points : "earns"
 
-    barbers {
-        bigint id PK
-        bigint user_id FK "→ users (cascade)"
-        text bio
-        tinyint experience_years
-        decimal rating "0.00 - 5.00"
-        boolean is_active
-    }
+    barbers ||--o{ working_schedules : "has"
+    barbers ||--o{ time_slots : "has"
+    barbers ||--o{ bookings : "serves"
+    barbers ||--o{ reviews : "receives"
+    barbers ||--o{ commissions : "earns"
+    barbers ||--o{ barber_leaves : "requests"
 
-    services {
-        bigint id PK
-        varchar name
-        text description
-        decimal price "VND"
-        int duration_minutes
-        varchar image
-        boolean is_active
-    }
+    branches ||--o{ barbers : "employs"
 
-    working_schedules {
-        bigint id PK
-        bigint barber_id FK "→ barbers (cascade)"
-        tinyint day_of_week "0=CN 1=T2...6=T7"
-        time start_time
-        time end_time
-        boolean is_day_off
-    }
+    services ||--o{ booking_services : "included in"
+    bookings ||--o{ booking_services : "contains"
+    bookings ||--o| payments : "has"
+    bookings ||--o| reviews : "has"
+    bookings ||--o| time_slots : "uses"
 
-    time_slots {
-        bigint id PK
-        bigint barber_id FK "→ barbers (cascade)"
-        date slot_date
-        time start_time
-        time end_time
-        enum status "available | booked | blocked"
-    }
-
-    bookings {
-        bigint id PK
-        varchar booking_code UK
-        bigint customer_id FK "→ users (cascade)"
-        bigint barber_id FK "→ barbers (cascade)"
-        bigint time_slot_id FK "→ time_slots (restrict)"
-        date booking_date
-        time start_time
-        time end_time
-        decimal total_price
-        enum status "FSM: pending→confirmed→..."
-        text note
-        timestamp cancelled_at
-        text cancel_reason
-    }
-
-    booking_services {
-        bigint id PK
-        bigint booking_id FK "→ bookings (cascade)"
-        bigint service_id FK "→ services (restrict)"
-        decimal price_snapshot "Gia tai thoi diem dat"
-        int duration_snapshot "Thoi gian tai thoi diem dat"
-    }
-
-    payments {
-        bigint id PK
-        bigint booking_id FK "unique - bookings cascade"
-        decimal amount
-        enum method "cash | vnpay | momo"
-        enum status "pending | paid | failed | refunded"
-        varchar transaction_id
-        timestamp paid_at
-    }
-
-    reviews {
-        bigint id PK
-        bigint booking_id FK "unique - bookings cascade"
-        bigint customer_id FK "→ users (cascade)"
-        bigint barber_id FK "→ barbers (cascade)"
-        tinyint rating "1-5 sao"
-        text comment
-    }
-
-    notifications {
-        bigint id PK
-        bigint user_id FK "→ users (cascade)"
-        varchar type
-        varchar title
-        text message
-        boolean is_read
-    }
-
-    users ||--o| barbers : "1 user co the la 1 barber"
-    users ||--o{ bookings : "1 user dat nhieu booking"
-    users ||--o{ notifications : "1 user nhan nhieu thong bao"
-    users ||--o{ reviews : "1 user viet nhieu review"
-
-    barbers ||--o{ working_schedules : "1 barber co 7 ngay lich"
-    barbers ||--o{ time_slots : "1 barber co nhieu slot"
-    barbers ||--o{ bookings : "1 barber co nhieu booking"
-    barbers ||--o{ reviews : "1 barber co nhieu review"
-
-    time_slots ||--o| bookings : "1 slot gan 1 booking"
-
-    bookings ||--o{ booking_services : "1 booking co nhieu dich vu"
-    services ||--o{ booking_services : "1 dich vu thuoc nhieu booking"
-
-    bookings ||--o| payments : "1 booking co 1 thanh toan"
-    bookings ||--o| reviews : "1 booking co 1 danh gia"
+    products ||--o{ order_items : "included in"
+    orders ||--o{ order_items : "contains"
+    orders ||--o| order_payments : "has"
+    orders ||--o| shipping_addresses : "has"
+    coupons ||--o{ orders : "applied to"
 ```
 
-### Đọc sơ đồ thế nào?
-
-| Ký hiệu | Nghĩa | Ví dụ |
-|---------|-------|-------|
-| `\|\|--o\|` | 1 đối 0 hoặc 1 | users ↔ barbers (1 user có thể là barber hoặc không) |
-| `\|\|--o{` | 1 đối nhiều (0..N) | users ↔ bookings (1 user đặt 0 hoặc nhiều booking) |
-| `PK` | Primary Key | Khóa chính |
-| `FK` | Foreign Key | Khóa ngoại (liên kết bảng khác) |
-| `UK` | Unique Key | Giá trị duy nhất |
-
-### Bảng chi tiết từng table
-
-#### `users` — Người dùng (customer, barber, admin)
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | Auto increment |
-| name | varchar(255) | Tên hiển thị |
-| email | varchar(255) UNIQUE | Email đăng nhập |
-| phone | varchar(20) NULL | Số điện thoại |
-| avatar | varchar(255) NULL | Đường dẫn ảnh đại diện |
-| role | enum('customer','barber','admin') | Vai trò, default: customer |
-| is_active | boolean | Tài khoản còn hoạt động? |
-| password | varchar(255) | Bcrypt hash |
-| email_verified_at | timestamp NULL | Xác thực email |
-
-#### `barbers` — Thợ cắt tóc (mở rộng từ users)
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | |
-| user_id | FK → users | **1-1**: mỗi barber gắn 1 user, cascade delete |
-| bio | text NULL | Giới thiệu bản thân |
-| experience_years | tinyint | Số năm kinh nghiệm |
-| rating | decimal(3,2) | Rating trung bình (0.00 - 5.00), tự tính |
-| is_active | boolean | Barber còn làm việc? |
-
-#### `services` — Dịch vụ (cắt tóc, gội đầu...)
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | |
-| name | varchar(100) | Tên dịch vụ |
-| description | text NULL | Mô tả |
-| price | decimal(10,2) | Giá (VND) |
-| duration_minutes | int | Thời gian phục vụ (phút) |
-| image | varchar(255) NULL | Ảnh minh họa |
-| is_active | boolean | Dịch vụ còn hoạt động? |
-
-#### `working_schedules` — Lịch làm việc tuần
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | |
-| barber_id | FK → barbers | Cascade delete |
-| day_of_week | tinyint | 0=Chủ nhật, 1=Thứ 2 ... 6=Thứ 7 |
-| start_time | time | Giờ bắt đầu (VD: 08:00) |
-| end_time | time | Giờ kết thúc (VD: 17:00) |
-| is_day_off | boolean | Ngày nghỉ? |
-| | UNIQUE | (barber_id, day_of_week) — mỗi barber 1 bản ghi/ngày |
-
-#### `time_slots` — Khung giờ đặt lịch
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | |
-| barber_id | FK → barbers | Cascade delete |
-| slot_date | date | Ngày cụ thể (VD: 2026-03-24) |
-| start_time | time | Bắt đầu khung (VD: 10:00) |
-| end_time | time | Kết thúc khung (VD: 10:30) |
-| status | enum('available','booked','blocked') | Trạng thái slot |
-| | UNIQUE | (barber_id, slot_date, start_time) |
-| | INDEX | (barber_id, slot_date, status) — tìm slot trống nhanh |
-
-#### `bookings` — Lịch hẹn
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | |
-| booking_code | varchar(20) UNIQUE | Mã lịch hẹn (VD: BK20260324001) |
-| customer_id | FK → users | Cascade delete |
-| barber_id | FK → barbers | Cascade delete |
-| time_slot_id | FK → time_slots | **Restrict** delete (không xóa slot đang có booking) |
-| booking_date | date | Ngày hẹn |
-| start_time | time | Giờ bắt đầu |
-| end_time | time | Giờ kết thúc (tính từ tổng duration dịch vụ) |
-| total_price | decimal(10,2) | Tổng tiền |
-| status | enum (FSM) | pending → confirmed → in_progress → completed / cancelled |
-| note | text NULL | Ghi chú của khách |
-| cancelled_at | timestamp NULL | Thời điểm hủy |
-| cancel_reason | text NULL | Lý do hủy |
-
-#### `booking_services` — Bảng trung gian (Pivot)
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | |
-| booking_id | FK → bookings | Cascade delete |
-| service_id | FK → services | **Restrict** delete (không xóa service đang dùng) |
-| price_snapshot | decimal(10,2) | **Giá tại thời điểm đặt** (giá gốc có thể đổi sau) |
-| duration_snapshot | int | **Thời gian tại thời điểm đặt** |
-
-> 🎯 `price_snapshot` rất quan trọng: nếu admin tăng giá cắt tóc từ 50k → 70k, booking cũ vẫn hiển thị đúng 50k.
-
-#### `payments` — Thanh toán
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | |
-| booking_id | FK → bookings UNIQUE | **1-1**: mỗi booking chỉ 1 payment |
-| amount | decimal(10,2) | Số tiền thanh toán |
-| method | enum('cash','vnpay','momo') | Phương thức |
-| status | enum('pending','paid','failed','refunded') | Trạng thái |
-| transaction_id | varchar(255) NULL | Mã giao dịch VNPay/MoMo |
-| paid_at | timestamp NULL | Thời điểm thanh toán thành công |
-
-#### `reviews` — Đánh giá
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | |
-| booking_id | FK → bookings UNIQUE | **1-1**: mỗi booking chỉ 1 review |
-| customer_id | FK → users | Cascade delete |
-| barber_id | FK → barbers | Cascade delete |
-| rating | tinyint | 1-5 sao |
-| comment | text NULL | Nhận xét |
-
-#### `notifications` — Thông báo
-
-| Cột | Kiểu | Ghi chú |
-|-----|------|---------|
-| id | bigint PK | |
-| user_id | FK → users | Cascade delete |
-| type | varchar(50) | Loại thông báo (booking_confirmed, ...) |
-| title | varchar(255) | Tiêu đề |
-| message | text | Nội dung |
-| is_read | boolean | Đã đọc chưa? |
-
-### Tổng hợp quan hệ
+### Tong hop quan he
 
 ```
-users ──1:1──→ barbers         (Mỗi barber là 1 user)
-users ──1:N──→ bookings        (Khách đặt nhiều lịch)
-users ──1:N──→ notifications   (Nhận nhiều thông báo)
+── BOOKING DOMAIN ──
+users ──1:1──→ barbers           (Moi barber la 1 user)
+users ──1:N──→ bookings          (Khach dat nhieu lich)
+barbers ──1:N──→ working_schedules  (Lich 7 ngay/tuan)
+barbers ──1:N──→ time_slots         (Nhieu slot moi ngay)
+barbers ──1:N──→ bookings           (Nhieu lich hen)
+bookings ──N:M──→ services       (Nhieu dich vu, qua booking_services pivot)
+bookings ──1:1──→ payments       (1 thanh toan)
+bookings ──1:1──→ reviews        (1 danh gia)
+bookings ──1:1──→ time_slots     (Gan 1 slot cu the)
 
-barbers ──1:N──→ working_schedules  (Lịch 7 ngày/tuần)
-barbers ──1:N──→ time_slots         (Nhiều slot mỗi ngày)
-barbers ──1:N──→ bookings           (Nhiều lịch hẹn)
-barbers ──1:N──→ reviews            (Nhiều đánh giá)
-
-bookings ──N:M──→ services     (Nhiều dịch vụ, qua booking_services)
-bookings ──1:1──→ payments     (1 thanh toán)
-bookings ──1:1──→ reviews      (1 đánh giá)
-bookings ──1:1──→ time_slots   (Gắn 1 slot cụ thể)
+── E-COMMERCE DOMAIN ──
+users ──1:N──→ orders            (Khach dat nhieu don hang)
+orders ──1:N──→ order_items      (Nhieu san pham)
+orders ──1:1──→ order_payments   (1 thanh toan)
+orders ──1:1──→ shipping_addresses (1 dia chi giao)
+products ──1:N──→ order_items    (1 san pham thuoc nhieu don)
+coupons ──1:N──→ orders          (1 ma giam gia ap dung nhieu don)
 ```
 
-### Cascade Delete — Xóa user thì sao?
+### Cac bang quan trong
 
-```
-Xóa User (role=barber)
-    │
-    ├── CASCADE → barbers (xóa barber)
-    │       ├── CASCADE → working_schedules (xóa lịch làm việc)
-    │       ├── CASCADE → time_slots (xóa slots)
-    │       ├── CASCADE → bookings (xóa bookings)
-    │       │       ├── CASCADE → booking_services (xóa pivot)
-    │       │       ├── CASCADE → payments (xóa thanh toán)
-    │       │       └── CASCADE → reviews (xóa đánh giá)  
-    │       └── CASCADE → reviews (xóa đánh giá trực tiếp)
-    │
-    └── CASCADE → notifications (xóa thông báo)
-```
+#### `booking_services` (Pivot) — Tai sao can `price_snapshot`?
 
-> ⚠️ **Lưu ý**: `time_slots` dùng `restrictOnDelete` với `bookings` — nghĩa là **không thể xóa time_slot đang có booking**. Phải hủy booking trước.
+| Cot | Kieu | Ghi chu |
+|-----|------|---------|
+| booking_id | FK → bookings | |
+| service_id | FK → services | |
+| price_snapshot | decimal(10,2) | **GIA TAI THOI DIEM DAT** |
+| duration_snapshot | int | **THOI GIAN TAI THOI DIEM DAT** |
+
+> 🎯 **Rat quan trong:** Neu admin tang gia cat toc tu 50k → 70k, booking cu VAN hien thi dung 50k. Khong co snapshot → khach bi tinh gia moi → kien!
+
+#### `time_slots` — Index toi uu
+
+| Cot | Kieu | Ghi chu |
+|-----|------|---------|
+| UNIQUE | (barber_id, slot_date, start_time) | Chong duplicate slot |
+| INDEX | (barber_id, slot_date, status) | Tim slot trong nhanh |
+
+#### `payments` vs `order_payments` — Tach biet 2 domain
+
+| Bang | Domain | Quan he |
+|------|--------|--------|
+| `payments` | Booking (dat lich) | 1 booking = 1 payment |
+| `order_payments` | Order (E-commerce) | 1 order = 1 payment |
 
 ---
 
-## 15. Tổng kết sơ đồ kiến trúc
+## 20. Analytics & Heatmaps (ApexCharts)
+
+### 🎯 WHAT — Heatmap la gi?
+
+Heatmaps (Ban do nhiet) phan tich mat do. Truc X la ngay trong tuan, truc Y la khung gio. O nao mau DO (10 booking/khung gio) la gio vang. O nao NHAT (0 booking) la gio vang.
+
+### ❓ WHY — Tai sao render Chart bang Alpine.js thay vi Server?
+
+**Pain Point:** Neu Server Backend phai tu ganh viec ve SVG/DOM phuc tap cua bieu do Heatmap thi Server se ton CPU khung khiep, gay lag toan dien. Cho ve xong moi giang xuong man hinh khien UX nghen.
+
+**Giai quyet:** Uy thac (Delegation). Backend Laravel chi tra JSON tho nhe tenh. Alpine.js o Client-side don JSON nay va huy dong GPU/CPU cua may tinh khach hang de ve Chart. Render sieu muot, Server khoe re!
+
+### 🛠 HOW — Luong du lieu
+
+```
+Admin mo trang Reports → Alpine.js x-init="fetchData()"
+    │
+    ▼
+AJAX GET /admin/reports/chart-data?type=booking_heatmap&start=...&end=...
+    │
+    ▼
+ReportService::getBookingHeatmap(startDate, endDate)
+    → Query time_slots trong dai thoi gian
+    → groupBy thu cua tuan → groupBy start_time
+    → Return JSON: [{ name: '10:00', data: [{x: 'Monday', y: 5}] }]
+    │
+    ▼
+Alpine.js nhan JSON → new ApexCharts(element, options).render()
+    → Heatmap hien thi tren man hinh khach hang
+```
+
+---
+
+## 21. Bao mat nang cao — 6 Tang Phong thu
+
+> 👉 **Tai lieu chi tiet:** [SECURITY.md](SECURITY.md)
+
+He thong Classic Cut ap dung 6 tang phong thu chong dong:
+
+### Tang 1: Security Headers (Middleware)
+Dong chat cac cong giao tiep tren trinh duyet: CSP chong XSS, X-Frame-Options chong Clickjacking.
+
+### Tang 2: FormRequest + Mass Assignment Protection
+Loc sach 100% du lieu ban truoc khi cho vao Server. Model `$fillable` cam gan bien tran lan.
+
+### Tang 3: CSRF + Auth Modal
+Token ngau nhien chong gia mao request. Auth Modal giu luong mua sam lien mach.
+
+### Tang 4: Role Middleware + Policy (Row-Level)
+RoleMiddleware chan quyen theo cum route. Policy chan quyen theo TUNG DONG du lieu.
+
+### Tang 5: Pessimistic Locking
+`lockForUpdate()` + `DB::transaction()` chong double-booking va oversell.
+
+### Tang 6: Webhook Signature + Idempotency
+HMAC SHA512 (VNPay) / SHA256 (MoMo) chong gia mao callback. Idempotency chong xu ly trung lap.
+
+---
+
+## 22. Nghiep vu mo rong
+
+### 22.1 He thong tich diem (Loyalty Points)
+
+**Luong cong diem:** Booking hoan thanh → Event `BookingCompleted` → Listener `RewardPointsForBooking` → Tinh diem (VD: 10.000d = 1 diem) → Cong vao `loyalty_points.total_points`.
+
+**Luong tieu diem:** Khach chon "Dung diem" luc Checkout → BookingService tru diem tu `total_points` → Giam `total_price` tuong ung.
+
+### 22.2 Ma giam gia (Coupons)
+
+```php
+// File: app/Services/CouponService.php
+
+public function validate(string $code, float $totalPrice, ?string $appliesTo = null): Coupon
+{
+    $coupon = Coupon::where('code', $code)->firstOrFail();
+
+    // 4 buoc kiem tra gat gao:
+    if (!$coupon->is_active) throw new \Exception('Ma da het hieu luc');
+    if ($coupon->expiry_date && $coupon->expiry_date->isPast()) throw new \Exception('Ma da het han');
+    if ($coupon->usage_limit && $coupon->used_count >= $coupon->usage_limit) throw new \Exception('Ma da het luot dung');
+    if ($totalPrice < $coupon->min_amount) throw new \Exception('Don toi thieu: ' . $coupon->min_amount);
+
+    return $coupon;
+}
+
+public function calculateDiscount(Coupon $coupon, float $totalPrice): float
+{
+    $discount = match ($coupon->type) {
+        CouponType::Fixed   => $coupon->value,                          // Tru thang (VD: 20.000d)
+        CouponType::Percent => $totalPrice * ($coupon->value / 100),    // Tru % (VD: 10%)
+    };
+
+    // Ap max_discount neu co (VD: giam toi da 100k)
+    if ($coupon->max_discount && $discount > $coupon->max_discount) {
+        $discount = $coupon->max_discount;
+    }
+
+    return min($discount, $totalPrice); // Khong giam qua tong tien
+}
+```
+
+### 22.3 Dat lich dinh ky (Recurring Booking)
+
+Khach co thoi quen hot toc moi 4 tuan → bam "Tao lich hen dinh ky". `BookingService::createRecurring()` se tao 1 booking chinh + toi da 3 booking tuong lai (4 tuan/lan). Neu slot tuong lai bi chiem → bao warning cho khach chon gio khac.
+
+### 22.4 Waitlist — Danh sach cho san slot
+
+Khung gio vang 19:00 da "Booked". Khach dang ky waitlist. Khi booking hien tai bi huy → Event `BookingCancelled` → Listener `NotifyWaitlistOnCancel` → Gui notification cho tat ca khach dang cho → Ai nhanh tay dat truoc duoc slot (First-Come First-Served).
+
+---
+
+## 23. Tong ket kien truc & Cong thuc them tinh nang moi
+
+### So do kien truc tong the
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
@@ -2005,24 +2069,24 @@ Xóa User (role=barber)
                   ▼
 ┌─────────────────────────────────────────┐
 │          FORM REQUESTS                   │
-│  Validate dữ liệu đầu vào              │
+│  Validate du lieu dau vao              │
 └─────────────────┬───────────────────────┘
                   │
                   ▼
 ┌─────────────────────────────────────────┐
 │           CONTROLLERS                    │
-│  Nhận request → Tạo DTO → Gọi Service  │
-│  → Trả response/redirect                │
+│  Nhan request → Tao DTO → Goi Service  │
+│  → Tra response/redirect                │
 └─────────────────┬───────────────────────┘
                   │ DTO
                   ▼
 ┌─────────────────────────────────────────┐
 │            SERVICES                      │
 │  Business logic + DB transactions       │
-│  + Phát Events + Log + Cache            │
+│  + Phat Events + Log + Cache            │
 │                                          │
 │  ┌─────────┐ ┌─────────┐ ┌──────────┐  │
-│  │ Booking │ │ Payment │ │  Report  │  │
+│  │ Booking │ │ Payment │ │  Order   │  │
 │  │ Service │ │ Service │ │  Service │  │
 │  └────┬────┘ └────┬────┘ └────┬─────┘  │
 └───────┼───────────┼───────────┼─────────┘
@@ -2034,163 +2098,72 @@ Xóa User (role=barber)
 │  Relationships, Casts (Enum), Fillable  │
 └─────────────────────────────────────────┘
 
-        ┌─────── Side Effects (từ Services) ────────┐
+        ┌─────── Side Effects (tu Services) ────────┐
         │                                             │
         ▼                                             ▼
 ┌───────────────┐                           ┌────────────────┐
 │    EVENTS     │ → BookingConfirmed        │    CACHE       │
 │               │ → BookingCancelled        │  CacheService  │
-│               │ → BookingCompleted        │  (Redis/File)  │
+│               │ → BookingCompleted        │  (File/Redis)  │
 └───────┬───────┘                           └────────────────┘
         │
         ▼
 ┌───────────────┐
-│   LISTENERS   │ → Tạo message
+│   LISTENERS   │ → Notification, Commission, Loyalty, Waitlist
 └───────┬───────┘
         │
         ▼
 ┌───────────────┐
 │     JOBS      │ → Queue (async)
-│  (ShouldQueue)│ → Notification::create()
+│  (ShouldQueue)│ → SendBookingNotificationJob
 └───────────────┘
 ```
 
----
+### Cong thuc them tinh nang moi
 
-## Phụ lục: Bảng tham chiếu nhanh
-
-### A. Mối quan hệ Model
+Khi can them tinh nang (VD: he thong Coupon), lam theo thu tu:
 
 ```
-User ─1──N─▶ Booking (customer_id)
-User ─1──1─▶ Barber (user_id)
-Barber ─1──N─▶ Booking
-Barber ─1──N─▶ TimeSlot
-Barber ─1──N─▶ WorkingSchedule
-Booking ─N──M─▶ Service (qua booking_services pivot)
-Booking ─1──1─▶ Payment
-Booking ─1──1─▶ Review
-Booking ─N──1─▶ TimeSlot
-User ─1──N─▶ Notification
+□  1. Migration     → database/migrations/create_coupons_table.php
+□  2. Model         → app/Models/Coupon.php (fillable, casts, relationships)
+□  3. Enum          → app/Enums/CouponType.php (neu co trang thai)
+□  4. DTO           → app/DTOs/CreateCouponData.php
+□  5. FormRequest   → app/Http/Requests/Admin/StoreCouponRequest.php
+□  6. Service       → app/Services/CouponService.php (business logic)
+□  7. Controller    → app/Http/Controllers/Admin/CouponController.php
+□  8. Policy        → app/Policies/CouponPolicy.php (neu can phan quyen)
+□  9. Event         → app/Events/CouponUsed.php (neu can side effects)
+□ 10. Listener      → app/Listeners/UpdateCouponUsage.php
+□ 11. Route         → routes/admin.php (them resource route)
+□ 12. Views         → resources/views/admin/coupons/ (CRUD views)
+□ 13. Cache         → CacheService (neu can cache du lieu)
+□ 14. Test          → tests/Feature/CouponTest.php
 ```
 
-### B. Bảng Route chính
+### Best Practices — Nen va Khong nen
 
-| Method | URL | Controller | Quyền |
-|--------|-----|-----------|-------|
-| GET | `/booking/create` | Client\BookingController@create | Public |
-| POST | `/booking` | Client\BookingController@store | Public (throttle) |
-| GET | `/payment/{booking}` | Client\PaymentController@show | Public |
-| POST | `/payment/{booking}` | Client\PaymentController@process | Public (throttle) |
-| PATCH | `/booking/{booking}/cancel` | Client\BookingController@cancel | Auth + Policy |
-| PATCH | `/barber/bookings/{booking}/confirm` | Barber\BookingController@confirm | Auth + role:barber + Policy |
-| PATCH | `/barber/bookings/{booking}/complete` | Barber\BookingController@complete | Auth + role:barber + Policy |
-| GET | `/admin/dashboard` | Admin\DashboardController@index | Auth + role:admin |
-| RESOURCE | `/admin/services` | Admin\ServiceController | Auth + role:admin |
-| RESOURCE | `/admin/barbers` | Admin\BarberController | Auth + role:admin |
+| ✅ NEN lam | Ly do |
+|-----------|-------|
+| Controller mong, Service day | De test, tai su dung logic |
+| Luon dung `DB::transaction` khi thao tac nhieu bang | Dam bao consistency |
+| Dung `lockForUpdate()` khi co race condition | Chong trung du lieu |
+| Dung Enum thay vi string cho trang thai | Type-safe, IDE support |
+| Dung DTO thay vi array cho Service input | Ro rang, autocomplete |
+| Dung FormRequest cho validation | Tach biet, tai su dung |
+| Dung Eager Loading (`with()`) | Tranh N+1 query |
+| Luu `price_snapshot` trong pivot | Giu gia tai thoi diem mua |
+| Dung Event/Listener cho side effects | Service gon, mo rong de |
+| Cache du lieu it thay doi tap trung | Tang toc, de quan ly |
 
-### C. Công thức thêm tính năng mới
-
-Khi cần thêm tính năng (VD: tạo coupon/mã giảm giá):
-
-```
-1. Tạo Model:        app/Models/Coupon.php
-2. Tạo Migration:    database/migrations/create_coupons_table.php
-3. Tạo Enum (nếu cần): app/Enums/CouponStatus.php
-4. Tạo DTO:          app/DTOs/CreateCouponData.php
-5. Tạo Service:      app/Services/CouponService.php
-6. Tạo FormRequest:  app/Http/Requests/Admin/StoreCouponRequest.php
-7. Tạo Controller:   app/Http/Controllers/Admin/CouponController.php
-8. Thêm Route:       routes/admin.php
-9. Tạo Views:        resources/views/admin/coupons/
-10. Cập nhật Cache:  CacheService nếu cần cache
-```
+| ❌ KHONG nen lam | Hau qua |
+|-------------|---------|
+| Business logic trong Controller | Controller phinh, kho test |
+| Query DB trong vong lap | N+1 → cham kinh khung |
+| String rai rac thay Enum | Typo → bug kho tim |
+| Truyen `$request->all()` vao Service | Khong type-safe, de lot field xau |
+| Cache rai rac (moi noi 1 key) | Sai key → stale data |
+| Bo qua transaction khi thao tac nhieu bang | Data inconsistency |
 
 ---
 
-## 16. Nghiệp vụ mở rộng - Giai đoạn 11
-
-Giai đoạn 11 tập trung vào việc áp dụng các cơ chế chăm sóc và giữ chân khách hàng (Retention) cho hệ thống BarberBook, biến các tác vụ thủ công thành quy trình tự động. Dưới đây là giải thích luồng xử lý chi tiết (Business Logic) dành cho lập trình viên:
-
-### 16.1 Hệ thống tích điểm (Loyalty Points)
-**Mục đích:** Tặng điểm thưởng cho khách hàng sau khi hoàn tất thanh toán dịch vụ, và dùng điểm này để giảm giá cho lần đặt lịch kế tiếp.
-
-**Luồng A: Cộng điểm tự động**
-1. **Trigger:** Khi thợ hoặc admin chuyển trạng thái booking sang `Completed` (hoàn thành cắt tóc). `BookingService::complete()` sẽ được gọi.
-2. **Event & Listener:** Service sẽ phát ra (dispatch) sự kiện `BookingCompleted`. Lập trình viên thiết lập một `AddLoyaltyPointsListener` để lắng nghe sự kiện này.
-3. **Logic tính điểm:** 
-   - Lấy `booking->total_price` (Ví dụ: 150.000 VNĐ).
-   - Truy vấn bảng cấu hình (`settings`) để lấy tỷ lệ quy đổi mặc định (VD: Cứ 10.000 VNĐ = 1 điểm). Tính ra khách được cộng thêm 15 điểm.
-4. **Cập nhật Database:** Tìm record trong bảng `loyalty_points` tương ứng với `user_id` của khách hàng.
-   - Cộng 15 vào cột `total_points` (điểm có thể dùng để tiêu).
-   - Cộng 15 vào cột `lifetime_points` (tổng số điểm lịch sử tích luỹ, có thể dùng sau này để nâng hạng thẻ Đồng/Bạc/Vàng).
-5. **Thông báo:** Bắn push notification cho khách (ví dụ báo bằng chuông điện thoại): "Bạn vừa tích thêm 15 điểm từ ...".
-
-**Luồng B: Tiêu điểm (Dùng điểm giảm giá)**
-1. Khi khách hàng vào màn hình **Xác nhận đặt lịch**, Frontend hiển thị số dư điểm hiện tại (VD: Có 50 điểm = giảm được 50,000đ). Hỏi khách "Có muốn dùng không?".
-2. Khách check vào ô "Có", form request tạo booking có trường `use_points = true`.
-3. **Trong `BookingService::create()`:**
-   - Dò lại `loyalty_points` của user. Ghi nhận user có 50 điểm.
-   - Tính tổng tiền hóa đơn gốc (VD: 200,000đ). Trừ đi tiền quy từ điểm -> `total_price` còn 150,000đ. Lưu và tạo booking thành công!
-   - Kèm theo trong Transaction Database đó, hệ thống lập tức cập nhật lại trừ 50 ở cột `total_points` của user đi. 
-
-**Luồng C: Quản lý & Cấu hình (Dành cho Admin)**
-1. **Lưu trữ Cấu hình (Settings):** Cần có bảng `settings` (hoặc hệ thống key-value cache) để lưu 3 tham số động thay vì hard-code:
-   - `loyalty_earn_rate`: Số tiền cần tiêu để được 1 điểm (VD: `10000` VNĐ = 1 điểm).
-   - `loyalty_redeem_rate`: Giá trị của 1 điểm khi mang ra giảm giá (VD: 1 điểm = `1000` VNĐ).
-   - `loyalty_enabled`: Công tắc Bật/Tắt module tích điểm của cả quán.
-2. **Giao diện cấu hình System Settings:** Admin có form để nhập và cập nhật các tham số trên. Ví dụ dịp Tết Admin muốn kích cầu có thể hạ mức điểm `loyalty_earn_rate` xuống `5000` = 1 điểm.
-3. **Giao diện Quản lý Khách Hàng:** Admin khi bấm vào Chi tiết một User (Customer) sẽ thấy hiển thị Tổng điểm khả dụng (`total_points`). Có thể thiết kế thêm nút "Tặng điểm/Trừ điểm thủ công" cho admin để xử lý khiếu nại hoặc làm event tri ân riêng từng người.
-
-### 16.2 Mã khoá giảm giá (Coupons)
-**Mục đích:** Cho phép Admin tạo ra mã Voucher (Ví dụ `KHAITRUONG2026`) để chạy Campaign kích thích đặt lịch.
-
-**Tạo và Kiểm tra Mã (Validation Flow):**
-1. Admin tạo mã vào bảng `coupons`. Chọn loại hình (`type`):
-   - `fixed`: Trừ thẳng tiền (Ví dụ 20.000đ).
-   - `percentage`: Trừ % hoá đơn (Ví dụ giảm 10%, có thể cài `max_discount` tối đa giảm giá 100.000đ).
-2. Khi khách nhập mã vào ô "Mã khuyến mãi" ở UI:
-   - Gọi một endpoint `POST /api/coupons/apply`.
-   - Lớp `CouponService::validate($code)` làm 4 bước kiểm tra gắt gao:
-      - Mã có tồn tại trong CSDL và `is_active` có bằng `true` không?
-      - Thời gian hệ thống (`now()`) có nằm giữa `start_date` và `end_date` không?
-      - Đã xài hết `usage_limit` do Admin cấp chưa?
-      - Liệu user này có xài lạm dụng cùng 1 mã nhiều lần không? (Nếu quy định 1 người chỉ dùng 1 lần, phải query tìm xem user này đã từng áp dụng mã này chưa ở các booking trước đó).
-3. Sau khi booking tạo thành công, tiến hành tăng biến `usage_count` (số lượt đã dùng mã) lên thêm +1.
-
-### 16.3 Đặt lịch định kỳ (Recurring Booking)
-**Mục đích:** Khách có thói quen hớt tóc mỗi 4 tuần vào chiều Chủ Nhật có thể bấm "Tạo lịch hẹn định kỳ", không phải thao tác lại trên App mỗi tháng.
-
-**Luồng Sinh Lịch Hẹn Chồng Chéo:**
-1. Trên form Booking, UI có thêm Switch Option chọn: "Lặp lại: Không / Mỗi Tuần / Mỗi 2 Tuần / Mỗi 4 Tuần". Option lặp lại cao nhất là 4 lượt để tránh đầy tràn Database.
-2. Dữ liệu khi gửi có chứa `frequency = 'monthly'`.
-3. **Bên trong Service:** Thay vì tạo 1 `Booking`, `BookingService` sẽ vào vòng lặp (For Each) theo chu kỳ.
-   - Lần quét thứ 1 (Tuần này): Kiểm tra `TimeSlot` -> Thành công. Sinh booking.
-   - Lần quét thứ 2 (4 tuần sau): Dò xem vào đúng `TimeSlot` ngày đó thợ rảnh không? -> Nếu rảnh sinh thêm `Booking`.
-   - Các Booking trong tương lai (Clone) sẽ được gắn cờ `original_booking_id` = ID của Booking lần đầu tiên khách gọi.
-   - Nếu trong tương lai (4 tuần sau) Lịch hôm đó Barber xin nghỉ hoặc Slot có người xí trước, Service sẽ ghi nhận Error/Báo lỗi hoặc Warning để thông báo khách tự chọn giờ khác cho tuần đó.
-
-### 16.4 Danh sách Thợ yêu thích (Favorites Barbers)
-**Mục đích:** Lưu danh sách những thợ quen thuộc để khách hàng dễ booking trong lần tới.
-
-**Luồng Thao tác (Tim/Không Tim):**
-1. **Thiết kế CSDL:** Tạo 1 bảng pivot `user_favorite_barbers` nối giữa `user_id` và `barber_id`. Nó chỉ lưu đúng 2 khoá đó cùng `created_at`.
-2. Giao diện: Tại Profile thợ hoặc màn hình danh sách Thợ, ta có nút ♥ (Trái tim). 
-   - Ấn vào ♥: Javascript gọi một request AJAX lên endpoint `POST /client/barbers/{id}/favorite`.
-   - Lớp Controller dùng hàm Toggle (nếu có rồi thì xoá, chưa có thì thêm). Trả về response JSON "Đã yêu thích". Nút tim đổi sang màu đỏ!
-3. **Ứng dụng lúc đặt lịch:** Tại form tạo Booking, lúc hệ thống lấy danh sách "Chọn thợ cắt". Data được lấy ra sẽ Sort By theo logic: Ai được Heart ♥ thì nằm ở đầu List (`OrderBy('is_favorite', 'desc')`). Điều này giúp khách hàng nhấp là thấy ngay thợ hợp ý dạo nọ.
-
-### 16.5 Waitlist - Danh sách chờ săn slot
-**Mục đích:** Săn khung giờ vàng (Ví dụ 19:00 rảnh rỗi nhất). Khung giờ này bốc hơi cực nhanh, khi nó "Booked", khách ấn "Thông báo cho tôi khi thợ rảnh lại".
-
-**Luồng Báo Chỗ Trống:**
-1. Khách hàng đăng ký waitlist cho Slot `[7 giờ tối, ngày 30/11, của Thợ Quang]`. Hệ thống insert dữ liệu này vào bảng `waitlists` với trang thái mặc định là `waiting`. UI sẽ nói: "Cám ơn, khi Quang trống lịch mình gọi nha".
-2. Khúc hay cấn nhất: Giả sử vị khách hiện tại nắm slot 19:00 bận việc không tới đột xuất, khách đó huỷ lịch (Trạng thái Status -> Cancelled).
-3. Khi `BookingService::cancel()` kích hoạt sự kiện `BookingCancelled`:
-   - Lập tức, `NotifyWaitlistOnCancellationListener` nhảy vào. Lục thùng Database bảng `waitlists`. Nó quét ra 3 người đang canh slot "7h Tối - Thợ Quang" nãy.
-   - Gửi tức thì PUSH Notification trên ĐT hoặc SMS/Email cho 3 khách hàng cắm mốc rình đó, trạng thái waitlist của họ chuyển thành `notified`.
-4. Ai trong số 3 người cầm đt lên trước, click vào link "Đặt Slot", hệ thống áp dụng cơ chế giành giựt First-Come First-Served. Người Book đầu được Slot -> Đổi thành `Booked`. Còn 2 người kia chậm tay bấm lỗi 404 (Slot báo mất).
-
----
-
-> 📌 **Handbook này nên được cập nhật khi thêm tính năng mới hoặc thay đổi kiến trúc.**
+> 📌 **Handbook nay nen duoc cap nhat khi them tinh nang moi hoac thay doi kien truc.**

@@ -13,20 +13,26 @@
 - Huỷ lịch (trước ≥2 giờ), kèm lý do
 - Đánh giá dịch vụ (1-5 sao + comment) sau khi hoàn thành
 - Quản lý hồ sơ cá nhân, upload avatar
-- Xem lịch sử booking trong trang Profile
+- Xem lịch sử booking và đơn hàng E-commerce trong trang Profile (giao diện tab bằng Alpine.js)
+- **Cửa hàng E-commerce:** Mua sắm sản phẩm chăm sóc tóc, thêm vào giỏ hàng, áp dụng mã giảm giá, checkout.
+- **Bảo mật:** Auth Modal kích hoạt khi cố gắng dùng tính năng E-commerce lúc chưa đăng nhập.
+- **Khách hàng thân thiết:** Tích lũy Loyalty Points (nếu có).
 
 ### ✂️ Thợ cắt tóc (Barber)
 - Dashboard hôm nay: stats cards + danh sách booking
 - Trang booking theo tuần: chuyển tuần, grouped by day
 - Xác nhận / Từ chối / Bắt đầu / Hoàn thành booking
-- Đăng ký lịch làm việc 7 ngày/tuần (giờ bắt đầu + kết thúc + ngày nghỉ)
+- Đăng ký lịch làm việc 7 ngày/tuần (giờ bắt đầu + kết thúc + ngày nghỉ), quản lý xin nghỉ (BarberLeave)
 - TimeSlot tự động sinh khi lưu schedule (mỗi slot 30 phút)
+- Thống kê hoa hồng (Commissions) dựa trên dịch vụ đã phục vụ.
 - Nhận notification khi có booking mới / bị huỷ
 
 ### 🛡 Quản trị viên (Admin)
 - Dashboard tổng quan: 5 stats cards, biểu đồ doanh thu 7 ngày, top 3 thợ, 5 booking mới
+- **Advanced Dashboard Reporting:** Bản đồ nhiệt (Heatmaps) với ApexCharts phân tích mật độ đặt lịch và doanh thu bán hàng.
+- Quản lý E-commerce: Quản lý sản phẩm (kho hàng, giá cả), Đơn hàng (cập nhật trạng thái), Mã giảm giá (Coupons).
 - Quản lý dịch vụ (CRUD + upload ảnh)
-- Quản lý thợ cắt (CRUD + gán user + xem/sửa schedule)
+- Quản lý thợ cắt (CRUD + gán user + xem/sửa schedule + quản lý Hoa hồng)
 - Quản lý người dùng (danh sách, lọc role, tìm kiếm, bật/tắt tài khoản)
 - Quản lý booking toàn hệ thống (theo thợ + theo tuần)
 - Báo cáo chi tiết:
@@ -34,6 +40,17 @@
   - Top thợ cắt theo doanh thu tháng
   - Top dịch vụ theo số lần đặt tháng
 - Nhận notification khi booking bị huỷ
+
+---
+
+## 🛒 Cửa hàng E-commerce
+
+Hệ thống bán lẻ các sản phẩm chăm sóc tóc (Pomade, Dầu gội,...) với đầy đủ tính năng:
+- **Giỏ hàng & Đơn hàng:** Thêm/bớt sản phẩm, quản lý tồn kho (Pessimistic Locking ngăn chặn race condition).
+- **Mã giảm giá (Coupons):** Giảm theo phần trăm hoặc số tiền cố định, giới hạn lượt dùng.
+- **Tính phí vận chuyển:** Tự động tính phí ship dựa trên khoảng cách từ chi nhánh Barbershop đến địa chỉ khách hàng qua thuật toán **Haversine Distance**.
+- **Auth Modal Protection:** Giao diện mua sắm bảo vệ các thao tác quan trọng bằng popup bắt buộc đăng nhập.
+
 
 ---
 

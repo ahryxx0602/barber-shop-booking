@@ -10,6 +10,8 @@ Hệ thống đặt lịch cắt tóc trực tuyến (Barbershop) được xây 
 - Hệ thống thanh toán tích hợp **VNPay** và **MoMo** (Sandbox).
 - Quản lý lịch hẹn cá nhân, huỷ lịch (trước 2 giờ), đánh giá dịch vụ (Rating/Review).
 - Quản lý hồ sơ cá nhân, upload avatar.
+- **E-commerce & Mua Sắm:** Cửa hàng sản phẩm tóc (Pomade, Dưỡng tóc,...), Giỏ hàng tích hợp mã giảm giá, tính phí ship tự động (Haversine), và quy trình Checkout linh hoạt.
+- **Bảo mật thao tác:** Auth Modal thông minh bảo vệ các hành động quan trọng như đặt hàng, lấy mã giảm giá.
 
 ### Dành cho Khách vãng lai (Guest)
 - Đặt lịch **không cần đăng ký tài khoản** — chỉ cần điền Tên, SĐT, Email.
@@ -24,25 +26,29 @@ Hệ thống đặt lịch cắt tóc trực tuyến (Barbershop) được xây 
 
 ### Dành cho Quản trị viên (Admin)
 - Dashboard tổng quan: Biểu đồ doanh thu 7 ngày, Top thợ cắt.
-- Quản lý người dùng, thợ cắt (thêm mới, phân quyền).
+- **Advanced Analytics (Heatmaps):** Bản đồ nhiệt đo lường mật độ booking và doanh thu sản phẩm một cách trực quan bằng thư viện ApexCharts.
+- Quản lý E-commerce: Danh mục sản phẩm, Đơn hàng, Mã giảm giá.
+- Quản lý người dùng, thợ cắt (thêm mới, phân quyền, tính lương hoa hồng - Commissions).
 - Quản lý dịch vụ (Tạo mới, upload ảnh, giá tiền, thời lượng).
 - Quản lý toàn bộ lịch hẹn hệ thống.
 - Báo cáo chi tiết (Doanh thu, Top Dịch vụ, Top Thợ theo tháng).
 
 ## 🛠 Công nghệ sử dụng
 - **Backend:** Laravel 11.x, PHP 8.2+
-- **Frontend:** Blade Templates, Tailwind CSS (Vanilla setup), Alpine.js
-- **Database:** MySQL
+- **Frontend:** Blade Templates, Tailwind CSS (Vanilla setup), Alpine.js (interactive tabs, modal)
+- **Database:** MySQL (21 Models - Tối ưu hoá N+1 Queries)
 - **Payment:** VNPay Sandbox, MoMo Sandbox
-- **Others:** Chart.js
+- **Others:** Chart.js, ApexCharts (Heatmaps), Thuật toán Haversine (tính khỏang cách nội bộ)
 
-## 🔒 Bảo mật
+## 🔒 Bảo mật & Tối ưu năng suất
 - **Payment Idempotency** — Callback VNPay/MoMo chống xử lý trùng lặp.
 - **MoMo Signature Verification** — HMAC SHA256 chống giả mạo webhook.
-- **VNPay IPN** — Server-to-server callback đảm bảo cập nhật thanh toán.
+- **VNPay IPN** — Server-to-server callback đảm bảo cập nhật thanh toán và IP Whitelisting (Chỉ IP từ VNPay được phép callback).
 - **FSM Guard** — Booking status chỉ chuyển trạng thái hợp lệ (`canTransitionTo`).
 - **Rate Limiting** — Chống spam đặt lịch/thanh toán (`throttle:5,1`).
-- **Pessimistic Locking** — `lockForUpdate()` chống double-booking time slot.
+- **Pessimistic Locking & Atomic Updates** — `lockForUpdate()` chống double-booking time slot và race condition (Mã giảm giá/Tồn kho).
+- **Security Headers** — HTTP Headers bảo vệ ứng dụng (X-Frame-Options, X-Content-Type-Options, etc.).
+- **N+1 Query Bottleneck Optimizations** — Tối ưu hệ thống truy vấn, Eager Loading đầy đủ cho Booking và Order logic.
 
 ## 🚀 Hướng dẫn cài đặt
 
@@ -156,8 +162,11 @@ Dự án sử dụng file `index.css` với các CSS Custom Properties để duy
 | Tài liệu | Mô tả |
 |-----------|-------|
 | [Kiến trúc hệ thống](docs/architecture.md) | Service Layer Pattern, cấu trúc thư mục, luồng booking, FSM, bảo mật |
-| [Database Schema](docs/database-schema.md) | ERD diagram + chi tiết 10 bảng |
+| [Database Schema](docs/database-schema.md) | ERD diagram + chi tiết 21 bảng |
 | [API Routes](docs/api-routes.md) | Tất cả routes theo role (Client, Admin, Barber) |
 | [Tính năng chi tiết](docs/features.md) | 4 vai trò, thanh toán, tự động hoá, thiết kế |
+| [Tính khoảng cách Haversine](docs/Haversine_Distance_Guide.md) | Chuyển đổi từ Google Maps sang tự tính phí ship E-Commerce nội bộ |
+| [Kiến trúc Bảo mật (SECURITY)](docs/SECURITY.md) | Bí kíp 6 Tầng phòng thủ (CSP, CSRF, Locking, IPN Whitelist, Roles) |
+| [Báo cáo QA Test](TestReport.md) | Kết quả Manual Testing & QA Audit toàn diện 9 modules của BarberBook |
 
 ---

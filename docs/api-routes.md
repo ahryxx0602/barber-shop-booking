@@ -9,6 +9,7 @@ Hệ thống chia routes theo 3 file, phân quyền bằng `RoleMiddleware`:
 | `web.php` | `/` | — | Client + Guest |
 | `admin.php` | `/admin` | `auth`, `role:admin` | Admin |
 | `barber.php` | `/barber` | `auth`, `role:barber,admin` | Barber + Admin |
+| `auth.php` | `/` | `guest` / `auth` | Đăng ký, Đăng nhập, Quên mật khẩu |
 
 ---
 
@@ -40,11 +41,27 @@ Hệ thống chia routes theo 3 file, phân quyền bằng `RoleMiddleware`:
 
 | Method | URI | Controller | Middleware | Mô tả |
 |--------|-----|-----------|-----------|-------|
-| GET | `/profile` | ProfileController@show | `auth` | Hồ sơ + lịch sử booking |
+| GET | `/profile` | ProfileController@show | `auth` | Hồ sơ + lịch sử booking + đơn hàng |
 | GET | `/profile/edit` | ProfileController@edit | `auth` | Form sửa hồ sơ |
 | PUT | `/profile` | ProfileController@update | `auth` | Cập nhật hồ sơ + avatar |
 | PATCH | `/booking/{booking}/cancel` | BookingController@cancel | `auth` | Huỷ booking (≥2h trước) |
-| POST | `/reviews` | ReviewController@store | `auth` | Gửi đánh giá |
+| POST | `/reviews` | ReviewController@store | `auth` | Gửi đánh giá dịch vụ/thợ |
+
+### E-commerce & Cart
+
+| Method | URI | Controller | Mô tả |
+|--------|-----|-----------|-------|
+| GET | `/shop` | ShopController@index | Danh sách sản phẩm |
+| GET | `/shop/{product}` | ShopController@show | Chi tiết sản phẩm |
+| GET | `/cart` | CartController@index | Xem giỏ hàng |
+| POST | `/cart/add` | CartController@add | Thêm vào giỏ (*Auth Modal*) |
+| POST | `/cart/update` | CartController@update | Cập nhật số lượng |
+| POST | `/cart/remove` | CartController@remove | Xoá khỏi giỏ |
+| POST | `/cart/apply-coupon` | CartController@applyCoupon | Áp dụng mã giảm giá |
+| GET | `/checkout` | CheckoutController@index | Trang Checkout (`auth`) |
+| POST | `/checkout` | CheckoutController@process | Xử lý đặt hàng (`auth`) |
+| GET | `/order-success/{order}` | CheckoutController@success | Đặt hàng thành công (`auth`) |
+
 
 ---
 
@@ -68,6 +85,10 @@ Tất cả đều yêu cầu `auth` + `role:admin`.
 | Barbers | `/admin/barbers` | BarberController | index, create, store, edit, update, destroy |
 | Users | `/admin/users` | UserController | index, show, edit, update |
 | Bookings | `/admin/bookings` | BookingController | index |
+| Products | `/admin/products` | ProductController | index, create, store, edit, update, destroy |
+| Orders | `/admin/orders` | OrderController | index, show, updateStatus |
+| Coupons | `/admin/coupons` | CouponController | index, create, store, edit, update, destroy |
+
 
 | Method | URI | Mô tả |
 |--------|-----|-------|
@@ -91,6 +112,32 @@ Tất cả yêu cầu `auth` + `role:barber,admin`.
 | PATCH | `/barber/bookings/{booking}/complete` | BookingController@complete | Hoàn thành |
 | GET | `/barber/schedule` | ScheduleController@edit | Xem lịch làm việc |
 | POST | `/barber/schedule` | ScheduleController@update | Cập nhật lịch |
+
+---
+
+## Auth Routes (`auth.php`)
+
+Routes xác thực chuẩn Laravel Breeze, include từ `web.php`.
+
+### Guest (Chưa đăng nhập)
+
+| Method | URI | Controller | Mô tả |
+|--------|-----|-----------|-------|
+| GET | `/register` | RegisteredUserController@create | Form đăng ký |
+| POST | `/register` | RegisteredUserController@store | Xử lý đăng ký |
+| GET | `/login` | AuthenticatedSessionController@create | Form đăng nhập |
+| POST | `/login` | AuthenticatedSessionController@store | Xử lý đăng nhập |
+| GET | `/forgot-password` | PasswordResetLinkController@create | Form quên mật khẩu |
+| POST | `/forgot-password` | PasswordResetLinkController@store | Gửi email reset |
+| GET | `/reset-password/{token}` | NewPasswordController@create | Form đặt lại mật khẩu |
+| POST | `/reset-password` | NewPasswordController@store | Xử lý đặt lại |
+
+### Authenticated (Đã đăng nhập)
+
+| Method | URI | Controller | Mô tả |
+|--------|-----|-----------|-------|
+| PUT | `/password` | PasswordController@update | Đổi mật khẩu |
+| POST | `/logout` | AuthenticatedSessionController@destroy | Đăng xuất |
 
 ---
 
