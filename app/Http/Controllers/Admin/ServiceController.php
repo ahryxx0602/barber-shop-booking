@@ -9,7 +9,7 @@ use App\Http\Requests\Admin\StoreServiceRequest;
 use App\Http\Requests\Admin\UpdateServiceRequest;
 use App\Models\Service;
 use App\Repositories\Contracts\Admin\ServiceRepositoryInterface;
-use App\Services\Admin\ServiceService;
+use App\Services\ServiceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 

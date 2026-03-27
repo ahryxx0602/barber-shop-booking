@@ -10,7 +10,7 @@ use App\Http\Requests\Admin\StoreProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
 use App\Models\Product;
 use App\Repositories\Contracts\Admin\ProductRepositoryInterface;
-use App\Services\Admin\ProductService;
+use App\Services\ProductService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

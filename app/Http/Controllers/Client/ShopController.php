@@ -7,8 +7,8 @@ use App\Enums\OrderPaymentMethod;
 use App\Enums\ProductCategory;
 use App\Http\Controllers\Controller;
 use App\Models\Product;
-use App\Services\Admin\CouponService;
-use App\Services\Client\ShippingService;
+use App\Services\CouponService;
+use App\Services\ShippingService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 

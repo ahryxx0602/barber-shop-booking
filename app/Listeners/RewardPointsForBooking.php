@@ -3,14 +3,16 @@
 namespace App\Listeners;
 
 use App\Events\BookingCompleted;
-use App\Services\Client\LoyaltyService;
+
+use App\Services\LoyaltyService;
 use Illuminate\Support\Facades\Log;
 
 class RewardPointsForBooking
 {
     public function __construct(
         protected LoyaltyService $loyaltyService,
-    ) {}
+    ) {
+    }
 
     public function handle(BookingCompleted $event): void
     {

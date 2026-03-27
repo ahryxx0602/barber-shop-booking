@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Client;
+namespace App\Services\Shop;
 
 use App\DTOs\Client\CreateOrderData;
 use App\Enums\OrderPaymentMethod;
@@ -11,13 +11,13 @@ use App\Models\OrderPayment;
 use App\Models\Product;
 use App\Models\ShippingAddress;
 use App\Repositories\Contracts\Client\OrderRepositoryInterface;
+use App\Services\ProductService;
+use App\Services\ShippingService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Mail;
 use Illuminate\Support\Str;
 use App\Mail\OrderStatusUpdatedMail;
-
-use App\Services\Admin\ProductService;
 
 class OrderService
 {
@@ -28,21 +28,13 @@ class OrderService
     ) {}
 
     /**
-     * Tạo đơn hàng mới trong transaction.
-     * 1. Validate stock
-     * 2. Tính subtotal, tax, shipping fee
-     * 3. Tạo Order + OrderItems + OrderPayment
-     * 4. Giảm stock
-     *
      * @return array{order: Order, redirect_url: ?string}
      */
     public function create(CreateOrderData $data): array
     {
         return DB::transaction(function () use ($data) {
-            // 1. Load shipping address để lấy tọa độ
             $shippingAddress = ShippingAddress::findOrFail($data->shipping_address_id);
 
-            // 2. Load & validate stock cho mỗi item, tính subtotal
             $subtotal = 0;
             $itemsData = [];
 
@@ -67,11 +59,9 @@ class OrderService
                 ];
             }
 
-            // 3. Tính thuế VAT 10%
             $taxRate = 10.00;
             $taxAmount = round($subtotal * $taxRate / 100, 2);
 
-            // 4. Tính phí vận chuyển (nếu có tọa độ)
             $shippingFee = 0;
             $shippingDistanceKm = null;
 
@@ -85,10 +75,8 @@ class OrderService
                 $shippingDistanceKm = $shippingResult['distance_km'];
             }
 
-            // 5. Tính tổng
             $totalAmount = $subtotal + $taxAmount + $shippingFee;
 
-            // 6. Tạo Order
             $order = $this->orderRepo->create([
                 'order_code'           => $this->generateCode(),
                 'customer_id'          => $data->customer_id,
@@ -103,17 +91,14 @@ class OrderService
                 'note'                 => $data->note,
             ]);
 
-            // 7. Tạo OrderItems
             foreach ($itemsData as $itemData) {
                 $order->items()->create($itemData);
             }
 
-            // 8. Giảm stock từng sản phẩm
             foreach ($data->items as $item) {
                 $this->productService->decreaseStock($item['product_id'], $item['quantity']);
             }
 
-            // 9. Tạo OrderPayment (pending)
             OrderPayment::create([
                 'order_id' => $order->id,
                 'amount'   => $totalAmount,
@@ -130,10 +115,8 @@ class OrderService
 
             Mail::to($order->customer->email)->queue(new OrderStatusUpdatedMail($order));
 
-            // 10. Nếu COD → trả order, nếu online → trả redirect URL (xử lý ở Phase 6)
             $redirectUrl = null;
             if ($data->payment_method !== OrderPaymentMethod::Cod) {
-                // Redirect URL sẽ được xử lý bởi OrderPaymentService ở Phase 6
                 $redirectUrl = null;
             }
 
@@ -144,9 +127,6 @@ class OrderService
         });
     }
 
-    /**
-     * Admin xác nhận đơn hàng: Pending → Confirmed.
-     */
     public function confirm(Order $order): Order
     {
         if (!$order->status->canTransitionTo(OrderStatus::Confirmed)) {
@@ -166,9 +146,6 @@ class OrderService
         return $order;
     }
 
-    /**
-     * Chuyển đơn sang trạng thái giao hàng: Confirmed → Shipping.
-     */
     public function ship(Order $order): Order
     {
         if (!$order->status->canTransitionTo(OrderStatus::Shipping)) {
@@ -188,10 +165,6 @@ class OrderService
         return $order;
     }
 
-    /**
-     * Hoàn thành giao hàng: Shipping → Delivered.
-     * Nếu COD → tự động đánh dấu payment là Paid.
-     */
     public function deliver(Order $order): Order
     {
         if (!$order->status->canTransitionTo(OrderStatus::Delivered)) {
@@ -202,7 +175,6 @@ class OrderService
 
         $order->update(['status' => OrderStatus::Delivered]);
 
-        // Nếu COD → auto mark payment as paid
         $payment = $order->payment;
         if ($payment && $payment->method === OrderPaymentMethod::Cod && $payment->status === PaymentStatus::Pending) {
             $payment->update([
@@ -220,9 +192,6 @@ class OrderService
         return $order;
     }
 
-    /**
-     * Hủy đơn hàng: hoàn stock, nếu đã thanh toán online → cần refund (flag).
-     */
     public function cancel(Order $order, ?string $reason = null): Order
     {
         if (!$order->status->canTransitionTo(OrderStatus::Cancelled)) {
@@ -238,16 +207,13 @@ class OrderService
                 'cancel_reason' => $reason ?? 'Đơn hàng bị hủy',
             ]);
 
-            // Hoàn stock từng sản phẩm
             $order->loadMissing('items');
             foreach ($order->items as $item) {
                 $this->productService->increaseStock($item->product_id, $item->quantity);
             }
 
-            // Nếu đã thanh toán online → đánh dấu cần hoàn tiền
             $payment = $order->payment;
             if ($payment && $payment->status === PaymentStatus::Paid && $payment->method !== OrderPaymentMethod::Cod) {
-                // TODO: Implement refund logic khi có API hoàn tiền
                 Log::channel('booking')->warning('Order cancelled — cần hoàn tiền online', [
                     'order_code'     => $order->order_code,
                     'payment_method' => $payment->method->value,
@@ -266,9 +232,6 @@ class OrderService
         });
     }
 
-    /**
-     * Tạo mã đơn hàng unique: ORD-YYYYMMDD-XXXX.
-     */
     protected function generateCode(): string
     {
         return 'ORD-' . now()->format('Ymd') . '-' . strtoupper(Str::random(6));

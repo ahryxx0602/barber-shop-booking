@@ -3,14 +3,16 @@
 namespace App\Listeners;
 
 use App\Events\BookingCancelled;
-use App\Services\Client\WaitlistService;
+
+use App\Services\WaitlistService;
 use Illuminate\Support\Facades\Log;
 
 class NotifyWaitlistOnCancel
 {
     public function __construct(
         protected WaitlistService $waitlistService,
-    ) {}
+    ) {
+    }
 
     public function handle(BookingCancelled $event): void
     {

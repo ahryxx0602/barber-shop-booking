@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Client;
+namespace App\Services;
 
 use App\DTOs\Client\StoreReviewData;
 use App\Enums\BookingStatus;
@@ -17,14 +17,9 @@ class ReviewService
         protected ReviewRepositoryInterface $reviewRepo,
     ) {}
 
-    /**
-     * Tạo review cho booking đã hoàn thành.
-     * Cập nhật rating trung bình của barber.
-     */
     public function store(StoreReviewData $data, User $customer): Review
     {
         return DB::transaction(function () use ($data, $customer) {
-            // Tối ưu N+1 Query (Issue #1): Eager load 'review' để tránh lazy load ở dòng kiểm tra null bên dưới
             $booking = Booking::with('review')->findOrFail($data->booking_id);
 
             abort_if($booking->customer_id !== $customer->id, 403);
@@ -45,9 +40,6 @@ class ReviewService
         });
     }
 
-    /**
-     * Tính lại rating trung bình của barber từ tất cả reviews.
-     */
     protected function updateBarberRating(int $barberId): void
     {
         $avgRating = $this->reviewRepo->getAverageRatingForBarber($barberId);

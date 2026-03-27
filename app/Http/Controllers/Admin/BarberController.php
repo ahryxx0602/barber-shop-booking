@@ -10,7 +10,7 @@ use App\Http\Requests\Admin\UpdateBarberRequest;
 use App\Models\Barber;
 use App\Repositories\Contracts\Admin\BarberRepositoryInterface;
 use App\Repositories\Contracts\Admin\BranchRepositoryInterface;
-use App\Services\Admin\BarberService;
+use App\Services\BarberService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

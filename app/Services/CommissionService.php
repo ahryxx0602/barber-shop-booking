@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Admin;
+namespace App\Services;
 
 use App\Enums\BookingStatus;
 use App\Models\Barber;
@@ -12,10 +12,6 @@ use Illuminate\Support\Facades\Log;
 
 class CommissionService
 {
-    /**
-     * Tự động tính hoa hồng khi booking hoàn thành.
-     * Chỉ tạo commission nếu barber có commission_rate > 0 và booking chưa có commission.
-     */
     public function calculateForBooking(Booking $booking): ?Commission
     {
         $barber = Barber::find($booking->barber_id);
@@ -24,7 +20,6 @@ class CommissionService
             return null;
         }
 
-        // Kiểm tra idempotency - booking đã có commission chưa
         $existing = Commission::where('booking_id', $booking->id)->first();
         if ($existing) {
             return $existing;
@@ -52,9 +47,6 @@ class CommissionService
         return $commission;
     }
 
-    /**
-     * Cập nhật tỷ lệ hoa hồng cho barber.
-     */
     public function updateRate(Barber $barber, float $rate): Barber
     {
         $barber->update(['commission_rate' => $rate]);
@@ -67,9 +59,6 @@ class CommissionService
         return $barber;
     }
 
-    /**
-     * Cập nhật tỷ lệ hoa hồng hàng loạt cho nhiều barber.
-     */
     public function bulkUpdateRate(float $rate, ?array $barberIds = null): int
     {
         $query = Barber::query();
@@ -89,9 +78,6 @@ class CommissionService
         return $count;
     }
 
-    /**
-     * Lấy tổng hoa hồng theo barber trong khoảng thời gian.
-     */
     public function getSummaryByBarber(?Carbon $startDate = null, ?Carbon $endDate = null): array
     {
         $startDate = $startDate ?? now()->startOfMonth();
@@ -122,9 +108,6 @@ class CommissionService
             ->toArray();
     }
 
-    /**
-     * Lấy lịch sử hoa hồng chi tiết (có phân trang).
-     */
     public function getHistory(?int $barberId = null, ?Carbon $startDate = null, ?Carbon $endDate = null, int $perPage = 15)
     {
         $query = Commission::with(['barber.user', 'booking.customer', 'booking.services'])
@@ -141,9 +124,6 @@ class CommissionService
         return $query->paginate($perPage);
     }
 
-    /**
-     * Thống kê tổng quan hoa hồng tháng hiện tại.
-     */
     public function getMonthlyOverview(): array
     {
         $startOfMonth = now()->startOfMonth();
@@ -157,7 +137,6 @@ class CommissionService
         ->whereBetween('created_at', [$startOfMonth, $endOfMonth])
         ->first();
 
-        // Tháng trước
         $prevStart = now()->subMonth()->startOfMonth();
         $prevEnd   = now()->subMonth()->endOfMonth();
 

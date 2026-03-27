@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Repositories\Contracts\Client\OrderRepositoryInterface;
-use App\Services\Client\OrderService;
+use App\Services\Shop\OrderService;
 use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 

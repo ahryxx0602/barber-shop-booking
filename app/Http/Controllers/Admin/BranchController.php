@@ -9,7 +9,7 @@ use App\Http\Requests\Admin\StoreBranchRequest;
 use App\Http\Requests\Admin\UpdateBranchRequest;
 use App\Models\Branch;
 use App\Repositories\Contracts\Admin\BranchRepositoryInterface;
-use App\Services\Admin\BranchService;
+use App\Services\BranchService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

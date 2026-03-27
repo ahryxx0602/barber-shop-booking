@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Services\Admin;
+namespace App\Services;
 
 use App\DTOs\Admin\CreateServiceData;
 use App\DTOs\Admin\UpdateServiceData;
 use App\Models\Service;
 use App\Repositories\Contracts\Admin\ServiceRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -15,6 +16,8 @@ class ServiceService
         private CacheService $cacheService,
         private ServiceRepositoryInterface $serviceRepo,
     ) {}
+
+    // ──────────────────── CRUD (Admin) ────────────────────
 
     public function create(CreateServiceData $data, ?UploadedFile $image = null): Service
     {
@@ -54,6 +57,15 @@ class ServiceService
 
         $this->cacheService->clearServiceCache();
     }
+
+    // ──────────────────── Queries (Client) ────────────────────
+
+    public function getActiveServices(): Collection
+    {
+        return Service::where('is_active', true)->get();
+    }
+
+    // ──────────────────── Private ────────────────────
 
     protected function deleteImage(Service $service): void
     {

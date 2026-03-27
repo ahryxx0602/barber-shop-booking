@@ -3,7 +3,7 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
-use App\Services\Client\OrderPaymentService;
+use App\Services\Payment\OrderPaymentService;
 use Illuminate\Http\Request;
 
 class OrderPaymentController extends Controller

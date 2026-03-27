@@ -4,35 +4,32 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Models\Barber;
+use App\Services\BarberService;
+use App\Services\BranchService;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BarberController extends Controller
 {
+    public function __construct(
+        protected BarberService $barberService,
+        protected BranchService $brancheService
+    ) {
+    }
+
     public function index(Request $request): View
     {
-        // Tối ưu N+1 Query (Issue #6): Thêm withCount('reviews') để tránh lazy load khi hiển thị số lượng đánh giá
-        $barbers = Barber::with('user', 'branch')
-            ->withCount('reviews')
-            ->where('is_active', true)
-            ->when($request->search, function ($query, $search) {
-                $query->whereHas('user', function ($q) use ($search) {
-                    $q->where('name', 'like', "%{$search}%");
-                });
-            })
-            ->when($request->branch_id, function ($query, $branchId) {
-                $query->where('branch_id', $branchId);
-            })
-            ->get();
+        $filters = $request->only(['search', 'branch_id']);
 
-        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+        $barbers = $this->barberService->getActiveBarbersWithFilters($filters);
+        $branches = $this->brancheService->getActiveBranches();
 
         return view('client.barbers.index', compact('barbers', 'branches'));
     }
 
     public function show(Barber $barber): View
     {
-        $barber->load(['user', 'reviews.customer', 'workingSchedules']);
+        $this->barberService->loadBarberDetails($barber);
 
         return view('client.barbers.show', compact('barber'));
     }

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Barber;
+namespace App\Services\Booking;
 
 use App\DTOs\Barber\CreateBookingData;
 use App\Enums\BookingStatus;
@@ -15,7 +15,7 @@ use App\Models\Booking;
 use App\Models\Service;
 use App\Models\User;
 use App\Repositories\Contracts\Barber\BookingRepositoryInterface;
-use App\Services\Admin\CouponService;
+use App\Services\CouponService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -32,8 +32,6 @@ class BookingService
     public function create(CreateBookingData $data, ?User $customer = null): Booking
     {
         return DB::transaction(function () use ($data, $customer) {
-            // Ai đến trước → giữ khóa, người sau phải CHỜ 
-            // SELECT * FROM time_slots WHERE id = 5 FOR UPDATE;
             $slot = $this->bookingRepo->findSlotForUpdate($data->time_slot_id);
 
             if ($slot->status !== TimeSlotStatus::Available) {
@@ -49,7 +47,6 @@ class BookingService
             $totalDuration = $services->sum('duration_minutes');
             $endTime = Carbon::parse($slot->start_time)->addMinutes($totalDuration)->format('H:i:s');
 
-            // Xử lý coupon nếu có
             $discountAmount = 0;
             $couponCode = null;
             if ($data->coupon_code) {
@@ -59,7 +56,6 @@ class BookingService
                     $couponCode = $coupon->code;
                     $this->couponService->markUsed($coupon);
                 } catch (\InvalidArgumentException $e) {
-                    // M1: Thông báo cho user thay vì nuốt im lặng
                     session()->flash('warning', 'Mã giảm giá không hợp lệ: ' . $e->getMessage());
                 }
             }
@@ -96,7 +92,6 @@ class BookingService
                 'discount' => $discountAmount,
             ]);
 
-            // Gửi thông báo cho thợ cắt
             $barber = \App\Models\Barber::find($data->barber_id);
             if ($barber && $barber->user_id) {
                 $message = "Bạn có lịch hẹn mới #{$booking->booking_code} từ khách hàng {$customer->name} "
@@ -114,18 +109,10 @@ class BookingService
         });
     }
 
-    /**
-     * Đặt lịch lặp lại (recurring) theo tần suất.
-     * Tạo booking gốc + tối đa 3 booking tiếp theo ở các tuần/tháng tiếp theo.
-     * Bỏ qua slot không khả dụng thay vì throw.
-     *
-     * @return array<Booking> danh sách booking đã tạo
-     */
     public function createRecurring(CreateBookingData $data, User $customer): array
     {
         $frequency = RecurringFrequency::tryFrom($data->recurring_frequency) ?? RecurringFrequency::None;
 
-        // Luôn tạo booking gốc
         $firstBooking = $this->create($data, $customer);
         $bookings = [$firstBooking];
 
@@ -136,11 +123,9 @@ class BookingService
         $baseSlot = $this->bookingRepo->findSlotForUpdate($data->time_slot_id);
         $interval = $frequency->daysInterval();
 
-        // Tạo tối đa 3 booking lặp tiếp theo
         for ($i = 1; $i <= 3; $i++) {
             $nextDate = Carbon::parse($baseSlot->slot_date)->addDays($interval * $i);
 
-            // Tìm slot cùng giờ, cùng barber, ngày tiếp theo
             $nextSlot = $this->bookingRepo->findAvailableRecurringSlot(
                 $data->barber_id,
                 $nextDate->format('Y-m-d'),
@@ -153,7 +138,7 @@ class BookingService
                     'barber_id' => $data->barber_id,
                     'reason' => 'Slot not available',
                 ]);
-                continue; // Bỏ qua nếu slot không khả dụng
+                continue;
             }
 
             try {

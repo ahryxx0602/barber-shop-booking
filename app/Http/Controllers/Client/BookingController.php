@@ -9,10 +9,16 @@ use App\Models\Barber;
 use App\Models\Booking;
 use App\Models\Service;
 use App\Repositories\Contracts\Barber\BookingRepositoryInterface;
-use App\Services\Barber\BookingService;
+use App\Services\BarberService;
+use App\Services\Booking\BookingService;
+use App\Services\BranchService;
+use App\Services\CouponService;
+use App\Services\ServiceService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use App\Http\Requests\Client\ApplyCouponRequest;
+use App\Http\Requests\Client\GetSlotsRequest;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
@@ -23,25 +29,24 @@ class BookingController extends Controller
     public function __construct(
         protected BookingService $bookingService,
         protected BookingRepositoryInterface $bookingRepo,
+        protected ServiceService $serviceService,
+        protected BarberService $barberService,
+        protected BranchService $brancheService,
+        protected CouponService $couponService
     ) {
     }
 
     public function create(): View
     {
-        $services = Service::where('is_active', true)->get();
-        $barbers = Barber::with('user', 'branch')->where('is_active', true)->get();
-        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+        $services = $this->serviceService->getActiveServices();
+        $barbers = $this->barberService->getAllBarbers();
+        $branches = $this->brancheService->getActiveBranches();
 
         return view('client.booking.create', compact('services', 'barbers', 'branches'));
     }
 
-    public function getSlots(Request $request): JsonResponse
+    public function getSlots(GetSlotsRequest $request): JsonResponse
     {
-        $request->validate([
-            'barber_id' => 'required|exists:barbers,id',
-            'date' => 'required|date|after_or_equal:today',
-        ]);
-
         $isToday = $request->date === now()->toDateString();
 
         $slots = $this->bookingRepo->getAvailableSlots(
@@ -53,16 +58,11 @@ class BookingController extends Controller
         return response()->json($slots);
     }
 
-    public function applyCoupon(Request $request, \App\Services\Admin\CouponService $couponService): JsonResponse
+    public function applyCoupon(ApplyCouponRequest $request): JsonResponse
     {
-        $request->validate([
-            'coupon_code' => 'required|string',
-            'total_price' => 'required|numeric|min:0',
-        ]);
-
         try {
-            $coupon = $couponService->validate($request->coupon_code, $request->total_price);
-            $discountAmount = $couponService->calculateDiscount($coupon, $request->total_price);
+            $coupon = $this->couponService->validate($request->coupon_code, $request->total_price);
+            $discountAmount = $this->couponService->calculateDiscount($coupon, $request->total_price);
 
             return response()->json([
                 'valid' => true,

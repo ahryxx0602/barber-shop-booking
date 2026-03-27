@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Admin;
+namespace App\Services;
 
 use App\DTOs\Admin\CreateBarberData;
 use App\DTOs\Admin\UpdateBarberData;
@@ -8,6 +8,7 @@ use App\Models\Barber;
 use App\Models\User;
 use App\Repositories\Contracts\Admin\BarberRepositoryInterface;
 use App\Repositories\Contracts\Admin\UserRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
@@ -20,6 +21,8 @@ class BarberService
         private BarberRepositoryInterface $barberRepo,
         private UserRepositoryInterface $userRepo,
     ) {}
+
+    // ──────────────────── CRUD (Admin) ────────────────────
 
     public function create(CreateBarberData $data, ?UploadedFile $avatar = null): Barber
     {
@@ -55,9 +58,8 @@ class BarberService
     public function update(Barber $barber, UpdateBarberData $data, ?UploadedFile $avatar = null): Barber
     {
         $result = DB::transaction(function () use ($barber, $data, $avatar) {
-            // Tối ưu N+1 Query: Eager load user để khi truy cập $barber->user ở dưới không bị query lại
             $barber->loadMissing('user');
-            
+
             $userData = [
                 'name'  => $data->name,
                 'email' => $data->email,
@@ -93,15 +95,44 @@ class BarberService
     public function delete(Barber $barber): void
     {
         DB::transaction(function () use ($barber) {
-            // Tối ưu N+1 Query: Eager load user để tránh N+1 khi truy cập $barber->user
             $barber->loadMissing('user');
-            
+
             $this->deleteAvatar($barber->user);
             $barber->user->delete();
         });
 
         $this->cacheService->clearBarberCache();
     }
+
+    // ──────────────────── Queries (Client) ────────────────────
+
+    public function getActiveBarbersWithFilters(array $filters = []): Collection
+    {
+        return Barber::with('user', 'branch')
+            ->withCount('reviews')
+            ->where('is_active', true)
+            ->when(isset($filters['search']) && $filters['search'], function ($query) use ($filters) {
+                $query->whereHas('user', function ($q) use ($filters) {
+                    $q->where('name', 'like', '%' . $filters['search'] . '%');
+                });
+            })
+            ->when(isset($filters['branch_id']) && $filters['branch_id'], function ($query) use ($filters) {
+                $query->where('branch_id', $filters['branch_id']);
+            })
+            ->get();
+    }
+
+    public function loadBarberDetails(Barber $barber): void
+    {
+        $barber->load(['user', 'reviews.customer', 'workingSchedules']);
+    }
+
+    public function getAllBarbers(): Collection
+    {
+        return Barber::with('user', 'branch')->where('is_active', true)->get();
+    }
+
+    // ──────────────────── Private ────────────────────
 
     protected function deleteAvatar(User $user): void
     {

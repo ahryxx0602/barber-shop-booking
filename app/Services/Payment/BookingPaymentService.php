@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Client;
+namespace App\Services\Payment;
 
 use App\Enums\PaymentMethod;
 use App\Enums\PaymentStatus;
@@ -10,17 +10,10 @@ use App\Services\Traits\PaymentGatewayTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Service xử lý thanh toán cho Booking.
- * H2: Dùng PaymentGatewayTrait để loại bỏ code trùng lặp với OrderPaymentService.
- */
-class PaymentService
+class BookingPaymentService
 {
     use PaymentGatewayTrait;
 
-    /**
-     * Tạo bản ghi Payment mới với status Pending, hoặc cập nhật nếu đã tồn tại.
-     */
     public function createPendingPayment(Booking $booking, PaymentMethod $method): Payment
     {
         return Payment::updateOrCreate(

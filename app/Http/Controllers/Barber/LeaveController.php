@@ -9,7 +9,7 @@ use App\Http\Requests\Barber\StoreLeaveRequest;
 use App\Models\BarberLeave;
 use App\Repositories\Contracts\Barber\BarberLeaveRepositoryInterface;
 use App\Repositories\Contracts\Barber\BookingRepositoryInterface;
-use App\Services\Barber\BarberLeaveService;
+use App\Services\BarberLeaveService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

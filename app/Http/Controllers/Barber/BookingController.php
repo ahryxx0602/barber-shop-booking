@@ -6,7 +6,7 @@ use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
 use App\Repositories\Contracts\Barber\BookingRepositoryInterface;
-use App\Services\Barber\BookingService;
+use App\Services\Booking\BookingService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;

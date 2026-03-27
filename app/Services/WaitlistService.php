@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Client;
+namespace App\Services;
 
 use App\Enums\WaitlistStatus;
 use App\Models\Barber;
@@ -11,12 +11,8 @@ use Illuminate\Support\Facades\Log;
 
 class WaitlistService
 {
-    /**
-     * Đăng ký chờ slot cho barber vào ngày cụ thể.
-     */
     public function register(User $user, int $barberId, string $desiredDate, ?string $desiredTime = null): Waitlist
     {
-        // Kiểm tra đã đăng ký chưa (tránh trùng)
         $existing = Waitlist::where('user_id', $user->id)
             ->where('barber_id', $barberId)
             ->where('desired_date', $desiredDate)
@@ -24,7 +20,7 @@ class WaitlistService
             ->first();
 
         if ($existing) {
-            return $existing; // Đã đăng ký rồi
+            return $existing;
         }
 
         return Waitlist::create([
@@ -36,10 +32,6 @@ class WaitlistService
         ]);
     }
 
-    /**
-     * Khi booking bị hủy, thông báo cho người đang chờ.
-     * Gọi method này từ Listener khi BookingCancelled.
-     */
     public function notifyWaiters(int $barberId, string $date, ?string $time = null): void
     {
         $query = Waitlist::where('barber_id', $barberId)
@@ -56,7 +48,6 @@ class WaitlistService
         $waiters = $query->with('user')->get();
 
         foreach ($waiters as $waiter) {
-            // Đánh dấu đã thông báo
             $waiter->update([
                 'status' => WaitlistStatus::Notified,
                 'notified_at' => now(),
@@ -67,14 +58,9 @@ class WaitlistService
                 'barber_id' => $barberId,
                 'date' => $date,
             ]);
-
-            // TODO: Gửi notification thực tế (email/in-app) khi có notification system
         }
     }
 
-    /**
-     * Dọn waitlist quá hạn (ngày đã qua).
-     */
     public function expireOld(): int
     {
         return Waitlist::where('status', WaitlistStatus::Waiting)

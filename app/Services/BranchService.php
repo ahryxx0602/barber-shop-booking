@@ -1,11 +1,12 @@
 <?php
 
-namespace App\Services\Admin;
+namespace App\Services;
 
 use App\DTOs\Admin\CreateBranchData;
 use App\DTOs\Admin\UpdateBranchData;
 use App\Models\Branch;
 use App\Repositories\Contracts\Admin\BranchRepositoryInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
 
@@ -14,6 +15,8 @@ class BranchService
     public function __construct(
         private BranchRepositoryInterface $branchRepo,
     ) {}
+
+    // ──────────────────── CRUD (Admin) ────────────────────
 
     public function create(CreateBranchData $data, ?UploadedFile $image = null): Branch
     {
@@ -43,7 +46,6 @@ class BranchService
         ];
 
         if ($image) {
-            // Xóa ảnh cũ nếu có
             if ($branch->image) {
                 Storage::disk('public')->delete($branch->image);
             }
@@ -55,14 +57,19 @@ class BranchService
 
     public function delete(Branch $branch): void
     {
-        // Xóa ảnh nếu có
         if ($branch->image) {
             Storage::disk('public')->delete($branch->image);
         }
 
-        // Gỡ barber khỏi chi nhánh trước khi xóa (set null)
         $branch->barbers()->update(['branch_id' => null]);
 
         $this->branchRepo->delete($branch);
+    }
+
+    // ──────────────────── Queries (Client) ────────────────────
+
+    public function getActiveBranches(): Collection
+    {
+        return Branch::where('is_active', true)->orderBy('name')->get();
     }
 }

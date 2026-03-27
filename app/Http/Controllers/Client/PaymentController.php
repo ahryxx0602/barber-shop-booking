@@ -7,7 +7,7 @@ use App\Models\Payment;
 use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Services\Client\PaymentService;
+use App\Services\Payment\BookingPaymentService as PaymentService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

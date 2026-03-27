@@ -1,10 +1,11 @@
 <?php
 
-namespace App\Services\Barber;
+namespace App\Services;
 
 use App\DTOs\Barber\UpdateScheduleData;
 use App\Models\Barber;
 use App\Repositories\Contracts\Barber\ScheduleRepositoryInterface;
+use App\Services\Booking\TimeSlotService;
 use Illuminate\Support\Facades\DB;
 
 class ScheduleService
@@ -24,9 +25,6 @@ class ScheduleService
         protected ScheduleRepositoryInterface $scheduleRepo,
     ) {}
 
-    /**
-     * Chuẩn bị dữ liệu schedule cho view (dùng chung cho Admin + Barber).
-     */
     public function getScheduleData(Barber $barber): array
     {
         $schedules = $barber->workingSchedules->keyBy('day_of_week');
@@ -59,9 +57,6 @@ class ScheduleService
         return compact('days', 'daysJson');
     }
 
-    /**
-     * Chuẩn bị dữ liệu tổng quan schedule cho tất cả barbers (Admin index).
-     */
     public function getAllBarbersScheduleData(?int $branchId = null): array
     {
         $barbers = $this->scheduleRepo->getBarbersByBranch($branchId);
@@ -88,29 +83,26 @@ class ScheduleService
         return $barbersData;
     }
 
-    /**
-     * Lưu schedule cho barber + regenerate time slots.
-     */
     public function updateSchedule(Barber $barber, UpdateScheduleData $data): void
     {
         DB::transaction(function () use ($barber, $data) {
-        $upsertData = [];
-        foreach ($data->schedules as $item) {
-            $isDayOff = !$item->is_working;
-            $upsertData[] = [
-                'barber_id'   => $barber->id,
-                'day_of_week' => $item->day_of_week,
-                'start_time'  => $isDayOff ? '00:00:00' : $item->start_time . ':00',
-                'end_time'    => $isDayOff ? '00:00:00' : $item->end_time . ':00',
-                'is_day_off'  => $isDayOff,
-            ];
-        }
+            $upsertData = [];
+            foreach ($data->schedules as $item) {
+                $isDayOff = !$item->is_working;
+                $upsertData[] = [
+                    'barber_id'   => $barber->id,
+                    'day_of_week' => $item->day_of_week,
+                    'start_time'  => $isDayOff ? '00:00:00' : $item->start_time . ':00',
+                    'end_time'    => $isDayOff ? '00:00:00' : $item->end_time . ':00',
+                    'is_day_off'  => $isDayOff,
+                ];
+            }
 
-        $this->scheduleRepo->upsertSchedules(
-            $upsertData,
-            ['barber_id', 'day_of_week'],           // unique keys để xác định record trùng
-            ['start_time', 'end_time', 'is_day_off'] // danh sách cột sẽ update nếu trùng
-        );
+            $this->scheduleRepo->upsertSchedules(
+                $upsertData,
+                ['barber_id', 'day_of_week'],
+                ['start_time', 'end_time', 'is_day_off']
+            );
         });
 
         $this->timeSlotService->clearAndRegenerate($barber->id);

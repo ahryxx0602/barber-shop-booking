@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Admin;
+namespace App\Services;
 
 use App\Enums\BookingStatus;
 use App\Enums\UserRole;
@@ -13,10 +13,6 @@ use Illuminate\Support\Facades\DB;
 
 class ReportService
 {
-    /**
-     * Lấy thống kê tổng quan theo tháng.
-     * Hỗ trợ filter theo branch_id (qua barber).
-     */
     public function getMonthlyOverview(?Carbon $date = null, ?int $branchId = null): array
     {
         $date = $date ?? now();
@@ -26,16 +22,13 @@ class ReportService
         $prevMonthStart = $date->copy()->subMonth()->startOfMonth();
         $prevMonthEnd = $date->copy()->subMonth()->endOfMonth();
 
-        // Base query builder cho booking (có thể filter theo branch)
         $bookingQuery = fn () => $branchId
             ? Booking::whereHas('barber', fn ($q) => $q->where('branch_id', $branchId))
             : Booking::query();
 
-        // Tổng booking
         $currentBookings = $bookingQuery()->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count();
         $prevBookings = $bookingQuery()->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count();
 
-        // Doanh thu (chỉ tính booking confirmed, in_progress, completed)
         $revenueStatuses = [
             BookingStatus::Confirmed,
             BookingStatus::InProgress,
@@ -52,7 +45,6 @@ class ReportService
             ->whereBetween('booking_date', [$prevMonthStart, $prevMonthEnd])
             ->sum('total_price');
 
-        // Khách hàng mới (không filter theo branch vì khách không thuộc branch)
         $currentNewCustomers = User::where('role', UserRole::Customer)
             ->whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])
             ->count();
@@ -78,9 +70,6 @@ class ReportService
         ];
     }
 
-    /**
-     * Lấy doanh thu theo ngày. Hỗ trợ filter branch.
-     */
     public function getDailyRevenue(?int $month = null, ?int $year = null, ?int $branchId = null): array
     {
         if ($month && $year) {
@@ -124,9 +113,6 @@ class ReportService
         return compact('labels', 'data');
     }
 
-    /**
-     * Lấy doanh thu theo từng tháng trong năm. Hỗ trợ filter branch.
-     */
     public function getMonthlyRevenue(int $year, ?int $branchId = null): array
     {
         $revenueStatuses = [
@@ -159,9 +145,6 @@ class ReportService
         return compact('labels', 'data');
     }
 
-    /**
-     * Lấy danh sách các năm có booking.
-     */
     public function getAvailableYears(): array
     {
         $years = Booking::selectRaw('DISTINCT YEAR(booking_date) as year')
@@ -177,9 +160,6 @@ class ReportService
         return $years;
     }
 
-    /**
-     * Top thợ theo doanh thu (tháng hiện tại). Hỗ trợ filter branch.
-     */
     public function getTopBarbers(int $limit = 5, ?int $branchId = null): array
     {
         $startOfMonth = now()->startOfMonth();
@@ -221,9 +201,6 @@ class ReportService
             ->toArray();
     }
 
-    /**
-     * Top dịch vụ theo số lần đặt (tháng hiện tại). Hỗ trợ filter branch.
-     */
     public function getTopServices(int $limit = 5, ?int $branchId = null): array
     {
         $startOfMonth = now()->startOfMonth();
@@ -258,9 +235,6 @@ class ReportService
             ->toArray();
     }
 
-    /**
-     * Lấy thống kê tổng quan sản phẩm theo tháng.
-     */
     public function getProductMonthlyOverview(?Carbon $date = null): array
     {
         $date = $date ?? now();
@@ -270,11 +244,9 @@ class ReportService
         $prevMonthStart = $date->copy()->subMonth()->startOfMonth();
         $prevMonthEnd = $date->copy()->subMonth()->endOfMonth();
 
-        // Tổng đơn hàng (phát sinh)
         $currentOrders = \App\Models\Order::whereBetween('created_at', [$currentMonthStart, $currentMonthEnd])->count();
         $prevOrders = \App\Models\Order::whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])->count();
 
-        // Doanh thu (chỉ tính đơn hàng Confirmed, Shipping, Delivered)
         $revenueStatuses = [
             \App\Enums\OrderStatus::Confirmed,
             \App\Enums\OrderStatus::Shipping,
@@ -289,7 +261,6 @@ class ReportService
             ->whereBetween('created_at', [$prevMonthStart, $prevMonthEnd])
             ->sum('total_amount');
 
-        // Tổng số sản phẩm đang bán
         $totalProducts = \App\Models\Product::where('is_active', true)->count();
 
         return [
@@ -308,9 +279,6 @@ class ReportService
         ];
     }
 
-    /**
-     * Lấy doanh thu sản phẩm theo ngày (biểu đồ).
-     */
     public function getProductDailyRevenue(?int $month = null, ?int $year = null): array
     {
         if ($month && $year) {
@@ -348,9 +316,6 @@ class ReportService
         return compact('labels', 'data');
     }
 
-    /**
-     * Lấy doanh thu sản phẩm theo từng tháng trong năm.
-     */
     public function getProductMonthlyRevenue(int $year): array
     {
         $revenueStatuses = [
@@ -377,9 +342,6 @@ class ReportService
         return compact('labels', 'data');
     }
 
-    /**
-     * Top sản phẩm bán chạy.
-     */
     public function getTopSellingProducts(int $limit = 5): array
     {
         $startOfMonth = now()->startOfMonth();
@@ -414,21 +376,6 @@ class ReportService
             ->toArray();
     }
 
-    /**
-     * Tính % thay đổi so với tháng trước.
-     */
-    private function calculateChange(float $current, float $previous): float
-    {
-        if ($previous == 0) {
-            return $current > 0 ? 100 : 0;
-        }
-
-        return round(($current - $previous) / $previous * 100, 1);
-    }
-
-    /**
-     * Dữ liệu bản đồ nhiệt cho Booking.
-     */
     public function getBookingHeatmapData(?int $branchId = null): array
     {
         $startDate = now()->subDays(29)->startOfDay();
@@ -445,7 +392,6 @@ class ReportService
             ->whereBetween('bookings.booking_date', [$startDate, $endDate]);
 
         if ($branchId) {
-            // Need to join barbers or use whereHas appropriately
             $query->whereHas('barber', fn ($q) => $q->where('branch_id', $branchId));
         }
 
@@ -456,9 +402,6 @@ class ReportService
         return $this->formatHeatmapData($results);
     }
 
-    /**
-     * Dữ liệu bản đồ nhiệt cho Đơn hàng.
-     */
     public function getProductHeatmapData(): array
     {
         $startDate = now()->subDays(29)->startOfDay();
@@ -491,7 +434,6 @@ class ReportService
             7 => 'Thứ 7',
         ];
 
-        // Frame from 8h to 20h for booking, 7h to 22h for order
         $startHour = $isOrder ? 7 : 8;
         $endHour = $isOrder ? 22 : 20;
         $hoursRange = range($startHour, $endHour);
@@ -512,13 +454,9 @@ class ReportService
             ];
         }
 
-        // ApexCharts puts the first array item at the top of the Y axis, 
-        // to order from Monday to Sunday, we should reverse or just build it carefully.
-        // Actually top to bottom: T2 -> CN. So let's re-order the $data array
         $orderedData = [];
-        $orderKeys = [2, 3, 4, 5, 6, 7, 1]; // Monday to Sunday
+        $orderKeys = [2, 3, 4, 5, 6, 7, 1];
         foreach ($orderKeys as $key) {
-            // Find in $data
             $found = collect($data)->firstWhere('name', $days[$key]);
             if ($found) {
                 $orderedData[] = $found;
@@ -526,5 +464,14 @@ class ReportService
         }
 
         return $orderedData;
+    }
+
+    private function calculateChange(float $current, float $previous): float
+    {
+        if ($previous == 0) {
+            return $current > 0 ? 100 : 0;
+        }
+
+        return round(($current - $previous) / $previous * 100, 1);
     }
 }

@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\UpdateProfileRequest;
-use App\Services\Client\LoyaltyService;
+use App\Services\LoyaltyService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;

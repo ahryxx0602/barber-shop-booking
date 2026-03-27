@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Client;
+namespace App\Services\Payment;
 
 use App\Enums\PaymentStatus;
 use App\Models\OrderPayment;
@@ -8,10 +8,6 @@ use App\Services\Traits\PaymentGatewayTrait;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
-/**
- * Service xử lý thanh toán cho Order.
- * H2: Dùng PaymentGatewayTrait để loại bỏ code trùng lặp với PaymentService.
- */
 class OrderPaymentService
 {
     use PaymentGatewayTrait;
@@ -40,7 +36,6 @@ class OrderPaymentService
             return ['success' => false, 'message' => 'Chữ ký không hợp lệ.', 'order' => null];
         }
 
-        // TxnRef format: ORD_{paymentId}_{timestamp}
         $txnRef = $result['inputData']['vnp_TxnRef'] ?? '';
         $parts = explode('_', $txnRef);
         $paymentId = $parts[1] ?? null;

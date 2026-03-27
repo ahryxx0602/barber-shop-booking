@@ -10,7 +10,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreCouponRequest;
 use App\Http\Requests\Admin\UpdateCouponRequest;
 use App\Models\Coupon;
-use App\Services\Admin\CouponService;
+use App\Services\CouponService;
 
 class CouponController extends Controller
 {

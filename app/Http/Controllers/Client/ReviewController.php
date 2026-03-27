@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Client;
 use App\DTOs\Client\StoreReviewData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreReviewRequest;
-use App\Services\Client\ReviewService;
+use App\Services\ReviewService;
 use Illuminate\Http\RedirectResponse;
 
 class ReviewController extends Controller

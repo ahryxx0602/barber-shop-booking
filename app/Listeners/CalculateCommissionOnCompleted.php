@@ -3,13 +3,15 @@
 namespace App\Listeners;
 
 use App\Events\BookingCompleted;
-use App\Services\Admin\CommissionService;
+use App\Services\CommissionService;
+
 
 class CalculateCommissionOnCompleted
 {
     public function __construct(
         private CommissionService $commissionService,
-    ) {}
+    ) {
+    }
 
     /**
      * Tự động tính hoa hồng khi booking hoàn thành.

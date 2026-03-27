@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Client;
+namespace App\Services;
 
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -8,8 +8,6 @@ use Illuminate\Support\Facades\Log;
 class ShippingService
 {
     /**
-     * Tính phí vận chuyển từ tọa độ địa chỉ giao hàng.
-     *
      * @return array{fee: float, distance_km: float, is_free: bool}
      */
     public function calculateFee(float $destLat, float $destLng, float $subtotal = 0): array
@@ -23,7 +21,6 @@ class ShippingService
 
         $feeResult = $this->feeFromDistance($distanceKm);
 
-        // Miễn phí ship khi đơn hàng đủ lớn
         $freeAbove = (float) config('services.shipping.free_above', 500000);
         if ($freeAbove > 0 && $subtotal >= $freeAbove) {
             $feeResult['fee'] = 0;
@@ -35,16 +32,10 @@ class ShippingService
         return $feeResult;
     }
 
-    /**
-     * Lấy khoảng cách (km) giữa 2 tọa độ.
-     * Ưu tiên Google Maps Distance Matrix API (đường đi thực tế).
-     * Fallback: Haversine formula (đường chim bay, miễn phí).
-     */
     public function getDistance(string $origin, string $destination): float
     {
         $apiKey = config('services.google_maps.api_key');
 
-        // Nếu có Google Maps API key → dùng Distance Matrix (chính xác hơn)
         if (!empty($apiKey)) {
             try {
                 $response = Http::timeout(10)->get('https://maps.googleapis.com/maps/api/distancematrix/json', [
@@ -74,20 +65,15 @@ class ShippingService
             }
         }
 
-        // Fallback: Haversine formula (miễn phí, không cần API)
         [$lat1, $lng1] = array_map('floatval', explode(',', $origin));
         [$lat2, $lng2] = array_map('floatval', explode(',', $destination));
 
         return $this->haversineDistance($lat1, $lng1, $lat2, $lng2);
     }
 
-    /**
-     * Tính khoảng cách đường chim bay (km) bằng công thức Haversine.
-     * Hoàn toàn miễn phí, không cần API.
-     */
     public function haversineDistance(float $lat1, float $lng1, float $lat2, float $lng2): float
     {
-        $earthRadius = 6371; // km
+        $earthRadius = 6371;
 
         $dLat = deg2rad($lat2 - $lat1);
         $dLng = deg2rad($lng2 - $lng1);
@@ -102,17 +88,12 @@ class ShippingService
     }
 
     /**
-     * Quy đổi khoảng cách → phí vận chuyển.
-     * - Dưới free_within_km (mặc định 20km) → miễn phí
-     * - Trên 20km → fee = base_fee + (km_vượt × per_km_fee), cap max_fee
-     *
      * @return array{fee: float, is_free: bool}
      */
     public function feeFromDistance(float $distanceKm): array
     {
         $freeWithinKm = (float) config('services.shipping.free_within_km', 20);
 
-        // Miễn phí nếu trong bán kính
         if ($distanceKm <= $freeWithinKm) {
             return [
                 'fee'     => 0,
@@ -120,7 +101,6 @@ class ShippingService
             ];
         }
 
-        // Tính phí cho phần km vượt quá
         $baseFee   = (float) config('services.shipping.base_fee', 10000);
         $perKmFee  = (float) config('services.shipping.per_km_fee', 2000);
         $maxFee    = (float) config('services.shipping.max_fee', 50000);
@@ -137,9 +117,7 @@ class ShippingService
     }
 
     /**
-     * Lấy tọa độ cửa hàng từ config.
-     *
-     * @return array{0: float, 1: float} [latitude, longitude]
+     * @return array{0: float, 1: float}
      */
     public function getShopCoordinates(): array
     {

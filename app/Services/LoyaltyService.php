@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Services\Client;
+namespace App\Services;
 
 use App\Enums\LoyaltyPointType;
 use App\Models\Booking;
@@ -10,14 +10,8 @@ use Illuminate\Support\Facades\DB;
 
 class LoyaltyService
 {
-    /**
-     * Tỷ lệ quy đổi: mỗi 10,000 VND = 1 điểm.
-     */
     const POINTS_PER_VND = 10000;
 
-    /**
-     * Cộng điểm khi booking hoàn thành.
-     */
     public function rewardForBooking(Booking $booking): ?LoyaltyPoint
     {
         $points = (int) floor($booking->total_price / self::POINTS_PER_VND);
@@ -36,9 +30,6 @@ class LoyaltyService
         ]);
     }
 
-    /**
-     * Trừ điểm (dùng cho đổi voucher, giảm giá...).
-     */
     public function spendPoints(User $user, int $points, string $description, ?string $relatedType = null, ?int $relatedId = null): LoyaltyPoint
     {
         $balance = $this->getBalance($user);
@@ -49,7 +40,7 @@ class LoyaltyService
 
         return LoyaltyPoint::create([
             'user_id' => $user->id,
-            'points' => -$points, // Trừ điểm (giá trị âm)
+            'points' => -$points,
             'type' => LoyaltyPointType::Spend,
             'description' => $description,
             'related_type' => $relatedType,
@@ -57,17 +48,11 @@ class LoyaltyService
         ]);
     }
 
-    /**
-     * Lấy số dư điểm của user.
-     */
     public function getBalance(User $user): int
     {
         return (int) LoyaltyPoint::where('user_id', $user->id)->sum('points');
     }
 
-    /**
-     * Lấy lịch sử giao dịch điểm.
-     */
     public function getHistory(User $user, int $limit = 20)
     {
         return LoyaltyPoint::where('user_id', $user->id)

@@ -9,9 +9,9 @@ use App\Http\Requests\Client\PlaceOrderRequest;
 use App\Models\Order;
 use App\Models\Product;
 use App\Repositories\Contracts\Client\OrderRepositoryInterface;
-use App\Services\Client\OrderService;
-use App\Services\Admin\CouponService;
-use App\Services\Client\OrderPaymentService;
+use App\Services\Shop\OrderService;
+use App\Services\CouponService;
+use App\Services\Payment\OrderPaymentService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
