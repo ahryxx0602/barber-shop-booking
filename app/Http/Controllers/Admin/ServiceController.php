@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
+use App\DTOs\Admin\CreateServiceData;
+use App\DTOs\Admin\UpdateServiceData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreServiceRequest;
 use App\Http\Requests\Admin\UpdateServiceRequest;
 use App\Models\Service;
-use App\Services\ServiceService;
+use App\Repositories\Contracts\Admin\ServiceRepositoryInterface;
+use App\Services\Admin\ServiceService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\View\View;
 
@@ -14,11 +17,12 @@ class ServiceController extends Controller
 {
     public function __construct(
         protected ServiceService $serviceService,
+        protected ServiceRepositoryInterface $serviceRepo,
     ) {}
 
     public function index(): View
     {
-        $services = Service::latest()->paginate(10);
+        $services = $this->serviceRepo->paginate(10);
         return view('admin.services.index', compact('services'));
     }
 
@@ -30,7 +34,7 @@ class ServiceController extends Controller
     public function store(StoreServiceRequest $request): RedirectResponse
     {
         $this->serviceService->create(
-            $request->validated(),
+            CreateServiceData::fromRequest($request),
             $request->file('image'),
         );
 
@@ -47,7 +51,7 @@ class ServiceController extends Controller
     {
         $this->serviceService->update(
             $service,
-            $request->validated(),
+            UpdateServiceData::fromRequest($request),
             $request->file('image'),
         );
 

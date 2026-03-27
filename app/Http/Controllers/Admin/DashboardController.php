@@ -8,7 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Booking;
  use App\Models\Branch;
  use App\Models\User;
- use App\Services\ReportService;
+ use App\Services\Admin\ReportService;
  use Illuminate\Support\Facades\DB;
  use Illuminate\View\View;
 

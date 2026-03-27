@@ -5,7 +5,8 @@ namespace App\Http\Controllers\Barber;
 use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Booking;
-use App\Services\BookingService;
+use App\Repositories\Contracts\Barber\BookingRepositoryInterface;
+use App\Services\Barber\BookingService;
 use Carbon\Carbon;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\RedirectResponse;
@@ -18,6 +19,7 @@ class BookingController extends Controller
 
     public function __construct(
         protected BookingService $bookingService,
+        protected BookingRepositoryInterface $bookingRepo,
     ) {
     }
 
@@ -36,12 +38,11 @@ class BookingController extends Controller
 
         $weekEnd = $weekStart->copy()->endOfWeek(Carbon::SUNDAY);
 
-        $bookings = Booking::where('barber_id', $barber->id)
-            ->whereBetween('booking_date', [$weekStart->toDateString(), $weekEnd->toDateString()])
-            ->with(['customer', 'services'])
-            ->orderBy('booking_date')
-            ->orderBy('start_time')
-            ->get();
+        $bookings = $this->bookingRepo->getByBarberAndWeek(
+            $barber->id,
+            $weekStart->toDateString(),
+            $weekEnd->toDateString()
+        );
 
         $days = [];
         for ($d = $weekStart->copy(); $d->lte($weekEnd); $d->addDay()) {
@@ -118,18 +119,14 @@ class BookingController extends Controller
     {
         $barber = $request->user()->barber;
 
-        $query = Booking::where('barber_id', $barber->id)
-            ->with(['customer', 'services']);
+        $start = $request->filled('start')
+            ? Carbon::parse($request->input('start'))->toDateString()
+            : null;
+        $end = $request->filled('end')
+            ? Carbon::parse($request->input('end'))->toDateString()
+            : null;
 
-        // FullCalendar gửi start/end param dạng ISO string
-        if ($request->filled('start')) {
-            $query->where('booking_date', '>=', Carbon::parse($request->input('start'))->toDateString());
-        }
-        if ($request->filled('end')) {
-            $query->where('booking_date', '<=', Carbon::parse($request->input('end'))->toDateString());
-        }
-
-        $bookings = $query->orderBy('booking_date')->orderBy('start_time')->get();
+        $bookings = $this->bookingRepo->getByBarberAndDateRange($barber->id, $start, $end);
 
         // Map sang format FullCalendar events
         $events = $bookings->map(function (Booking $booking) {
@@ -139,7 +136,7 @@ class BookingController extends Controller
             $end = Carbon::parse($dateStr . ' ' . $booking->end_time);
 
             // Nếu end_time qua nửa đêm (end < start), giữ event trong cùng ngày
-            if ($end->lte($start)) {
+            if ($end->lt($start)) {
                 $end = Carbon::parse($dateStr . ' 23:59:00');
             }
 

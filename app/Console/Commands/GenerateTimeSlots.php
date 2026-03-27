@@ -3,7 +3,7 @@
 namespace App\Console\Commands;
 
 use App\Models\Barber;
-use App\Services\TimeSlotService;
+use App\Services\Barber\TimeSlotService;
 use Illuminate\Console\Command;
 
 class GenerateTimeSlots extends Command

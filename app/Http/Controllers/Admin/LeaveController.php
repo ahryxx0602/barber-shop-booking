@@ -5,7 +5,7 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\LeaveStatus;
 use App\Http\Controllers\Controller;
 use App\Models\BarberLeave;
-use App\Services\BarberLeaveService;
+use App\Services\Barber\BarberLeaveService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;

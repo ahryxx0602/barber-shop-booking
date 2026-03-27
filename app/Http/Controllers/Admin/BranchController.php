@@ -2,13 +2,14 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\DTOs\CreateBranchData;
-use App\DTOs\UpdateBranchData;
+use App\DTOs\Admin\CreateBranchData;
+use App\DTOs\Admin\UpdateBranchData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreBranchRequest;
 use App\Http\Requests\Admin\UpdateBranchRequest;
 use App\Models\Branch;
-use App\Services\BranchService;
+use App\Repositories\Contracts\Admin\BranchRepositoryInterface;
+use App\Services\Admin\BranchService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -17,6 +18,7 @@ class BranchController extends Controller
 {
     public function __construct(
         protected BranchService $branchService,
+        protected BranchRepositoryInterface $branchRepo,
     ) {}
 
     public function index(Request $request): View
@@ -31,11 +33,9 @@ class BranchController extends Controller
             $filterDate = now();
         }
 
-        $branches = Branch::withCount('barbers')
-            ->latest()
-            ->paginate(10);
+        $branches = $this->branchRepo->paginateWithBarberCount(10);
 
-        // Tính revenue cho mỗi branch theo tháng đã chọn
+        // Revenue query — giữ nguyên (reporting logic, không phải CRUD)
         $branchIds = $branches->pluck('id');
         $revenues = \DB::table('bookings')
             ->join('barbers', 'bookings.barber_id', '=', 'barbers.id')

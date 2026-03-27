@@ -4,7 +4,8 @@ namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
-use App\Services\OrderService;
+use App\Repositories\Contracts\Client\OrderRepositoryInterface;
+use App\Services\Client\OrderService;
 use App\Enums\OrderStatus;
 use Illuminate\Http\Request;
 
@@ -12,6 +13,7 @@ class OrderController extends Controller
 {
     public function __construct(
         protected OrderService $orderService,
+        protected OrderRepositoryInterface $orderRepo,
     ) {}
 
     /**
@@ -19,40 +21,12 @@ class OrderController extends Controller
      */
     public function index(Request $request)
     {
-        $query = Order::with(['customer', 'payment'])->latest();
+        $orders = $this->orderRepo->paginateWithFilters([
+            'status' => $request->input('status'),
+            'search' => $request->input('search'),
+        ]);
 
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
-
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                // M2: order_code dùng prefix match (index-friendly) thay vì %like%
-                $q->where('order_code', 'like', "{$search}%")
-                  ->orWhereHas('customer', function ($q) use ($search) {
-                      $q->where('name', 'like', "%{$search}%")
-                        ->orWhere('email', 'like', "{$search}%")
-                        ->orWhere('phone', 'like', "{$search}%");
-                  });
-            });
-        }
-
-        $orders = $query->paginate(15)->withQueryString();
-
-        // M6: Gom stats vào 1 query aggregate thay vì 4 queries riêng
-        $stats = Order::selectRaw("
-            COUNT(*) as total_orders,
-            SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as pending_orders,
-            SUM(CASE WHEN status = ? THEN 1 ELSE 0 END) as shipping_orders,
-            SUM(CASE WHEN status = ? AND MONTH(created_at) = ? AND YEAR(created_at) = ? THEN total_amount ELSE 0 END) as this_month_revenue
-        ", [
-            OrderStatus::Pending->value,
-            OrderStatus::Shipping->value,
-            OrderStatus::Delivered->value,
-            now()->month,
-            now()->year,
-        ])->first();
+        $stats = $this->orderRepo->getStats();
 
         $totalOrders = $stats->total_orders;
         $pendingOrders = $stats->pending_orders;

@@ -2,14 +2,15 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\DTOs\CreateProductData;
-use App\DTOs\UpdateProductData;
+use App\DTOs\Admin\CreateProductData;
+use App\DTOs\Admin\UpdateProductData;
 use App\Enums\ProductCategory;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreProductRequest;
 use App\Http\Requests\Admin\UpdateProductRequest;
 use App\Models\Product;
-use App\Services\ProductService;
+use App\Repositories\Contracts\Admin\ProductRepositoryInterface;
+use App\Services\Admin\ProductService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -18,6 +19,7 @@ class ProductController extends Controller
 {
     public function __construct(
         protected ProductService $productService,
+        protected ProductRepositoryInterface $productRepo,
     ) {}
 
     /**
@@ -105,13 +107,13 @@ class ProductController extends Controller
     }
 
     /**
-     * Toggle ẩn/hiện sản phẩm (AJAX hoặc redirect).
+     * Toggle ẩn/hiện sản phẩm.
      */
     public function toggleActive(Product $product): RedirectResponse
     {
-        $product->update(['is_active' => !$product->is_active]);
+        $this->productRepo->update($product, ['is_active' => !$product->is_active]);
 
-        $status = $product->is_active ? 'kích hoạt' : 'tạm ẩn';
+        $status = !$product->is_active ? 'kích hoạt' : 'tạm ẩn';
 
         return redirect()->route('admin.products.index')
             ->with('success', "Sản phẩm đã được {$status}.");

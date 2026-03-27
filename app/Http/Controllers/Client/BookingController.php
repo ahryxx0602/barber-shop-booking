@@ -2,15 +2,14 @@
 
 namespace App\Http\Controllers\Client;
 
-use App\DTOs\CreateBookingData;
-use App\Enums\TimeSlotStatus;
+use App\DTOs\Barber\CreateBookingData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreBookingRequest;
 use App\Models\Barber;
 use App\Models\Booking;
 use App\Models\Service;
-use App\Models\TimeSlot;
-use App\Services\BookingService;
+use App\Repositories\Contracts\Barber\BookingRepositoryInterface;
+use App\Services\Barber\BookingService;
 use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
@@ -23,6 +22,7 @@ class BookingController extends Controller
 
     public function __construct(
         protected BookingService $bookingService,
+        protected BookingRepositoryInterface $bookingRepo,
     ) {}
 
     public function create(): View
@@ -41,27 +41,18 @@ class BookingController extends Controller
             'date' => 'required|date|after_or_equal:today',
         ]);
 
-        $slots = TimeSlot::where('barber_id', $request->barber_id)
-            ->where('slot_date', $request->date)
-            ->where('status', TimeSlotStatus::Available)
-            ->when($request->date === now()->toDateString(), function ($query) {
-                // Chỉ hiển thị slot cách ít nhất 1 tiếng so với giờ hiện tại
-                $minTime = now()->addHour()->format('H:i:s');
-                $query->where('start_time', '>=', $minTime);
-            })
-            ->orderBy('start_time')
-            ->get()
-            ->map(fn ($slot) => [
-                'id' => $slot->id,
-                'start_time' => $slot->start_time,
-                'end_time' => $slot->end_time,
-                'label' => \Carbon\Carbon::parse($slot->start_time)->format('H:i'),
-            ]);
+        $isToday = $request->date === now()->toDateString();
+
+        $slots = $this->bookingRepo->getAvailableSlots(
+            $request->barber_id,
+            $request->date,
+            $isToday
+        );
 
         return response()->json($slots);
     }
 
-    public function applyCoupon(Request $request, \App\Services\CouponService $couponService): JsonResponse
+    public function applyCoupon(Request $request, \App\Services\Admin\CouponService $couponService): JsonResponse
     {
         $request->validate([
             'coupon_code' => 'required|string',

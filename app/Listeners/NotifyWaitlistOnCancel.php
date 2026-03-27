@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\BookingCancelled;
-use App\Services\WaitlistService;
+use App\Services\Client\WaitlistService;
 use Illuminate\Support\Facades\Log;
 
 class NotifyWaitlistOnCancel

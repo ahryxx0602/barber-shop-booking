@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\StoreAddressRequest;
-use App\DTOs\ShippingAddressData;
+use App\DTOs\Client\ShippingAddressData;
 use App\Models\ShippingAddress;
 use Illuminate\Http\JsonResponse;
 

@@ -6,41 +6,32 @@ use App\Enums\UserRole;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateUserRequest;
 use App\Models\User;
+use App\Repositories\Contracts\Admin\UserRepositoryInterface;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class UserController extends Controller
 {
+    public function __construct(
+        protected UserRepositoryInterface $userRepo,
+    ) {}
+
     /**
      * Danh sách users — phân trang, lọc role, tìm kiếm.
      */
     public function index(Request $request): View
     {
-        $query = User::where('id', '!=', auth()->id());
-
-        // Lọc theo role
-        if ($request->filled('role')) {
-            $query->where('role', $request->role);
-        }
-
-        // Tìm kiếm theo tên / email / SĐT
-        if ($request->filled('search')) {
-            $search = $request->search;
-            $query->where(function ($q) use ($search) {
-                $q->where('name', 'like', "%{$search}%")
-                  ->orWhere('email', 'like', "%{$search}%")
-                  ->orWhere('phone', 'like', "%{$search}%");
-            });
-        }
-
-        $users = $query->latest()->paginate(15)->withQueryString();
+        $users = $this->userRepo->paginateWithFilters(
+            $request->only(['role', 'search']),
+            15
+        );
 
         // Đếm theo role cho stats
         $totalUsers     = User::count();
-        $totalCustomers = User::where('role', UserRole::Customer)->count();
-        $totalBarbers   = User::where('role', UserRole::Barber)->count();
-        $totalAdmins    = User::where('role', UserRole::Admin)->count();
+        $totalCustomers = $this->userRepo->countByRole(UserRole::Customer);
+        $totalBarbers   = $this->userRepo->countByRole(UserRole::Barber);
+        $totalAdmins    = $this->userRepo->countByRole(UserRole::Admin);
 
         return view('admin.users.index', compact(
             'users', 'totalUsers', 'totalCustomers', 'totalBarbers', 'totalAdmins'
@@ -78,7 +69,7 @@ class UserController extends Controller
      */
     public function update(UpdateUserRequest $request, User $user): RedirectResponse
     {
-        $user->update($request->validated());
+        $this->userRepo->update($user, $request->validated());
 
         return redirect()->route('admin.users.index')
             ->with('success', 'Cập nhật tài khoản thành công.');
@@ -95,9 +86,9 @@ class UserController extends Controller
                 ->with('error', 'Bạn không thể vô hiệu hoá tài khoản của chính mình.');
         }
 
-        $user->update(['is_active' => !$user->is_active]);
+        $this->userRepo->update($user, ['is_active' => !$user->is_active]);
 
-        $status = $user->is_active ? 'kích hoạt' : 'vô hiệu hoá';
+        $status = !$user->is_active ? 'kích hoạt' : 'vô hiệu hoá';
 
         return redirect()->back()
             ->with('success', "Tài khoản {$user->name} đã được {$status}.");

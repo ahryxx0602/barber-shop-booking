@@ -2,46 +2,41 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\DTOs\CreateBarberData;
-use App\DTOs\UpdateBarberData;
+use App\DTOs\Admin\CreateBarberData;
+use App\DTOs\Admin\UpdateBarberData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\StoreBarberRequest;
 use App\Http\Requests\Admin\UpdateBarberRequest;
 use App\Models\Barber;
-use App\Services\BarberService;
+use App\Repositories\Contracts\Admin\BarberRepositoryInterface;
+use App\Repositories\Contracts\Admin\BranchRepositoryInterface;
+use App\Services\Admin\BarberService;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BarberController extends Controller
 {
     public function __construct(
         protected BarberService $barberService,
+        protected BarberRepositoryInterface $barberRepo,
+        protected BranchRepositoryInterface $branchRepo,
     ) {}
 
-    public function index(\Illuminate\Http\Request $request): View
+    public function index(Request $request): View
     {
-        $query = Barber::with('user', 'branch');
-
-        // Filter theo chi nhánh
-        if ($request->filled('branch_id')) {
-            $query->where('branch_id', $request->input('branch_id'));
-        }
-
-        // Tìm theo tên thợ
-        if ($request->filled('search')) {
-            $search = $request->input('search');
-            $query->whereHas('user', fn ($q) => $q->where('name', 'like', "%{$search}%"));
-        }
-
-        $barbers = $query->latest()->paginate(10)->withQueryString();
-        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+        $barbers = $this->barberRepo->paginateWithFilters(
+            $request->only(['branch_id', 'search']),
+            10
+        );
+        $branches = $this->branchRepo->getActiveBranches();
 
         return view('admin.barbers.index', compact('barbers', 'branches'));
     }
 
     public function create(): View
     {
-        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = $this->branchRepo->getActiveBranches();
         return view('admin.barbers.create', compact('branches'));
     }
 
@@ -59,7 +54,7 @@ class BarberController extends Controller
     public function edit(Barber $barber): View
     {
         $barber->load('user');
-        $branches = \App\Models\Branch::where('is_active', true)->orderBy('name')->get();
+        $branches = $this->branchRepo->getActiveBranches();
         return view('admin.barbers.edit', compact('barber', 'branches'));
     }
 

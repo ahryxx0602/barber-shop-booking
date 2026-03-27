@@ -3,14 +3,15 @@
 namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
-use App\DTOs\CreateOrderData;
+use App\DTOs\Client\CreateOrderData;
 use App\Enums\CouponAppliesTo;
 use App\Http\Requests\Client\PlaceOrderRequest;
 use App\Models\Order;
 use App\Models\Product;
-use App\Services\OrderService;
-use App\Services\CouponService;
-use App\Services\OrderPaymentService;
+use App\Repositories\Contracts\Client\OrderRepositoryInterface;
+use App\Services\Client\OrderService;
+use App\Services\Admin\CouponService;
+use App\Services\Client\OrderPaymentService;
 use Illuminate\Http\Request;
 
 class OrderController extends Controller
@@ -19,6 +20,7 @@ class OrderController extends Controller
         protected OrderService $orderService,
         protected CouponService $couponService,
         protected OrderPaymentService $orderPaymentService,
+        protected OrderRepositoryInterface $orderRepo,
     ) {}
 
     /**
@@ -140,10 +142,7 @@ class OrderController extends Controller
      */
     public function index()
     {
-        $orders = auth()->user()->orders()
-            ->with(['items.product', 'payment'])
-            ->latest()
-            ->paginate(10);
+        $orders = $this->orderRepo->paginateByCustomer(auth()->id());
 
         return view('client.orders.index', compact('orders'));
     }

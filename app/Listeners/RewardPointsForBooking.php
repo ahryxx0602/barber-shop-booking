@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\BookingCompleted;
-use App\Services\LoyaltyService;
+use App\Services\Client\LoyaltyService;
 use Illuminate\Support\Facades\Log;
 
 class RewardPointsForBooking

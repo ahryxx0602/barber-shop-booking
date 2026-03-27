@@ -2,11 +2,14 @@
 
 namespace App\Http\Controllers\Barber;
 
+use App\DTOs\Barber\CreateLeaveData;
 use App\Enums\LeaveStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Barber\StoreLeaveRequest;
 use App\Models\BarberLeave;
-use App\Services\BarberLeaveService;
+use App\Repositories\Contracts\Barber\BarberLeaveRepositoryInterface;
+use App\Repositories\Contracts\Barber\BookingRepositoryInterface;
+use App\Services\Barber\BarberLeaveService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
@@ -15,6 +18,8 @@ class LeaveController extends Controller
 {
     public function __construct(
         protected BarberLeaveService $leaveService,
+        protected BarberLeaveRepositoryInterface $leaveRepo,
+        protected BookingRepositoryInterface $bookingRepo,
     ) {}
 
     /**
@@ -49,38 +54,23 @@ class LeaveController extends Controller
         $validated = $request->validated();
 
         // Kiểm tra đã đăng ký nghỉ ngày này chưa
-        $exists = BarberLeave::where('barber_id', $barber->id)
-            ->where('leave_date', $validated['leave_date'])
-            ->exists();
-
-        if ($exists) {
+        if ($this->leaveRepo->existsForBarberOnDate($barber->id, $validated['leave_date'])) {
             return back()->withErrors(['leave_date' => 'Bạn đã đăng ký nghỉ ngày này rồi.'])->withInput();
         }
 
         // Kiểm tra có booking active trong ngày đó không
-        $activeStatuses = [
-            \App\Enums\BookingStatus::Pending->value,
-            \App\Enums\BookingStatus::Confirmed->value,
-            \App\Enums\BookingStatus::InProgress->value,
-        ];
+        $startTime = ($validated['type'] === 'partial' && !empty($validated['start_time']) && !empty($validated['end_time']))
+            ? $validated['start_time']
+            : null;
+        $endTime = ($validated['type'] === 'partial' && !empty($validated['start_time']) && !empty($validated['end_time']))
+            ? $validated['end_time']
+            : null;
 
-        $bookingQuery = \App\Models\Booking::where('barber_id', $barber->id)
-            ->where('booking_date', $validated['leave_date'])
-            ->whereIn('status', $activeStatuses);
-
-        // Nếu nghỉ partial, chỉ check booking trong khoảng giờ đó
-        if ($validated['type'] === 'partial' && !empty($validated['start_time']) && !empty($validated['end_time'])) {
-            $bookingQuery->where(function ($q) use ($validated) {
-                $q->where('start_time', '<', $validated['end_time'])
-                  ->where('end_time', '>', $validated['start_time']);
-            });
-        }
-
-        if ($bookingQuery->exists()) {
+        if ($this->bookingRepo->hasActiveBookingsOnDate($barber->id, $validated['leave_date'], $startTime, $endTime)) {
             return back()->withErrors(['leave_date' => 'Ngày này đã có lịch hẹn, không thể đăng ký nghỉ. Vui lòng liên hệ Admin.'])->withInput();
         }
 
-        $this->leaveService->store($barber->id, $validated);
+        $this->leaveService->store($barber->id, CreateLeaveData::fromRequest($request));
 
         return back()->with('success', 'Đã gửi đơn xin nghỉ. Vui lòng chờ Admin duyệt.');
     }

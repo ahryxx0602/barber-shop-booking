@@ -5,14 +5,18 @@ namespace App\Http\Controllers\Admin;
 use App\Enums\BookingStatus;
 use App\Http\Controllers\Controller;
 use App\Models\Barber;
-use App\Models\Booking;
 use App\Models\Branch;
+use App\Repositories\Contracts\Barber\BookingRepositoryInterface;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
 
 class BookingController extends Controller
 {
+    public function __construct(
+        protected BookingRepositoryInterface $bookingRepo,
+    ) {}
+
     public function index(Request $request): View
     {
         $branches = Branch::where('is_active', true)->orderBy('name')->get();
@@ -39,12 +43,11 @@ class BookingController extends Controller
         if ($selectedBarberId) {
             $selectedBarber = $barbers->firstWhere('id', $selectedBarberId);
 
-            $bookings = Booking::where('barber_id', $selectedBarberId)
-                ->whereBetween('booking_date', [$weekStart->toDateString(), $weekEnd->toDateString()])
-                ->with(['customer', 'services'])
-                ->orderBy('booking_date')
-                ->orderBy('start_time')
-                ->get();
+            $bookings = $this->bookingRepo->getByBarberAndWeek(
+                $selectedBarberId,
+                $weekStart->toDateString(),
+                $weekEnd->toDateString()
+            );
         }
 
         $days = [];

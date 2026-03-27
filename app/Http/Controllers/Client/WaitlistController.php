@@ -4,7 +4,7 @@ namespace App\Http\Controllers\Client;
 
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Client\StoreWaitlistRequest;
-use App\Services\WaitlistService;
+use App\Services\Client\WaitlistService;
 use Illuminate\Http\Request;
 
 class WaitlistController extends Controller

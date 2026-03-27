@@ -3,7 +3,7 @@
 namespace App\Listeners;
 
 use App\Events\BookingCompleted;
-use App\Services\CommissionService;
+use App\Services\Admin\CommissionService;
 
 class CalculateCommissionOnCompleted
 {

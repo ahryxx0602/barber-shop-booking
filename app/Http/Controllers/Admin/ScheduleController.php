@@ -2,11 +2,11 @@
 
 namespace App\Http\Controllers\Admin;
 
-use App\DTOs\UpdateScheduleData;
+use App\DTOs\Barber\UpdateScheduleData;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Admin\UpdateScheduleRequest;
 use App\Models\Barber;
-use App\Services\ScheduleService;
+use App\Services\Barber\ScheduleService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\View\View;
