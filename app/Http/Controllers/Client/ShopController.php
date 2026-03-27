@@ -17,7 +17,8 @@ class ShopController extends Controller
     public function __construct(
         protected ShippingService $shippingService,
         protected CouponService $couponService,
-    ) {}
+    ) {
+    }
 
     /**
      * Trang mã giảm giá — hiển thị coupon active cho client.
@@ -126,9 +127,9 @@ class ShopController extends Controller
             }
 
             $cartItems[] = [
-                'product'  => $product,
+                'product' => $product,
                 'quantity' => $quantity,
-                'total'    => $product->price * $quantity,
+                'total' => $product->price * $quantity,
             ];
             $subtotal += $product->price * $quantity;
         }
@@ -148,7 +149,7 @@ class ShopController extends Controller
     {
         $request->validate([
             'product_id' => 'required|integer|exists:products,id',
-            'quantity'    => 'nullable|integer|min:1',
+            'quantity' => 'nullable|integer|min:1',
         ]);
 
         $product = Product::findOrFail($request->product_id);
@@ -192,8 +193,8 @@ class ShopController extends Controller
         session()->put('cart', $cart);
 
         return response()->json([
-            'success'    => true,
-            'message'    => "Đã thêm \"{$product->name}\" vào giỏ hàng.",
+            'success' => true,
+            'message' => "Đã thêm \"{$product->name}\" vào giỏ hàng.",
             'cart_count' => $this->getCartCount(),
         ]);
     }
@@ -205,7 +206,7 @@ class ShopController extends Controller
     {
         $request->validate([
             'product_id' => 'required|integer|exists:products,id',
-            'quantity'    => 'required|integer|min:1',
+            'quantity' => 'required|integer|min:1',
         ]);
 
         $product = Product::findOrFail($request->product_id);
@@ -240,9 +241,9 @@ class ShopController extends Controller
         $itemTotal = $product->price * $request->quantity;
 
         return response()->json([
-            'success'    => true,
+            'success' => true,
             'item_total' => $itemTotal,
-            'subtotal'   => $this->calculateSubtotal(),
+            'subtotal' => $this->calculateSubtotal(),
             'cart_count' => $this->getCartCount(),
         ]);
     }
@@ -261,9 +262,9 @@ class ShopController extends Controller
         session()->put('cart', $cart);
 
         return response()->json([
-            'success'    => true,
-            'message'    => 'Đã xóa sản phẩm khỏi giỏ hàng.',
-            'subtotal'   => $this->calculateSubtotal(),
+            'success' => true,
+            'message' => 'Đã xóa sản phẩm khỏi giỏ hàng.',
+            'subtotal' => $this->calculateSubtotal(),
             'cart_count' => $this->getCartCount(),
         ]);
     }
@@ -286,11 +287,12 @@ class ShopController extends Controller
             $product = Product::find($productId);
             if ($product && $product->is_active) {
                 $quantity = min($item['quantity'], $product->stock_quantity);
-                if ($quantity <= 0) continue;
+                if ($quantity <= 0)
+                    continue;
                 $cartItems[] = [
-                    'product'  => $product,
+                    'product' => $product,
                     'quantity' => $quantity,
-                    'total'    => $product->price * $quantity,
+                    'total' => $product->price * $quantity,
                 ];
                 $subtotal += $product->price * $quantity;
             }
@@ -306,7 +308,11 @@ class ShopController extends Controller
         $paymentMethods = OrderPaymentMethod::cases();
 
         return view('client.shop.checkout', compact(
-            'cartItems', 'subtotal', 'taxAmount', 'addresses', 'paymentMethods'
+            'cartItems',
+            'subtotal',
+            'taxAmount',
+            'addresses',
+            'paymentMethods'
         ));
     }
 
@@ -335,7 +341,7 @@ class ShopController extends Controller
                 $geoData = $geoRes->json();
                 if (!empty($geoData[0]['lat']) && !empty($geoData[0]['lon'])) {
                     $address->update([
-                        'latitude'  => (float) $geoData[0]['lat'],
+                        'latitude' => (float) $geoData[0]['lat'],
                         'longitude' => (float) $geoData[0]['lon'],
                     ]);
                     $address->refresh();
@@ -348,10 +354,10 @@ class ShopController extends Controller
             if (!$address->latitude || !$address->longitude) {
                 $fallbackFee = $this->shippingService->feeFromDistance(10.0);
                 return response()->json([
-                    'fee'         => $fallbackFee['fee'],
+                    'fee' => $fallbackFee['fee'],
                     'distance_km' => 10.0,
-                    'is_free'     => $fallbackFee['is_free'],
-                    'note'        => 'Phí ước tính (chưa xác định tọa độ)',
+                    'is_free' => $fallbackFee['is_free'],
+                    'note' => 'Phí ước tính (chưa xác định tọa độ)',
                 ]);
             }
         }
@@ -374,7 +380,7 @@ class ShopController extends Controller
     public function applyCoupon(Request $request): JsonResponse
     {
         $request->validate([
-            'code'       => 'required|string|max:50',
+            'code' => 'required|string|max:50',
             'applies_to' => 'required|in:product,shipping',
         ]);
 
@@ -394,12 +400,12 @@ class ShopController extends Controller
             $discount = $this->couponService->calculateDiscount($coupon, $discountTarget);
 
             return response()->json([
-                'success'  => true,
-                'code'     => $coupon->code,
-                'type'     => $coupon->type->value,
-                'value'    => $coupon->value,
+                'success' => true,
+                'code' => $coupon->code,
+                'type' => $coupon->type->value,
+                'value' => $coupon->value,
                 'discount' => $discount,
-                'message'  => 'Áp dụng mã thành công! Giảm ' . number_format($discount, 0, ',', '.') . 'đ',
+                'message' => 'Áp dụng mã thành công! Giảm ' . number_format($discount, 0, ',', '.') . 'đ',
             ]);
         } catch (\InvalidArgumentException $e) {
             return response()->json([

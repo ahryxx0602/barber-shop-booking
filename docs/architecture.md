@@ -39,7 +39,7 @@ Controller::store() {                    Controller::store() {
 $bookingService->create($dto);  // ← Tái sử dụng logic!
 ```
 
-**Files:** `app/Services/BookingService.php`, `app/Services/OrderService.php`, + 12 services khác.
+**Files:** `app/Services/Booking/BookingService.php`, `app/Services/Shop/OrderService.php`, + 14 services khác.
 
 ---
 
@@ -348,7 +348,7 @@ app/
 ├── Models/                  # 21 Eloquent models
 ├── Policies/                # BookingPolicy (confirm, reject, start, complete, cancel)
 ├── Traits/                  # PaymentGatewayTrait (shared VNPay/MoMo logic)
-└── Services/                # 14 business services
+└── Services/                # Business services (Domain-driven)
 
 routes/
 ├── web.php                  # Client + Guest + E-commerce

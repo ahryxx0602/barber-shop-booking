@@ -151,23 +151,29 @@ app/
 ├── Traits/
 │   └── PaymentGatewayTrait.php # Logic chung VNPay/MoMo cho Booking + Order
 │
-└── Services/                  # 14 business services
-    ├── BookingService.php     # Tao/huy booking, FSM transitions, pessimistic locking
-    ├── PaymentService.php     # VNPay + MoMo integration, signature verify
-    ├── OrderService.php       # E-commerce: tao don, tru kho, tinh thue
-    ├── OrderPaymentService.php # Thanh toan don hang (VNPay/MoMo/COD)
-    ├── CartService.php        # Gio hang (Session-based)
-    ├── ProductService.php     # CRUD san pham + tru/hoan kho an toan
-    ├── ShippingService.php    # Tinh phi ship (Haversine / Google Maps fallback)
-    ├── CouponService.php      # Validate + ap dung ma giam gia
-    ├── TimeSlotService.php    # Sinh slot tu dong, batch upsert
-    ├── ScheduleService.php    # CRUD lich lam viec barber
-    ├── BarberService.php      # CRUD barber + user
-    ├── ServiceService.php     # CRUD dich vu
-    ├── ReviewService.php      # Danh gia + cap nhat rating trung binh
-    ├── ReportService.php      # Chart.js, ApexCharts Heatmaps, Top stats
-    ├── CacheService.php       # Cache layer tap trung
-    └── CommissionService.php  # Tinh toan hoa hong tho cat
+└── Services/                  # Business services (Domain-driven)
+    ├── Booking/               # Domain Đặt lịch
+    │   ├── BookingService.php # Logic tạo/huỷ booking, FSM transitions
+    │   └── TimeSlotService.php # Sinh slot tự động, batch upsert
+    ├── Payment/               # Domain Thanh toán
+    │   ├── BookingPaymentService.php # Thanh toán cho lịch hẹn
+    │   └── OrderPaymentService.php   # Thanh toán cho đơn hàng E-commerce
+    ├── Shop/                  # Domain Cửa hàng
+    │   └── OrderService.php   # Tạo đơn, trừ kho, tính thuế
+    ├── BarberLeaveService.php # Quản lý nghỉ phép của thợ
+    ├── BarberService.php      # Quản lý thợ cắt tóc
+    ├── BranchService.php      # Quản lý chi nhánh
+    ├── CommissionService.php  # Tính toán hoa hồng thợ
+    ├── CouponService.php      # Validate + áp dụng mã giảm giá
+    ├── LoyaltyService.php     # Hệ thống tích điểm khách hàng
+    ├── ProductService.php     # Quản lý sản phẩm & kho
+    ├── ReportService.php      # Báo cáo, biểu đồ, thống kê
+    ├── ScheduleService.php    # Lịch làm việc của thợ
+    ├── ServiceService.php     # Quản lý dịch vụ cắt tóc
+    ├── ShippingService.php    # Tính phí vận chuyển (Haversine)
+    ├── WaitlistService.php    # Quản lý danh sách chờ
+    ├── CacheService.php       # Cache layer tập trung
+    └── ReviewService.php      # Đánh giá & xếp hạng trung bình
 
 routes/
 ├── web.php                    # Routes client + guest + E-commerce
