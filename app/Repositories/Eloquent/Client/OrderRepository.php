@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent\Client;
 
+use App\Repositories\Eloquent\BaseRepository;
 use App\Enums\OrderStatus;
 use App\Models\Order;
 use App\Repositories\Contracts\Client\OrderRepositoryInterface;

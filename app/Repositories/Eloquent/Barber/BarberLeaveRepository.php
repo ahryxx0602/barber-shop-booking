@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent\Barber;
 
+use App\Repositories\Eloquent\BaseRepository;
 use App\Enums\LeaveStatus;
 use App\Enums\TimeSlotStatus;
 use App\Models\BarberLeave;

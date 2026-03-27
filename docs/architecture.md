@@ -332,32 +332,23 @@ Request ──→ SecurityHeaders ──→ LogActivity ──→ RoleMiddleware
 
 ```
 app/
-├── DTOs/                    # Data Transfer Objects (type-safe), phân theo vai trò
-│   ├── Admin/               # DTOs cho Admin
-│   ├── Barber/              # DTOs cho Barber
-│   └── Client/              # DTOs cho Client
+├── DTOs/                    # 7 Data Transfer Objects (type-safe)
 ├── Enums/                   # 9 PHP 8.1 Backed Enums (BookingStatus, OrderStatus, ...)
 ├── Events/                  # 3 Booking lifecycle events
 ├── Exceptions/              # SlotNotAvailableException
 ├── Http/
-│   ├── Controllers/         # Phân theo vai trò
+│   ├── Controllers/
 │   │   ├── Admin/           # 10+ controllers (Dashboard, Barber, Service, Product, Order, ...)
 │   │   ├── Barber/          # 3 controllers (Dashboard, Booking, Schedule)
 │   │   └── Client/          # 8+ controllers (Booking, Payment, Shop, Cart, Checkout, ...)
-│   ├── Middleware/          # RoleMiddleware, SecurityHeaders, LogActivity
-│   └── Requests/            # Form validations cho Admin, Barber, Client
+│   ├── Middleware/           # RoleMiddleware, SecurityHeaders, LogActivity
+│   └── Requests/            # FormRequest cho Admin, Barber, Client
 ├── Jobs/                    # SendBookingNotificationJob (async)
 ├── Listeners/               # 6 listeners (Notification, Commission, Loyalty, Waitlist)
 ├── Models/                  # 21 Eloquent models
 ├── Policies/                # BookingPolicy (confirm, reject, start, complete, cancel)
-├── Repositories/            # Lớp truy xuất dữ liệu (Repository Pattern)
-│   ├── Contracts/           # Các Interface định nghĩa phương thức
-│   └── Eloquent/            # Code thực thi truy xuất DB thực tế
 ├── Traits/                  # PaymentGatewayTrait (shared VNPay/MoMo logic)
-└── Services/                # Lớp xử lý nghiệp vụ, phân theo vai trò
-    ├── Admin/               # Services cho nhánh Quản trị viên
-    ├── Barber/              # Services cho nhánh Thợ cắt tóc
-    └── Client/              # Services cho nhánh Khách hàng
+└── Services/                # 14 business services
 
 routes/
 ├── web.php                  # Client + Guest + E-commerce

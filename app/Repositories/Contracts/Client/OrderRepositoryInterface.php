@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts\Client;
 
 use App\Enums\OrderStatus;
+use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface OrderRepositoryInterface extends BaseRepositoryInterface

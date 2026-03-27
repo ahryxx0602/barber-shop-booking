@@ -4,6 +4,7 @@ namespace App\Repositories\Contracts\Barber;
 
 use App\Enums\TimeSlotStatus;
 use App\Models\TimeSlot;
+use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 
 interface BookingRepositoryInterface extends BaseRepositoryInterface

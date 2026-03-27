@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Contracts\Barber;
 
+use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Database\Eloquent\Collection;
 
 interface ScheduleRepositoryInterface extends BaseRepositoryInterface

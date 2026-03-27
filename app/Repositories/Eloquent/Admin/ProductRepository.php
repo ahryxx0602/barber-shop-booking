@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent\Admin;
 
+use App\Repositories\Eloquent\BaseRepository;
 use App\Models\Product;
 use App\Repositories\Contracts\Admin\ProductRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

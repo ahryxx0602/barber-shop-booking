@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent\Admin;
 
+use App\Repositories\Eloquent\BaseRepository;
 use App\Models\Barber;
 use App\Repositories\Contracts\Admin\BarberRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;

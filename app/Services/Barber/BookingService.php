@@ -15,6 +15,7 @@ use App\Models\Booking;
 use App\Models\Service;
 use App\Models\User;
 use App\Repositories\Contracts\Barber\BookingRepositoryInterface;
+use App\Services\Admin\CouponService;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -25,7 +26,8 @@ class BookingService
     public function __construct(
         protected CouponService $couponService,
         protected BookingRepositoryInterface $bookingRepo,
-    ) {}
+    ) {
+    }
 
     public function create(CreateBookingData $data, ?User $customer = null): Booking
     {
@@ -98,7 +100,7 @@ class BookingService
             $barber = \App\Models\Barber::find($data->barber_id);
             if ($barber && $barber->user_id) {
                 $message = "Bạn có lịch hẹn mới #{$booking->booking_code} từ khách hàng {$customer->name} "
-                         . "vào lúc {$booking->start_time} ngày {$booking->booking_date->format('d/m/Y')}.";
+                    . "vào lúc {$booking->start_time} ngày {$booking->booking_date->format('d/m/Y')}.";
 
                 \App\Jobs\SendBookingNotificationJob::dispatch(
                     $barber->user_id,

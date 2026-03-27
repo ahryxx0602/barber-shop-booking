@@ -85,7 +85,7 @@ class OrderController extends Controller
                 try {
                     $coupon = $this->couponService->validate(
                         $request->shipping_coupon_code,
-                        (float) $order->shipping_fee,
+                        (float) $order->subtotal,
                         CouponAppliesTo::Shipping
                     );
                     $discount = $this->couponService->calculateDiscount($coupon, (float) $order->shipping_fee);

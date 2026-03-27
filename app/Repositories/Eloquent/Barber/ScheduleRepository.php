@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent\Barber;
 
+use App\Repositories\Eloquent\BaseRepository;
 use App\Models\Barber;
 use App\Models\WorkingSchedule;
 use App\Repositories\Contracts\Barber\ScheduleRepositoryInterface;

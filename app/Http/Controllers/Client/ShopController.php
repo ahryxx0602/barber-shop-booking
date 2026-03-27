@@ -380,16 +380,18 @@ class ShopController extends Controller
 
         $appliesTo = CouponAppliesTo::from($request->applies_to);
 
-        // Tính subtotal hoặc shipping fee tùy loại
+        $orderSubtotal = $this->calculateSubtotal();
+
+        // Tính số tiền cần discount (discountTarget) tùy loại
         if ($appliesTo === CouponAppliesTo::Product) {
-            $amount = $this->calculateSubtotal();
+            $discountTarget = $orderSubtotal;
         } else {
-            $amount = (float) $request->input('shipping_fee', 0);
+            $discountTarget = (float) $request->input('shipping_fee', 0);
         }
 
         try {
-            $coupon = $this->couponService->validate($request->code, $amount, $appliesTo);
-            $discount = $this->couponService->calculateDiscount($coupon, $amount);
+            $coupon = $this->couponService->validate($request->code, $orderSubtotal, $appliesTo);
+            $discount = $this->couponService->calculateDiscount($coupon, $discountTarget);
 
             return response()->json([
                 'success'  => true,

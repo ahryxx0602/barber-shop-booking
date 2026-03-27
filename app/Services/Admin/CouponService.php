@@ -48,7 +48,7 @@ class CouponService
      *
      * @throws \InvalidArgumentException
      */
-    public function validate(string $code, float $totalPrice, ?CouponAppliesTo $appliesTo = null): Coupon
+    public function validate(string $code, float $orderSubtotal, ?CouponAppliesTo $appliesTo = null): Coupon
     {
         $coupon = $this->couponRepo->findByCode($code);
 
@@ -66,7 +66,7 @@ class CouponService
             throw new \InvalidArgumentException("Mã này chỉ áp dụng cho: {$label}.");
         }
 
-        if ($totalPrice < $coupon->min_amount) {
+        if ($orderSubtotal < $coupon->min_amount) {
             throw new \InvalidArgumentException(
                 'Đơn tối thiểu ' . number_format($coupon->min_amount, 0, ',', '.') . 'đ để sử dụng mã này.'
             );
@@ -78,21 +78,21 @@ class CouponService
     /**
      * Tính số tiền giảm giá.
      */
-    public function calculateDiscount(Coupon $coupon, float $totalPrice): float
+    public function calculateDiscount(Coupon $coupon, float $targetAmount): float
     {
         if ($coupon->type === CouponType::Fixed) {
-            return min($coupon->value, $totalPrice);
+            return min($coupon->value, $targetAmount);
         }
 
         // Percent
-        $discount = $totalPrice * ($coupon->value / 100);
+        $discount = $targetAmount * ($coupon->value / 100);
 
         // Áp dụng giới hạn giảm tối đa nếu có
         if ($coupon->max_discount !== null) {
             $discount = min($discount, $coupon->max_discount);
         }
 
-        return min($discount, $totalPrice);
+        return min($discount, $targetAmount);
     }
 
     /**

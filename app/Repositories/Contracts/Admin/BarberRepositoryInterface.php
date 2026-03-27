@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Contracts\Admin;
 
+use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface BarberRepositoryInterface extends BaseRepositoryInterface

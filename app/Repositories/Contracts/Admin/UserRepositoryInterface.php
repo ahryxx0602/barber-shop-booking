@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts\Admin;
 
 use App\Enums\UserRole;
+use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 
 interface UserRepositoryInterface extends BaseRepositoryInterface

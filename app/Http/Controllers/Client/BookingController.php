@@ -23,7 +23,8 @@ class BookingController extends Controller
     public function __construct(
         protected BookingService $bookingService,
         protected BookingRepositoryInterface $bookingRepo,
-    ) {}
+    ) {
+    }
 
     public function create(): View
     {

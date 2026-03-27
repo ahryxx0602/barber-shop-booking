@@ -3,6 +3,7 @@
 namespace App\Repositories\Contracts\Barber;
 
 use App\Models\BarberLeave;
+use App\Repositories\Contracts\BaseRepositoryInterface;
 use Illuminate\Support\Collection;
 
 interface BarberLeaveRepositoryInterface extends BaseRepositoryInterface

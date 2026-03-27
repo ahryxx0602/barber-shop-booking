@@ -677,6 +677,11 @@ function checkoutForm() {
                 this.shippingFee = data.fee || 0;
                 this.distanceKm = data.distance_km || 0;
                 this.isFreeShip = data.is_free || false;
+                
+                // Cập nhật lại discount phí ship nếu mã đã được nhập
+                if (this.shippingCouponInput) {
+                    this.applyCoupon('shipping');
+                }
             })
             .catch(() => { this.shippingFee = 0; })
             .finally(() => { this.calculatingShip = false; this.shippingCalculated = true; });
@@ -746,6 +751,12 @@ function checkoutForm() {
             const isProduct = type === 'product';
             const code = isProduct ? this.productCouponInput : this.shippingCouponInput;
             if (!code) return;
+
+            if (!isProduct && !this.shippingCalculated) {
+                this.shippingCouponMsg = 'Vui lòng bấm Tính phí giao hàng trước khi áp mã.';
+                this.shippingCouponLoading = false;
+                return;
+            }
 
             if (isProduct) { this.productCouponLoading = true; this.productCouponMsg = ''; }
             else { this.shippingCouponLoading = true; this.shippingCouponMsg = ''; }

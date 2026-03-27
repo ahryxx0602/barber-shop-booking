@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent\Client;
 
+use App\Repositories\Eloquent\BaseRepository;
 use App\Models\Review;
 use App\Repositories\Contracts\Client\ReviewRepositoryInterface;
 

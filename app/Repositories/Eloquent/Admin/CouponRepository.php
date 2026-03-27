@@ -2,9 +2,11 @@
 
 namespace App\Repositories\Eloquent\Admin;
 
+use App\Repositories\Eloquent\BaseRepository;
 use App\Models\Coupon;
 use App\Repositories\Contracts\Admin\CouponRepositoryInterface;
 use Illuminate\Database\Eloquent\Model;
+
 
 class CouponRepository extends BaseRepository implements CouponRepositoryInterface
 {
@@ -23,8 +25,8 @@ class CouponRepository extends BaseRepository implements CouponRepositoryInterfa
         // Atomic update — chỉ tăng nếu chưa vượt max_usage
         return $this->model->where('id', $couponId)
             ->where(function ($query) {
-                $query->whereNull('max_usage')
-                      ->orWhereColumn('used_count', '<', 'max_usage');
+                $query->whereNull('usage_limit')
+                    ->orWhereColumn('used_count', '<', 'usage_limit');
             })
             ->increment('used_count');
     }

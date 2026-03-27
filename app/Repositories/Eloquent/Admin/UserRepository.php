@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent\Admin;
 
+use App\Repositories\Eloquent\BaseRepository;
 use App\Enums\UserRole;
 use App\Models\User;
 use App\Repositories\Contracts\Admin\UserRepositoryInterface;

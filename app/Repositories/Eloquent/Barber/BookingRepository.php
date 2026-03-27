@@ -2,6 +2,7 @@
 
 namespace App\Repositories\Eloquent\Barber;
 
+use App\Repositories\Eloquent\BaseRepository;
 use App\Enums\BookingStatus;
 use App\Enums\TimeSlotStatus;
 use App\Models\Booking;

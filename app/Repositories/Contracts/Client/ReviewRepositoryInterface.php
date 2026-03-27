@@ -2,6 +2,8 @@
 
 namespace App\Repositories\Contracts\Client;
 
+use App\Repositories\Contracts\BaseRepositoryInterface;
+
 interface ReviewRepositoryInterface extends BaseRepositoryInterface
 {
     /**
