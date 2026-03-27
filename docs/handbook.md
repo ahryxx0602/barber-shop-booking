@@ -81,14 +81,10 @@ app/
 │   ├── GenerateTimeSlots.php  # Tao time slots hang ngay
 │   └── SecurityAudit.php      # Kiem tra bao mat
 │
-├── DTOs/                      # Data Transfer Objects
-│   ├── CreateBookingData.php  # Du lieu tao booking
-│   ├── CreateBarberData.php   # Du lieu tao barber
-│   ├── UpdateBarberData.php   # Du lieu sua barber
-│   ├── CreateOrderData.php    # Du lieu tao don hang E-commerce
-│   ├── StoreReviewData.php    # Du lieu danh gia
-│   ├── ScheduleItemData.php   # 1 ngay trong lich
-│   └── UpdateScheduleData.php # Cap nhat lich (7 ngay)
+├── DTOs/                      # Data Transfer Objects (Phan theo vai tro)
+│   ├── Admin/                 # DTOs cho Admin
+│   ├── Barber/                # DTOs cho Barber
+│   └── Client/                # DTOs cho Client
 │
 ├── Enums/                     # Gia tri co dinh (PHP 8.1 Backed Enums)
 │   ├── BookingStatus.php      # Trang thai booking (voi FSM)
@@ -148,26 +144,17 @@ app/
 ├── Providers/
 │   └── AppServiceProvider.php # Dang ky events, rate limiting
 │
+├── Repositories/              # Lop truy xuat du lieu (Repository Pattern)
+│   ├── Contracts/             # Cac Interface Repository
+│   └── Eloquent/              # Thuc thi Repository
+│
 ├── Traits/
 │   └── PaymentGatewayTrait.php # Logic chung VNPay/MoMo cho Booking + Order
 │
-└── Services/                  # 14 business services
-    ├── BookingService.php     # Tao/huy booking, FSM transitions, pessimistic locking
-    ├── PaymentService.php     # VNPay + MoMo integration, signature verify
-    ├── OrderService.php       # E-commerce: tao don, tru kho, tinh thue
-    ├── OrderPaymentService.php # Thanh toan don hang (VNPay/MoMo/COD)
-    ├── CartService.php        # Gio hang (Session-based)
-    ├── ProductService.php     # CRUD san pham + tru/hoan kho an toan
-    ├── ShippingService.php    # Tinh phi ship (Haversine / Google Maps fallback)
-    ├── CouponService.php      # Validate + ap dung ma giam gia
-    ├── TimeSlotService.php    # Sinh slot tu dong, batch upsert
-    ├── ScheduleService.php    # CRUD lich lam viec barber
-    ├── BarberService.php      # CRUD barber + user
-    ├── ServiceService.php     # CRUD dich vu
-    ├── ReviewService.php      # Danh gia + cap nhat rating trung binh
-    ├── ReportService.php      # Chart.js, ApexCharts Heatmaps, Top stats
-    ├── CacheService.php       # Cache layer tap trung
-    └── CommissionService.php  # Tinh toan hoa hong tho cat
+└── Services/                  # Business services phan chia theo vai tro
+    ├── Admin/                 # Cac service cho Admin
+    ├── Barber/                # Cac service cho Barber
+    └── Client/                # Cac service cho Client
 
 routes/
 ├── web.php                    # Routes client + guest + E-commerce
