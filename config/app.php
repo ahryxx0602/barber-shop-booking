@@ -123,4 +123,16 @@ return [
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
 
+    /*
+    |--------------------------------------------------------------------------
+    | Deploy Token (Shared Hosting)
+    |--------------------------------------------------------------------------
+    |
+    | Token bảo vệ các route deploy-helpers trên shared hosting.
+    | Đặt giá trị trong file .env: DEPLOY_TOKEN=your-secret-token
+    |
+    */
+
+    'deploy_token' => env('DEPLOY_TOKEN'),
+
 ];

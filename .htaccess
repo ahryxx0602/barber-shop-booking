@@ -1,0 +1,14 @@
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+
+    # ---------------------------------------------------------------
+    # InfinityFree Shared Hosting — Redirect htdocs → public/
+    # ---------------------------------------------------------------
+    # Nếu request KHÔNG trỏ tới một file thật hoặc thư mục thật
+    # trong thư mục gốc, chuyển tiếp vào public/ để Laravel xử lý.
+    # ---------------------------------------------------------------
+
+    # Cho phép truy cập trực tiếp các file tồn tại trong public/
+    RewriteCond %{REQUEST_URI} !^/public/
+    RewriteRule ^(.*)$ public/$1 [L]
+</IfModule>

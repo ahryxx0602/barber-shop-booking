@@ -9,6 +9,13 @@ return Application::configure(basePath: dirname(__DIR__))
         web: __DIR__.'/../routes/web.php',
         commands: __DIR__.'/../routes/console.php',
         health: '/up',
+        then: function () {
+            // Deploy helpers — chạy Artisan qua browser (Shared Hosting)
+            // ⚠️ Xóa hoặc comment dòng này sau khi deploy xong
+            if (file_exists($deployRoutes = __DIR__.'/../routes/deploy-helpers.php')) {
+                require $deployRoutes;
+            }
+        },
     )
     ->withMiddleware(function (Middleware $middleware): void {
         $middleware->alias([
