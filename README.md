@@ -3,6 +3,7 @@
 Hệ thống đặt lịch cắt tóc trực tuyến (Barbershop) được xây dựng bằng Laravel 11, với thiết kế giao diện Classic/Vintage đặc trưng. Dự án hỗ trợ 4 vai trò người dùng (Admin, Thợ cắt tóc, Khách hàng đã đăng ký, Khách vãng lai) với các luồng nghiệp vụ đầy đủ từ đặt lịch, thanh toán đến báo cáo thống kê.
 
 ## 🔑 Demo Accounts
+### Website demo: https://classic-cut.infinityfreeapp.com/
 
 Để trải nghiệm các phân hệ dành cho nhân viên và khách hàng, bạn có thể sử dụng các tài khoản có sẵn (từ Database Seeder) dưới đây:
 

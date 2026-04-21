@@ -16,6 +16,9 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
   <meta name="csrf-token" content="{{ csrf_token() }}" />
   <title>@yield('title', 'Admin') — {{ config('app.name', 'Classic Cut') }}</title>
+  
+  {{-- Favicon Logo --}}
+  <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg fill='%23b08968' viewBox='0 0 48 48' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M24 4C25.7818 14.2173 33.7827 22.2182 44 24C33.7827 25.7818 25.7818 33.7827 24 44C22.2182 33.7827 14.2173 25.7818 4 24C14.2173 22.2182 22.2182 14.2173 24 4Z'/%3E%3C/svg%3E">
 
   @vite(['resources/css/app.css', 'resources/js/app.js'])
 
