@@ -34,11 +34,11 @@ class SecurityHeaders
         // L2: CSP — dynamic theo environment
         $isLocal = app()->environment('local', 'testing', 'development');
 
-        // Whitelist CDNs và External Services
-        $scriptSrc = "'self' 'unsafe-inline' 'unsafe-eval' https://cdnjs.cloudflare.com https://cdn.jsdelivr.net https://unpkg.com https://maps.googleapis.com";
-        $styleSrc  = "'self' 'unsafe-inline' https://cdnjs.cloudflare.com https://fonts.googleapis.com https://fonts.bunny.net https://cdn.jsdelivr.net https://unpkg.com";
-        $fontSrc   = "'self' data: https://fonts.gstatic.com https://fonts.bunny.net https://cdnjs.cloudflare.com https://cdn.jsdelivr.net";
-        $connectSrc = "'self' https://provinces.open-api.vn https://api.provinces.open-api.vn https://nominatim.openstreetmap.org";
+        // Whitelist CDNs và External Services (Chấp nhận tất cả HTTPS để Frontend không bị nghẽn)
+        $scriptSrc = "'self' 'unsafe-inline' 'unsafe-eval' https:";
+        $styleSrc  = "'self' 'unsafe-inline' https:";
+        $fontSrc   = "'self' data: https:";
+        $connectSrc = "'self' https:";
 
         if ($isLocal) {
             // Cho phép Vite dev server HMR (hot module replacement)

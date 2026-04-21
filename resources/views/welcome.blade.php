@@ -456,18 +456,20 @@
 
                         {{-- Service rows --}}
                         @foreach($chunk as $service)
-                            <div class="svc-row" data-img="{{ $service->image ? Storage::url($service->image) : '' }}"
-                                data-name="{{ $service->name }}" data-price="{{ number_format($service->price, 0, ',', '.') }}đ">
-                                <span class="service-name">{{ $service->name }}</span>
-                                <span class="service-price" style="font-family:var(--font-serif)">
-                                    {{ number_format($service->price, 0, ',', '.') }}đ
-                                </span>
+                            <div style="border-bottom: 1px solid var(--v-rule); padding-bottom: 16px; margin-bottom: 8px;">
+                                <div class="svc-row" style="border-bottom: none; padding-bottom: 6px;" data-img="{{ $service->image ? Storage::url($service->image) : '' }}"
+                                    data-name="{{ $service->name }}" data-price="{{ number_format($service->price, 0, ',', '.') }}đ">
+                                    <span class="service-name">{{ $service->name }}</span>
+                                    <span class="service-price" style="font-family:var(--font-serif)">
+                                        {{ number_format($service->price, 0, ',', '.') }}đ
+                                    </span>
+                                </div>
+                                @if($service->description)
+                                    <p style="font-size:12px;color:var(--v-muted);margin:0;line-height:1.6;">
+                                        {{ Str::limit($service->description, 80) }}
+                                    </p>
+                                @endif
                             </div>
-                            @if($service->description)
-                                <p style="font-size:12px;color:var(--v-muted);margin:-4px 0 8px 0;line-height:1.6;">
-                                    {{ Str::limit($service->description, 80) }}
-                                </p>
-                            @endif
                         @endforeach
                     </div>
                 @endforeach

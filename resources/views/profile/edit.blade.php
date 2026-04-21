@@ -1,4 +1,4 @@
-@extends('layouts.tailadmin')
+@extends(auth()->user()->role === \App\Enums\UserRole::Admin ? 'layouts.tailadmin' : 'layouts.tailbarber')
 
 @section('title', 'Hồ sơ cá nhân')
 

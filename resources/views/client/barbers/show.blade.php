@@ -42,12 +42,13 @@
                             <span class="material-symbols-outlined" style="font-size:14px;color:var(--v-copper);">work_history</span>
                             {{ $barber->experience_years }} năm KN
                         </div>
-                        @if($barber->rating > 0)
+                        @php $dynamicRating = $barber->reviews->avg('rating') ?? 0; @endphp
+                        @if($dynamicRating > 0)
                         <div style="display:flex;align-items:center;gap:3px;">
                             @for($i = 1; $i <= 5; $i++)
-                                <span class="material-symbols-outlined {{ $i <= round($barber->rating) ? 'fill' : '' }}" style="font-size:12px;color:{{ $i <= round($barber->rating) ? 'var(--v-copper)' : 'var(--v-muted)' }};opacity:{{ $i <= round($barber->rating) ? '1' : '0.3' }};">star</span>
+                                <span class="material-symbols-outlined {{ $i <= round($dynamicRating) ? 'fill' : '' }}" style="font-size:12px;color:{{ $i <= round($dynamicRating) ? 'var(--v-copper)' : 'var(--v-muted)' }};opacity:{{ $i <= round($dynamicRating) ? '1' : '0.3' }};">star</span>
                             @endfor
-                            <span style="font-weight:600;color:var(--v-ink);margin-left:2px;">{{ number_format($barber->rating, 1) }}</span>
+                            <span style="font-weight:600;color:var(--v-ink);margin-left:2px;">{{ number_format($dynamicRating, 1) }}</span>
                             <span style="color:var(--v-muted);">({{ $barber->reviews->count() }})</span>
                         </div>
                         @endif
@@ -117,11 +118,12 @@
                     @if($barber->reviews->isNotEmpty())
                         {{-- Rating summary bar (compact) --}}
                         <div style="padding:16px;border-bottom:1px solid var(--v-rule);display:flex;align-items:center;gap:16px;">
+                            @php $dynamicRating = $barber->reviews->avg('rating') ?? 0; @endphp
                             <div style="text-align:center;flex-shrink:0;">
-                                <div style="font-family:var(--font-serif);font-size:32px;font-weight:700;color:var(--v-ink);line-height:1;">{{ number_format($barber->rating, 1) }}</div>
+                                <div style="font-family:var(--font-serif);font-size:32px;font-weight:700;color:var(--v-ink);line-height:1;">{{ number_format($dynamicRating, 1) }}</div>
                                 <div style="display:flex;align-items:center;gap:1px;margin-top:4px;justify-content:center;">
                                     @for($i = 1; $i <= 5; $i++)
-                                        <span class="material-symbols-outlined {{ $i <= round($barber->rating) ? 'fill' : '' }}" style="font-size:10px;color:{{ $i <= round($barber->rating) ? 'var(--v-copper)' : 'var(--v-muted)' }};opacity:{{ $i <= round($barber->rating) ? '1' : '0.3' }};">star</span>
+                                        <span class="material-symbols-outlined {{ $i <= round($dynamicRating) ? 'fill' : '' }}" style="font-size:10px;color:{{ $i <= round($dynamicRating) ? 'var(--v-copper)' : 'var(--v-muted)' }};opacity:{{ $i <= round($dynamicRating) ? '1' : '0.3' }};">star</span>
                                     @endfor
                                 </div>
                             </div>

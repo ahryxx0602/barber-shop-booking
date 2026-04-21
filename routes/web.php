@@ -92,6 +92,8 @@ Route::name('client.')->group(function () {
     });
 });
 
+
+
 Route::get('/dashboard', function () {
     $role = auth()->user()->role;
     return redirect(match ($role) {

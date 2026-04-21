@@ -9,7 +9,7 @@ class StoreServiceRequest extends FormRequest
 {
     public function authorize(): bool
     {
-        return auth()->check() && auth()->user()->role === 'admin';
+        return auth()->check() && auth()->user()->role->value === 'admin';
     }
 
     public function rules(): array

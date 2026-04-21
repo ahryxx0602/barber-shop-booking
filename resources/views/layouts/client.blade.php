@@ -342,38 +342,75 @@
             </div>
 
             {{-- Mobile Menu --}}
-            <div class="md:hidden" x-data="{ open: false }">
-                <button @click="open = !open" style="padding:8px;color:var(--v-ink);">
-                    <span class="material-symbols-outlined" x-text="open ? 'close' : 'menu'">menu</span>
+            <div class="md:hidden" x-data="{ open: false }" x-effect="document.body.style.overflow = open ? 'hidden' : ''">
+                <button @click="open = true" style="padding:8px;color:var(--v-ink);">
+                    <span class="material-symbols-outlined">menu</span>
                 </button>
-                <div x-show="open" x-cloak @click.away="open = false" x-transition
-                    style="position:absolute;top:72px;left:0;right:0;z-index:50;background:var(--v-cream);border-bottom:1px solid var(--v-rule);padding:24px;display:flex;flex-direction:column;gap:16px;">
-                    <a class="v-nav-link" href="{{ url('/') }}#services">Dịch vụ</a>
-                    <a class="v-nav-link" href="{{ url('/') }}#story">Câu chuyện</a>
-                    <a class="v-nav-link" href="{{ route('client.barbers.index') }}">Thợ cắt</a>
-                    <a class="v-nav-link" href="{{ route('client.branches.index') }}">Chi nhánh</a>
-                    <a class="v-nav-link" href="{{ route('client.shop.index') }}">Cửa hàng</a>
-                    <a class="v-nav-link" href="{{ route('client.coupons') }}">Giảm giá</a>
-                    <a class="v-nav-link" href="{{ route('client.cart') }}" style="display:flex;align-items:center;gap:6px;">
-                        <span class="material-symbols-outlined" style="font-size:18px;">shopping_cart</span>
-                        Giỏ hàng
-                        @if($cartCount > 0)
-                            <span class="cart-badge-count" style="display:flex;width:18px;height:18px;border-radius:50%;background:var(--v-copper);color:#fff;font-size:9px;font-weight:700;align-items:center;justify-content:center;">{{ $cartCount }}</span>
-                        @endif
-                    </a>
-                    @auth
-                        <a class="v-nav-link" href="{{ route('client.profile.show') }}" style="display:flex;align-items:center;gap:8px;">
-                            @if(auth()->user()->avatar)
-                                <img src="{{ Storage::url(auth()->user()->avatar) }}" style="width:28px;height:28px;border-radius:50%;object-fit:cover;border:1px solid var(--v-rule);" alt="" />
-                            @else
-                                <span style="width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--v-copper);color:#fff;font-size:11px;font-weight:700;">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+
+                {{-- Backdrop --}}
+                <div x-show="open" x-cloak @click="open = false" 
+                    x-transition.opacity.duration.300ms
+                    style="position:fixed;inset:0;background:rgba(28,23,19,0.6);z-index:90;backdrop-filter:blur(2px);">
+                </div>
+
+                {{-- Sidebar Drawer --}}
+                <div x-show="open" x-cloak @click.away="open = false"
+                    x-transition:enter="transition ease-out duration-300"
+                    x-transition:enter-start="transform translate-x-full"
+                    x-transition:enter-end="transform translate-x-0"
+                    x-transition:leave="transition ease-in duration-200"
+                    x-transition:leave-start="transform translate-x-0"
+                    x-transition:leave-end="transform translate-x-full"
+                    style="position:fixed;top:0;right:0;bottom:0;width:80%;max-width:320px;z-index:100;background:var(--v-cream);border-left:1px solid var(--v-rule);display:flex;flex-direction:column;box-shadow:-10px 0 30px rgba(0,0,0,0.15);">
+                    
+                    {{-- Header --}}
+                    <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--v-rule);padding:24px;">
+                        <span style="font-family:var(--font-serif);font-size:16px;font-weight:700;letter-spacing:3px;text-transform:uppercase;color:var(--v-ink);">Menu</span>
+                        <button @click="open = false" style="background:none;border:none;color:var(--v-ink);display:flex;align-items:center;padding:4px;cursor:pointer;">
+                            <span class="material-symbols-outlined">close</span>
+                        </button>
+                    </div>
+
+                    {{-- Links --}}
+                    <div style="flex:1;overflow-y:auto;padding:24px;display:flex;flex-direction:column;gap:20px;">
+                        <a class="v-nav-link" href="{{ url('/') }}#services" style="font-size:11px;">Dịch vụ</a>
+                        <a class="v-nav-link" href="{{ url('/') }}#story" style="font-size:11px;">Câu chuyện</a>
+                        <a class="v-nav-link" href="{{ route('client.barbers.index') }}" style="font-size:11px;">Thợ cắt</a>
+                        <a class="v-nav-link" href="{{ route('client.branches.index') }}" style="font-size:11px;">Chi nhánh</a>
+                        <a class="v-nav-link" href="{{ route('client.shop.index') }}" style="font-size:11px;">Cửa hàng</a>
+                        <a class="v-nav-link" href="{{ route('client.coupons') }}" style="font-size:11px;">Giảm giá</a>
+                        
+                        <div style="height:1px;background:var(--v-rule);margin:12px 0;"></div>
+
+                        <a class="v-nav-link" href="{{ route('client.cart') }}" style="display:flex;align-items:center;gap:12px;font-size:11px;">
+                            <span class="material-symbols-outlined" style="font-size:20px;">shopping_cart</span>
+                            Giỏ hàng
+                            @if($cartCount > 0)
+                                <span class="cart-badge-count" style="display:flex;width:20px;height:20px;border-radius:50%;background:var(--v-copper);color:#fff;font-size:10px;font-weight:700;align-items:center;justify-content:center;">{{ $cartCount }}</span>
                             @endif
-                            Tài khoản
                         </a>
-                    @else
-                        <a class="v-nav-link" href="{{ route('login') }}">Đăng nhập</a>
-                    @endauth
-                    <a href="{{ route('client.booking.create') }}" class="v-btn-primary v-btn-sm" style="text-align:center;">Đặt lịch</a>
+                        
+                        @auth
+                            <a class="v-nav-link" href="{{ route('client.profile.show') }}" style="display:flex;align-items:center;gap:12px;font-size:11px;">
+                                @if(auth()->user()->avatar)
+                                    <img src="{{ Storage::url(auth()->user()->avatar) }}" style="width:32px;height:32px;border-radius:50%;object-fit:cover;border:1px solid var(--v-rule);" alt="" />
+                                @else
+                                    <span style="width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;background:var(--v-copper);color:#fff;font-size:12px;font-weight:700;">{{ strtoupper(substr(auth()->user()->name, 0, 1)) }}</span>
+                                @endif
+                                <div style="display:flex;flex-direction:column;gap:2px;">
+                                    <span>Tài khoản</span>
+                                    <span style="font-size:10px;color:var(--v-muted);text-transform:none;letter-spacing:0;font-weight:500;">{{ auth()->user()->name }}</span>
+                                </div>
+                            </a>
+                        @else
+                            <a class="v-nav-link" href="{{ route('login') }}" style="font-size:11px;">Đăng nhập</a>
+                        @endauth
+                    </div>
+                    
+                    {{-- Bottom fixed CTA --}}
+                    <div style="padding:24px;border-top:1px solid var(--v-rule);background:var(--v-surface);">
+                        <a href="{{ route('client.booking.create') }}" class="v-btn-primary" style="width:100%;font-size:11px;height:48px;">Đặt lịch ngay</a>
+                    </div>
                 </div>
             </div>
         </div>
@@ -387,7 +424,7 @@
     {{-- Footer --}}
     <footer class="v-footer v-noise">
         <div style="max-width:1400px;margin:0 auto;padding:64px 24px 0;" class="md:px-12 lg:px-24">
-            <div style="display:grid;gap:48px;margin-bottom:56px;" class="grid-cols-1 md:grid-cols-3">
+            <div style="display:grid;gap:48px;margin-bottom:56px;" class="grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
                 {{-- Brand --}}
                 <div>
                     <div style="display:flex;align-items:center;gap:12px;margin-bottom:24px;">
@@ -423,9 +460,19 @@
                         <li style="display:flex;justify-content:space-between;"><span>Chủ Nhật</span><span style="color:var(--v-copper);">Nghỉ</span></li>
                     </ul>
                 </div>
+                {{-- Contact --}}
+                <div>
+                    <h4 style="font-size:9px;font-weight:700;letter-spacing:4px;text-transform:uppercase;color:rgba(245,240,232,0.35);margin-bottom:24px;">Liên hệ</h4>
+                    <ul style="list-style:none;padding:0;margin:0;display:flex;flex-direction:column;gap:12px;">
+                        <li><a href="tel:+84327461459" style="font-size:14px; display:flex; align-items:flex-start; gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;">phone_iphone</span> +84 327 461 459</a></li>
+                        <li><a href="mailto:phvanthanh06@gmail.com" style="font-size:14px; display:flex; align-items:flex-start; gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;">mail</span> phvanthanh06@gmail.com</a></li>
+                        <li><a href="https://www.linkedin.com/in/phan-văn-thành-959256311/" target="_blank" rel="noopener noreferrer" style="font-size:14px; display:flex; align-items:flex-start; gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;">link</span> LinkedIn</a></li>
+                        <li><a href="https://github.com/ahryxx0602" target="_blank" rel="noopener noreferrer" style="font-size:14px; display:flex; align-items:flex-start; gap:8px;"><span class="material-symbols-outlined" style="font-size:18px;">code</span> GitHub</a></li>
+                    </ul>
+                </div>
             </div>
             <div style="border-top:1px solid rgba(245,240,232,0.08);padding:24px 0;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:16px;">
-                <p style="font-size:12px;color:rgba(245,240,232,0.3);">&copy; {{ date('Y') }} Classic Cut Barbershop. Đồ án tốt nghiệp -
+                <p style="font-size:12px;color:rgba(245,240,232,0.3);">&copy; {{ date('Y') }} Classic Cut Barbershop. Đồ án cá nhân -
                     Phan Văn Thành.</p>
             </div>
         </div>
